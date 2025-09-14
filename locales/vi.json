@@ -12,6 +12,8 @@
     "logout": "Đăng xuất"
   },
   "login": {
+    "titleLine1": "Trung tâm Video",
+    "titleLine2": "YouTube",
     "tagline": "Bảng điều khiển tất cả trong một để quản lý, theo dõi và tối ưu hóa quy trình sản xuất video của bạn.",
     "signInTitle": "Đăng nhập",
     "signInPrompt": "Đăng nhập để truy cập các dự án của bạn.",

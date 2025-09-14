@@ -12,6 +12,8 @@
     "logout": "Logout"
   },
   "login": {
+    "titleLine1": "Video Hub Center",
+    "titleLine2": "YouTube",
     "tagline": "Your all-in-one dashboard to manage, track, and optimize your video production workflow.",
     "signInTitle": "Sign In",
     "signInPrompt": "Sign in to access your projects.",

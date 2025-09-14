@@ -12,20 +12,23 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md text-center">
+      <div className="w-full max-w-lg text-center">
         <div className="flex items-center justify-center gap-4 mb-6">
-          <Youtube className="text-primary" size={64} />
-          <h1 className="text-4xl font-bold">{t('header.title')}</h1>
+          <Youtube className="text-primary" size={56} />
+          <div>
+            <h1 className="text-4xl font-bold text-left">{t('login.titleLine1')}</h1>
+            <h1 className="text-4xl font-bold text-left">{t('login.titleLine2')}</h1>
+          </div>
         </div>
-        <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
+        <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
           {t('login.tagline')}
         </p>
-        <div className="bg-light-card dark:bg-dark-card p-8 rounded-xl shadow-2xl">
-          <h2 className="text-2xl font-semibold mb-2">{t('login.signInTitle')}</h2>
+        <div className="bg-light-card dark:bg-dark-card p-8 rounded-xl shadow-2xl max-w-sm mx-auto">
+          <h2 className="text-3xl font-bold mb-2">{t('login.signInTitle')}</h2>
           <p className="text-gray-500 dark:text-gray-400 mb-6">{t('login.signInPrompt')}</p>
           <button
             onClick={onLogin}
-            className="w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            className="w-full flex items-center justify-center gap-3 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
           >
             <svg className="w-6 h-6" viewBox="0 0 48 48">
               <path fill="#4285F4" d="M43.611 20.083H24v8.61h11.011c-1.637 5.564-6.91 9.55-13.011 9.55-7.79 0-14.1-6.31-14.1-14.1s6.31-14.1 14.1-14.1c4.438 0 8.324 2.103 10.74 5.31l6.7-6.7C39.046 3.99 32.11 0 24 0 10.74 0 0 10.74 0 24s10.74 24 24 24c12.572 0 22.92-9.23 23.82-21.356A24.013 24.013 0 0043.611 20.083z"></path>
@@ -37,7 +40,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             {t('login.signInButton')}
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-8">
+        <p className="text-xs text-gray-500 mt-8 max-w-sm mx-auto">
             {t('login.securityNote')}
         </p>
       </div>

@@ -93,7 +93,7 @@ export interface AutomationStep {
 
 export type AIProvider = 'gemini' | 'openai';
 
-export type AIModel = 'gemini-1.5-pro' | 'gemini-2.5-flash' | 'gpt-4o' | 'gpt-4-turbo';
+export type AIModel = 'gemini-2.5-flash' | 'gpt-4o' | 'gpt-4-turbo';
 
 export interface ApiKeys {
     gemini: string;

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -340,7 +341,7 @@ const AppContent: React.FC = () => {
     } catch (error: any) {
       console.error("Google sign-in error:", error);
        // Handle specific error codes
-      if (error?.code === 'auth/operation-not-supported-in-this-environment') {
+      if (error?.code === 'auth/operation-not-supported-in-this-environment' || error?.code === 'auth/popup-blocked') {
           showToast(t('toasts.unsupportedEnvironment'), 'error');
       } else if (error?.code === 'auth/unauthorized-domain') {
         const domain = window.location.hostname;
