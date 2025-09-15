@@ -1,10 +1,8 @@
-
-import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { Loader } from 'lucide-react';
 
 type Language = 'en' | 'vi';
-
-const initialTranslations: Record<Language, any> = { en: {}, vi: {} };
 
 export interface LanguageContextType {
     language: Language;
@@ -20,61 +18,78 @@ interface LanguageProviderProps {
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
     const [language, setLanguage] = useLocalStorage<Language>('language', 'en');
-    const [translations, setTranslations] = useState<Record<Language, any>>(initialTranslations);
-    const [isLoaded, setIsLoaded] = useState(false);
+    const [translations, setTranslations] = useState<Record<Language, any> | null>(null);
 
     useEffect(() => {
-        const loadTranslations = async () => {
+        const fetchTranslations = async () => {
             try {
-                // Use fetch with absolute paths to load translation files
+                // Paths are relative to the root of the application (index.html)
                 const [enResponse, viResponse] = await Promise.all([
-                    fetch('/locales/en.json'),
-                    fetch('/locales/vi.json')
+                    fetch('./locales/en.json'),
+                    fetch('./locales/vi.json')
                 ]);
+                if (!enResponse.ok || !viResponse.ok) {
+                    throw new Error(`Failed to fetch translation files. Status: ${enResponse.status}, ${viResponse.status}`);
+                }
                 const enData = await enResponse.json();
                 const viData = await viResponse.json();
-                setTranslations({ en: enData, vi: viData });
-                setIsLoaded(true);
+                setTranslations({
+                    en: enData,
+                    vi: viData
+                });
             } catch (error) {
-                console.error('Failed to load translations:', error);
+                console.error("Failed to load translations:", error);
+                // Fallback to empty objects to prevent app from crashing
+                setTranslations({ en: {}, vi: {} });
             }
         };
-        loadTranslations();
+
+        fetchTranslations();
     }, []);
 
     const t = useCallback((key: string, options?: Record<string, string | number>): string => {
-        if (!isLoaded) {
-            return key; // Return the key itself if translations are not loaded yet
+        if (!translations) {
+            return key; // Should not happen due to the loading guard below
         }
 
-        const keys = key.split('.');
-        let result = translations[language];
-        for (const k of keys) {
-            result = result?.[k];
-            if (result === undefined) {
-                // Fallback to English if key not found in current language
-                let fallbackResult = translations['en'];
-                for (const fk of keys) {
-                    fallbackResult = fallbackResult?.[fk];
-                }
-                result = fallbackResult;
-                break;
+        const findTranslation = (lang: Language): string | undefined => {
+            const keys = key.split('.');
+            let result = translations[lang];
+            for (const k of keys) {
+                result = result?.[k];
+                if (result === undefined) return undefined;
             }
+            return typeof result === 'string' ? result : undefined;
+        };
+    
+        let translatedString = findTranslation(language);
+    
+        if (translatedString === undefined && language !== 'en') {
+            translatedString = findTranslation('en');
         }
-
-        if (typeof result !== 'string') {
-            console.warn(`Translation key '${key}' not found.`);
+    
+        if (translatedString === undefined) {
+            console.warn(`Translation key '${key}' not found in any language.`);
             return key;
         }
 
         if (options) {
-            result = Object.entries(options).reduce((str, [key, value]) => {
-                return str.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
-            }, result);
+            return Object.entries(options).reduce((str, [optKey, value]) => {
+                return str.replace(new RegExp(`{{${optKey}}}`, 'g'), String(value));
+            }, translatedString);
         }
 
-        return result;
-    }, [language, translations, isLoaded]);
+        return translatedString;
+    }, [language, translations]);
+
+    if (!translations) {
+        return (
+            <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex justify-center items-center text-light-text dark:text-dark-text">
+                <Loader className="w-8 h-8 animate-spin text-primary" />
+                <p className="ml-4 text-lg">Loading language files...</p>
+            </div>
+        );
+    }
 
     return (
         <LanguageContext.Provider value={{ language, setLanguage, t }}>

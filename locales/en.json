@@ -18,7 +18,17 @@
     "signInTitle": "Sign In",
     "signInPrompt": "Sign in to access your projects.",
     "signInButton": "Sign in with Google",
-    "securityNote": "Sign in with your Google Account to securely save and sync your projects across devices."
+    "securityNote": "Sign in with your Google Account to securely save and sync your projects across devices.",
+    "setupGuide": {
+      "title": "First-Time Setup Guide",
+      "intro": "If sign-in fails, please complete these two one-time steps in your Firebase project.",
+      "step1Title": "Step 1: Enable Google Sign-In",
+      "step1Desc": "This allows your app to use Google for authentication.",
+      "step1Button": "Open Sign-In Methods",
+      "step2Title": "Step 2: Authorize Your App's Domain",
+      "step2Desc": "This tells Google that your application's domain is trusted.",
+      "step2Button": "Open Auth Settings"
+    }
   },
   "pending": {
     "title": "Account Pending Approval",
@@ -51,6 +61,26 @@
     "check2": "Verify that your API key in the Firebase Console has no restrictions, or that this app's domain is allowed.",
     "check3": "Check your Firestore Security Rules to ensure they are not blocking read/write access.",
     "backToLogin": "Try Again"
+  },
+  "authConfigError": {
+    "title": "Action Required: Complete Authentication Setup",
+    "intro": "Your sign-in failed due to a common configuration issue in your Firebase project. Please check the following settings to resolve the problem.",
+    "problem1Title": "Problem 1: Google Sign-In Method is Disabled",
+    "problem1Intro": "This is the most common cause of 'invalid request' or 'redirect_uri_mismatch' errors.",
+    "step1Title": "Go to Firebase Sign-In Methods",
+    "step1Button": "Open Firebase Sign-In Methods",
+    "step2Title": "Enable the Google Provider",
+    "step2Desc": "Find 'Google' in the list, click it, toggle the switch to 'Enable', provide a project support email, and click 'Save'.",
+    "problem2Title": "Problem 2: Application Domain is Not Authorized",
+    "problem2Intro": "If you are running the app on a new domain (like from a hosting provider), you must authorize it.",
+    "step3Title": "Copy this app's domain",
+    "step3Desc": "Your current domain is:",
+    "step4Title": "Add the domain in Firebase",
+    "step4Button": "Open Firebase Auth Settings",
+    "step4Desc": "Go to the 'Authorized domains' section, click 'Add domain', and paste the domain you copied.",
+    "outro": "After checking both settings, return here and try signing in again.",
+    "tryAgainButton": "Return to Login",
+    "copyDomain": "Copy domain"
   },
   "projects": {
     "title": "Video Projects",
@@ -108,6 +138,7 @@
     "deleting": "Deleting...",
     "clearForm": "Clear Form",
     "rerunAutomation": "Rerun Automation",
+    "exportToSheet": "Export for Sheet",
     "save": "Save Project"
   },
   "settings": {
@@ -178,6 +209,9 @@
     "output": "Output",
     "copyOutput": "Copy output",
     "settings": "Settings",
+    "rerunStep": "Rerun",
+    "rerunStepOnly": "Rerun this step only",
+    "rerunFromThisStep": "Rerun from this step",
     "defaultDescription": "Please review and edit the auto-generated description.",
     "step1": {
       "name": "Viral Analysis & Outline Generation",
@@ -192,19 +226,23 @@
       "description": "Compiles the final script into a clean, voice-actor-ready format, stripping production notes and adding branding."
     },
     "step4": {
-      "name": "Title & Thumbnail Prompt Generation",
-      "description": "Generates catchy titles and creative thumbnail prompts based on the final script."
+      "name": "Title & Thumbnail Analysis",
+      "description": "Generates catchy titles and thumbnail ideas, then analyzes and selects the best option with a confidence score."
     },
     "step5": {
       "name": "SEO Distribution Package",
-      "description": "Creates an SEO-optimized description, tags, and social media posts."
+      "description": "Creates an SEO-optimized description, tags, and social media posts, auto-filled from the previous step.",
+      "inputsTitle": "Manual Override Inputs",
+      "finalTitle": "Final Title",
+      "thumbOverlay": "Thumbnail Overlay Text",
+      "thumbOverlayL1": "Line 1",
+      "thumbOverlayL2": "Line 2",
+      "nextVideoUrl": "Next Video URL",
+      "mainKeywords": "Main Keywords (3-6, comma-separated)"
     },
     "step6": {
       "name": "Visual Prompt Generation",
-      "description": "Analyzes the VO script to generate a complete set of photo-realistic image prompts for the video.",
-      "settings": {
-        "imageCount": "Number of images to generate"
-      }
+      "description": "Analyzes the VO script to generate a complete set of photo-realistic image prompts for the video."
     },
     "step7": {
       "name": "Prompt Table Builder",
@@ -249,6 +287,8 @@
     "fetchVideoDetailsError": "Could not fetch details for this video. Check the link and your API key.",
     "viralInfoAndTargetTitleRequired": "Please provide the viral video transcript and a target title.",
     "stepError": "An error occurred in: {{stepName}}.",
+    "stepError500": "A temporary internal error occurred in: {{stepName}}. Please try again in a moment.",
+    "stepRerunSuccess": "Step '{{stepName}}' re-run successfully!",
     "chainCompleted": "Automation chain completed!",
     "srtRequired": "Please provide SRT content for the final step to continue.",
     "chainAlreadyCompleted": "The automation chain has already completed successfully.",
@@ -257,6 +297,9 @@
     "resetInputsSuccess": "All inputs have been cleared.",
     "dbConnectionError": "Failed to connect to the database. This might be due to a network issue or an incorrect Firebase project configuration (e.g., Firestore not enabled).",
     "copied": "Copied to clipboard!",
+    "step5AutoFilled": "Step 5 inputs have been auto-filled from Step 4's best choice!",
+    "projectExported": "Project data copied to clipboard!",
+    "exportFailed": "Could not copy data to clipboard.",
     "generated": {
       "videoTitle": "Video title generated!",
       "description": "Description generated!",

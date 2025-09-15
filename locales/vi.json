@@ -18,7 +18,17 @@
     "signInTitle": "Đăng nhập",
     "signInPrompt": "Đăng nhập để truy cập các dự án của bạn.",
     "signInButton": "Đăng nhập bằng Google",
-    "securityNote": "Đăng nhập bằng Tài khoản Google của bạn để lưu và đồng bộ hóa các dự án của bạn một cách an toàn trên các thiết bị."
+    "securityNote": "Đăng nhập bằng Tài khoản Google của bạn để lưu và đồng bộ hóa các dự án của bạn một cách an toàn trên các thiết bị.",
+    "setupGuide": {
+      "title": "Hướng dẫn Cài đặt Lần đầu",
+      "intro": "Nếu đăng nhập thất bại, vui lòng hoàn thành hai bước cài đặt một lần sau trong dự án Firebase của bạn.",
+      "step1Title": "Bước 1: Bật Đăng nhập bằng Google",
+      "step1Desc": "Điều này cho phép ứng dụng của bạn sử dụng Google để xác thực.",
+      "step1Button": "Mở Phương thức Đăng nhập",
+      "step2Title": "Bước 2: Ủy quyền Tên miền Ứng dụng của bạn",
+      "step2Desc": "Điều này cho Google biết rằng tên miền ứng dụng của bạn là đáng tin cậy.",
+      "step2Button": "Mở Cài đặt Xác thực"
+    }
   },
   "pending": {
     "title": "Tài khoản Chờ Phê duyệt",
@@ -51,6 +61,26 @@
     "check2": "Xác minh rằng khóa API của bạn trong Bảng điều khiển Firebase không có hạn chế nào, hoặc tên miền của ứng dụng này đã được cho phép.",
     "check3": "Kiểm tra Quy tắc Bảo mật Firestore của bạn để đảm bảo chúng không chặn quyền truy cập đọc/ghi.",
     "backToLogin": "Thử lại"
+  },
+  "authConfigError": {
+    "title": "Yêu cầu Hành động: Hoàn tất Cài đặt Xác thực",
+    "intro": "Đăng nhập không thành công do sự cố cấu hình phổ biến trong dự án Firebase của bạn. Vui lòng kiểm tra hai cài đặt sau để giải quyết vấn đề.",
+    "problem1Title": "Vấn đề 1: Phương thức Đăng nhập bằng Google bị vô hiệu hóa",
+    "problem1Intro": "Đây là nguyên nhân phổ biến nhất gây ra lỗi 'yêu cầu không hợp lệ' hoặc 'redirect_uri_mismatch'.",
+    "step1Title": "Đi đến Phương thức Đăng nhập Firebase",
+    "step1Button": "Mở Phương thức Đăng nhập Firebase",
+    "step2Title": "Bật Nhà cung cấp Google",
+    "step2Desc": "Tìm 'Google' trong danh sách, nhấp vào đó, bật công tắc sang 'Bật', cung cấp email hỗ trợ dự án và nhấp 'Lưu'.",
+    "problem2Title": "Vấn đề 2: Tên miền Ứng dụng chưa được ủy quyền",
+    "problem2Intro": "Nếu bạn đang chạy ứng dụng trên một tên miền mới (ví dụ: từ nhà cung cấp hosting), bạn phải ủy quyền nó.",
+    "step3Title": "Sao chép tên miền của ứng dụng này",
+    "step3Desc": "Tên miền hiện tại của bạn là:",
+    "step4Title": "Thêm tên miền vào Firebase",
+    "step4Button": "Mở Cài đặt Xác thực Firebase",
+    "step4Desc": "Đi đến mục 'Miền được ủy quyền', nhấp vào 'Thêm miền' và dán tên miền bạn đã sao chép.",
+    "outro": "Sau khi kiểm tra cả hai cài đặt, hãy quay lại đây và thử đăng nhập lại.",
+    "tryAgainButton": "Quay lại Đăng nhập",
+    "copyDomain": "Sao chép tên miền"
   },
   "projects": {
     "title": "Các dự án Video",
@@ -108,6 +138,7 @@
     "deleting": "Đang xóa...",
     "clearForm": "Làm trống Form",
     "rerunAutomation": "Chạy lại Tự động hóa",
+    "exportToSheet": "Xuất ra Sheet",
     "save": "Lưu dự án"
   },
   "settings": {
@@ -178,6 +209,9 @@
     "output": "Kết quả",
     "copyOutput": "Sao chép kết quả",
     "settings": "Cài đặt",
+    "rerunStep": "Chạy lại",
+    "rerunStepOnly": "Chỉ chạy lại bước này",
+    "rerunFromThisStep": "Chạy lại từ bước này",
     "defaultDescription": "Vui lòng xem lại và chỉnh sửa mô tả được tạo tự động.",
     "step1": {
       "name": "Phân tích Viral & Tạo dàn ý",
@@ -192,19 +226,23 @@
       "description": "Biên soạn kịch bản cuối cùng thành định dạng sạch, sẵn sàng cho diễn viên lồng tiếng, loại bỏ ghi chú sản xuất và thêm thương hiệu."
     },
     "step4": {
-      "name": "Tạo Tiêu đề & Prompt cho Thumbnail",
-      "description": "Tạo các tiêu đề hấp dẫn và các prompt sáng tạo cho hình thu nhỏ dựa trên kịch bản cuối cùng."
+      "name": "Phân tích Tiêu đề & Thumbnail",
+      "description": "Tạo các tiêu đề và ý tưởng thumbnail hấp dẫn, sau đó phân tích và chọn ra phương án tốt nhất kèm điểm đánh giá."
     },
     "step5": {
       "name": "Gói phân phối SEO",
-      "description": "Tạo mô tả, thẻ và bài đăng mạng xã hội được tối ưu hóa SEO."
+      "description": "Tạo mô tả, thẻ và bài đăng mạng xã hội, được tự động điền từ bước trước.",
+      "inputsTitle": "Ghi đè thủ công",
+      "finalTitle": "Tiêu đề cuối cùng",
+      "thumbOverlay": "Chữ trên Thumbnail",
+      "thumbOverlayL1": "Dòng 1",
+      "thumbOverlayL2": "Dòng 2",
+      "nextVideoUrl": "URL Video tiếp theo",
+      "mainKeywords": "Từ khóa chính (3-6, cách nhau bởi dấu phẩy)"
     },
     "step6": {
       "name": "Tạo Prompt hình ảnh minh họa",
-      "description": "Phân tích kịch bản lồng tiếng để tạo một bộ hoàn chỉnh các prompt hình ảnh chân thực cho video.",
-      "settings": {
-        "imageCount": "Số lượng ảnh cần tạo"
-      }
+      "description": "Phân tích kịch bản lồng tiếng để tạo một bộ hoàn chỉnh các prompt hình ảnh chân thực cho video."
     },
     "step7": {
       "name": "Xây dựng bảng Prompt",
@@ -249,6 +287,8 @@
     "fetchVideoDetailsError": "Không thể tải chi tiết video này. Kiểm tra lại đường dẫn và khóa API của bạn.",
     "viralInfoAndTargetTitleRequired": "Vui lòng cung cấp bản ghi lời của video viral và tiêu đề mục tiêu.",
     "stepError": "Đã xảy ra lỗi ở bước: {{stepName}}.",
+    "stepError500": "Đã xảy ra lỗi nội bộ tạm thời ở bước: {{stepName}}. Vui lòng thử lại sau giây lát.",
+    "stepRerunSuccess": "Chạy lại bước '{{stepName}}' thành công!",
     "chainCompleted": "Chuỗi tự động hóa đã hoàn tất!",
     "srtRequired": "Vui lòng cung cấp nội dung SRT cho bước cuối cùng để tiếp tục.",
     "chainAlreadyCompleted": "Chuỗi tự động hóa đã hoàn thành.",
@@ -257,6 +297,9 @@
     "resetInputsSuccess": "Tất cả dữ liệu đầu vào đã được xóa.",
     "dbConnectionError": "Không thể kết nối với cơ sở dữ liệu. Điều này có thể do sự cố mạng hoặc cấu hình dự án Firebase không chính xác (ví dụ: Firestore chưa được bật).",
     "copied": "Đã sao chép vào clipboard!",
+    "step5AutoFilled": "Dữ liệu cho Bước 5 đã được điền tự động từ lựa chọn tốt nhất của Bước 4!",
+    "projectExported": "Đã sao chép dữ liệu dự án!",
+    "exportFailed": "Không thể sao chép dữ liệu.",
     "generated": {
       "videoTitle": "Đã tạo tiêu đề video!",
       "description": "Đã tạo mô tả!",

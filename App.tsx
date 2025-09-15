@@ -1,5 +1,9 @@
 
 
+
+
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -13,6 +17,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { PendingApprovalScreen } from './components/PendingApprovalScreen';
 import { ExpiredScreen } from './components/ExpiredScreen';
 import { DbConnectionErrorScreen } from './components/DbConnectionErrorScreen';
+import { AuthConfigurationErrorScreen } from './components/AuthConfigurationErrorScreen';
 import { Loader, PlusCircle } from 'lucide-react';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { useTranslation } from './hooks/useTranslation';
@@ -30,7 +35,7 @@ type FirebaseUser = firebase.User;
 // --- DEVELOPMENT MODE FLAG ---
 // Set to true to bypass login and use a mock user for development.
 // Set to false for production to enable real Google Sign-In.
-const IS_DEV_MODE = false;
+const IS_DEV_MODE = true;
 
 const MOCK_USER: User = {
   uid: 'dev-user-01',
@@ -74,6 +79,7 @@ const AppContent: React.FC = () => {
   const [channelDna, setChannelDna] = useLocalStorage<ChannelDna>('channel-dna', '');
   const { t } = useTranslation();
   const [dbConnectionError, setDbConnectionError] = useState<DbError | null>(null);
+  const [signInError, setSignInError] = useState<{ code: string; domain?: string } | null>(null);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -166,6 +172,28 @@ const AppContent: React.FC = () => {
       }
     });
     return () => unsubscribe();
+  }, [showToast, t]);
+
+  // Handle redirect result from Google Sign-In
+  useEffect(() => {
+    if (IS_DEV_MODE) return;
+    
+    // Check for redirect result on app load.
+    const checkRedirectResult = async () => {
+        try {
+            await auth.getRedirectResult();
+            // Successful sign-in is handled by the onAuthStateChanged listener.
+        } catch (error: any) {
+            console.error("Google sign-in redirect error:", error);
+            if (error.code === 'auth/operation-not-allowed' || error.code === 'auth/unauthorized-domain') {
+                setSignInError({ code: error.code, domain: window.location.hostname });
+            } else {
+                showToast(t('toasts.signInError'), 'error');
+            }
+        }
+    };
+    
+    checkRedirectResult();
   }, [showToast, t]);
 
   // Listener for project data from Firestore using v8 syntax
@@ -329,29 +357,17 @@ const AppContent: React.FC = () => {
     handleCloseModal();
   };
 
-  // handleLogin updated to use v8 Auth syntax
+  // handleLogin now uses signInWithRedirect
   const handleLogin = async () => {
     try {
       setDbConnectionError(null);
-      // FIX: Explicitly set auth persistence to 'session'. This is more compatible
-      // with environments like sandboxed iframes where default (local) storage might be blocked.
+      setSignInError(null);
       await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
-      await auth.signInWithPopup(googleProvider);
-      // onAuthStateChanged will handle setting user state and loading projects
+      // Use redirect flow to avoid cross-origin issues with popups
+      await auth.signInWithRedirect(googleProvider);
     } catch (error: any) {
-      console.error("Google sign-in error:", error);
-       // Handle specific error codes
-      if (error?.code === 'auth/operation-not-supported-in-this-environment' || error?.code === 'auth/popup-blocked') {
-          showToast(t('toasts.unsupportedEnvironment'), 'error');
-      } else if (error?.code === 'auth/unauthorized-domain') {
-        const domain = window.location.hostname;
-        const message = t('toasts.unauthorizedDomain', { domain });
-        showToast(message, 'error');
-      } else if (error?.code === 'auth/configuration-not-found') {
-        showToast(t('toasts.googleSignInNotEnabled'), 'error');
-      } else {
-        showToast(t('toasts.signInError'), 'error');
-      }
+      console.error("Google sign-in initiation error:", error);
+      showToast(t('toasts.signInError'), 'error');
     }
   };
 
@@ -377,6 +393,10 @@ const AppContent: React.FC = () => {
         <Loader className="w-12 h-12 animate-spin text-primary" />
       </div>
     );
+  }
+  
+  if (signInError) {
+      return <AuthConfigurationErrorScreen error={signInError} onResolve={() => setSignInError(null)} />;
   }
 
   if (dbConnectionError) {

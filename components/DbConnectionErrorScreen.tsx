@@ -2,6 +2,7 @@
 import React from 'react';
 import { DatabaseZap, ExternalLink, RotateCcw } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
+import { firebaseConfig } from '../firebase';
 
 interface DbConnectionErrorScreenProps {
   error: {
@@ -10,8 +11,6 @@ interface DbConnectionErrorScreenProps {
   };
   onReset: () => void;
 }
-
-const FIREBASE_PROJECT_ID = 'video-hub-1aabc';
 
 export const DbConnectionErrorScreen: React.FC<DbConnectionErrorScreenProps> = ({ error, onReset }) => {
   const { t } = useTranslation();
@@ -30,7 +29,7 @@ export const DbConnectionErrorScreen: React.FC<DbConnectionErrorScreenProps> = (
             <p className="font-semibold">{t('dbError.step1.title')}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{t('dbError.step1.description')}</p>
             <a
-              href={`https://console.firebase.google.com/project/${FIREBASE_PROJECT_ID}/firestore`}
+              href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow"

@@ -4,11 +4,12 @@ import "firebase/compat/auth";
 import "firebase/compat/firestore";
 
 // Your web app's Firebase configuration
-const firebaseConfig = {
+// FIX: Updated configuration to match the user's correct Firebase project ID.
+export const firebaseConfig = {
   apiKey: "AIzaSyAUnmo1FRReKnMpHqHB1jVJD5CdfGA4x2E",
-  authDomain: "video-hub-1aabc.firebaseapp.com",
-  projectId: "video-hub-1aabc",
-  storageBucket: "video-hub-1aabc.appspot.com",
+  authDomain: "youtube-video-hub-1017358933371.firebaseapp.com",
+  projectId: "youtube-video-hub-1017358933371",
+  storageBucket: "youtube-video-hub-1017358933371.appspot.com",
   messagingSenderId: "1017358933371",
   appId: "1:1017358933371:web:7ea24fae4b72aab06771de",
   measurementId: "G-439MDT7ETH"

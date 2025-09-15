@@ -3,7 +3,7 @@ import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, Ap
 import { getStatusOptions } from '../constants';
 import { fetchVideoStats } from '../services/youtubeService';
 import { StatsChart } from './StatsChart';
-import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code } from 'lucide-react';
+import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -117,6 +117,46 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
     
     const handleRerun = () => {
         onRerun(formData as Project);
+    };
+
+    const handleExportToSheet = () => {
+        const data = formData as Project;
+        const tsvLines: string[] = [];
+
+        // Helper to add a row to the TSV content
+        const addLine = (labelKey: string, value: any) => {
+            const label = t(labelKey);
+            // Sanitize value for TSV: replace tabs with spaces and newlines with a carriage return for simple paste
+            const cleanValue = String(value || '').replace(/\t/g, ' ').replace(/\n/g, '\r');
+            tsvLines.push(`${label}\t${cleanValue}`);
+        };
+
+        addLine('projectModal.projectName', data.projectName);
+        addLine('projectModal.videoTitle', data.videoTitle);
+        addLine('projectModal.publishDate', data.publishDateTime);
+        addLine('projectModal.status', data.status);
+        addLine('projectModal.youtubeLink', data.youtubeLink);
+        addLine('projectModal.description', data.description);
+        addLine('projectModal.tags', Array.isArray(data.tags) ? data.tags.join(', ') : '');
+        addLine('projectModal.pinnedComment', data.pinnedComment);
+        addLine('projectModal.communityPost', data.communityPost);
+        addLine('projectModal.facebookPost', data.facebookPost);
+        addLine('projectModal.script', data.script);
+        addLine('projectModal.thumbnailPrompt', data.thumbnailPrompt);
+        addLine('projectModal.voiceoverScript', data.voiceoverScript);
+        addLine('projectModal.promptTable', data.promptTable);
+        addLine('projectModal.timecodeMap', data.timecodeMap);
+        addLine('projectModal.seoMetadata', data.seoMetadata);
+        addLine('projectModal.metadata', data.metadata);
+        
+        const tsvContent = tsvLines.join('\n');
+
+        navigator.clipboard.writeText(tsvContent).then(() => {
+            showToast(t('toasts.projectExported'), 'success');
+        }).catch(err => {
+            console.error('Failed to copy to clipboard', err);
+            showToast(t('toasts.exportFailed'), 'error');
+        });
     };
     
     const extractVideoId = (url: string): string | null => {
@@ -555,6 +595,13 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
                                     className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 font-semibold py-2 px-4 rounded-lg hover:bg-blue-500/10"
                                 >
                                     <Repeat size={16} /> {t('projectModal.rerunAutomation')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleExportToSheet}
+                                    className="flex items-center gap-2 text-green-600 hover:text-green-800 dark:hover:text-green-400 font-semibold py-2 px-4 rounded-lg hover:bg-green-500/10"
+                                >
+                                    <Sheet size={16} /> {t('projectModal.exportToSheet')}
                                 </button>
                                </>
                             )}

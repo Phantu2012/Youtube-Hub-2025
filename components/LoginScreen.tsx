@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Youtube } from 'lucide-react';
+import { Youtube, AlertTriangle, ExternalLink } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
+import { firebaseConfig } from '../firebase';
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -43,6 +44,40 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         <p className="text-xs text-gray-500 mt-8 max-w-sm mx-auto">
             {t('login.securityNote')}
         </p>
+      </div>
+
+      <div className="w-full max-w-3xl mt-12 p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-800 dark:text-yellow-200">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="text-yellow-600 dark:text-yellow-400" size={24} />
+          <h3 className="text-xl font-bold">{t('login.setupGuide.title')}</h3>
+        </div>
+        <p className="mt-2 mb-6 text-sm">{t('login.setupGuide.intro')}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+          <div className="bg-light-card dark:bg-dark-card/30 p-4 rounded-md">
+            <h4 className="font-bold">{t('login.setupGuide.step1Title')}</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-3">{t('login.setupGuide.step1Desc')}</p>
+            <a
+              href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/providers`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow"
+            >
+              {t('login.setupGuide.step1Button')} <ExternalLink size={14} />
+            </a>
+          </div>
+          <div className="bg-light-card dark:bg-dark-card/30 p-4 rounded-md">
+            <h4 className="font-bold">{t('login.setupGuide.step2Title')}</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-3">{t('login.setupGuide.step2Desc')}</p>
+             <a
+              href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/settings`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow"
+            >
+              {t('login.setupGuide.step2Button')} <ExternalLink size={14} />
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );

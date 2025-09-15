@@ -30,6 +30,14 @@ interface AutomationInput {
     };
 }
 
+interface Step5Inputs {
+    title: string;
+    thumbOverlayL1: string;
+    thumbOverlayL2: string;
+    nextVideoUrl: string;
+    keywords: string; // comma-separated
+}
+
 type StepSettings = Record<number, Record<string, string | number>>;
 
 
@@ -40,6 +48,13 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
         targetVideo: { title: '', wordCount: '800' }
     });
     const [srtContent, setSrtContent] = useLocalStorage<string>('automation-srt-content', '');
+    const [step5Inputs, setStep5Inputs] = useLocalStorage<Step5Inputs>('automation-step5-inputs', {
+        title: '',
+        thumbOverlayL1: '',
+        thumbOverlayL2: '',
+        nextVideoUrl: '',
+        keywords: ''
+    });
     const [isFetchingDetails, setIsFetchingDetails] = useState(false);
     const [isRunning, setIsRunning] = useState(false);
     const [steps, setSteps] = useLocalStorage<AutomationStep[]>('automation-steps', DEFAULT_AUTOMATION_STEPS);
@@ -82,6 +97,10 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
                 [field]: value
             }
         }));
+    };
+    
+    const handleStep5InputChange = (field: keyof Step5Inputs, value: string) => {
+        setStep5Inputs(prev => ({ ...prev, [field]: value }));
     };
 
     const handleFetchVideoDetails = async () => {
@@ -131,44 +150,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
         }));
     };
     
-    const hydratePrompt = (template: string, context: Record<string, string>): string => {
-        let hydrated = template;
-        for (const key in context) {
-            hydrated = hydrated.replace(new RegExp(`{{${key}}}`, 'g'), context[key]);
-        }
-        return hydrated;
-    };
-
-    const handleRunChain = async () => {
-        if (!automationInput.viralVideo.transcript.trim() || !automationInput.targetVideo.title.trim()) {
-            showToast(t('toasts.viralInfoAndTargetTitleRequired'), 'info');
-            return;
-        }
-        const aiApiKey = selectedProvider === 'gemini' ? apiKeys.gemini : apiKeys.openai;
-        if (!aiApiKey) {
-            showToast(t('toasts.aiKeyMissing', { provider: selectedProvider }), 'error');
-            return;
-        }
-
-        const isResuming = pausedAtStep !== null;
-        if (!isResuming) {
-            setPausedAtStep(null);
-        }
-
-        setIsRunning(true);
-        setCurrentStep(null);
-        
-        const startingStepIndex = isResuming 
-            ? steps.findIndex(step => step.id === pausedAtStep)
-            : steps.findIndex(step => stepStatus[step.id] !== AutomationStepStatus.Completed);
-        const stepsToRun = steps.slice(startingStepIndex === -1 ? 0 : startingStepIndex);
-
-        if (stepsToRun.length === 0 && !isResuming) {
-            showToast(t('toasts.chainAlreadyCompleted'), 'info');
-            setIsRunning(false);
-            return;
-        }
-
+    const buildContext = (currentOutputs: Record<number, string>): Record<string, string> => {
         const context: Record<string, string> = {
             CHANNEL_DNA: channelDna,
             VIRAL_VIDEO_LINK: automationInput.viralVideo.link,
@@ -179,6 +161,10 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
             TARGET_VIDEO_TITLE: automationInput.targetVideo.title,
             TARGET_VIDEO_WORD_COUNT: automationInput.targetVideo.wordCount,
             SRT_CONTENT: srtContent,
+            TITLE_FINAL: step5Inputs.title,
+            THUMB_FINAL_OVERLAY: JSON.stringify({ L1: step5Inputs.thumbOverlayL1, L2: step5Inputs.thumbOverlayL2 }),
+            VIDEO_URL_NEXT: step5Inputs.nextVideoUrl,
+            TOPIC_MAIN_KEYWORDS: JSON.stringify(step5Inputs.keywords.split(',').map(k => k.trim()).filter(Boolean)),
         };
 
         // Add settings to context
@@ -191,29 +177,32 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
             }
         });
 
-        // Populate context with outputs from already completed steps for resuming
-        Object.keys(stepOutputs).forEach(stepId => {
-            const stepNumber = Number(stepId);
-            if (stepStatus[stepNumber] === AutomationStepStatus.Completed) {
-                context[`STEP_${stepId}_OUTPUT`] = stepOutputs[stepNumber];
-            }
+        // Populate context with step outputs
+        Object.keys(currentOutputs).forEach(stepId => {
+            context[`STEP_${stepId}_OUTPUT`] = currentOutputs[Number(stepId)];
         });
 
-        for (const step of stepsToRun) {
-            // Special check for Step 9 before running it
-            if (step.id === 9 && !srtContent.trim()) {
-                showToast(t('toasts.srtRequired'), 'info');
-                setIsRunning(false); // Pause execution
-                setPausedAtStep(9);
-                return;
-            }
+        return context;
+    };
+    
+    const hydratePrompt = (template: string, context: Record<string, string>): string => {
+        let hydrated = template;
+        for (const key in context) {
+            hydrated = hydrated.replace(new RegExp(`{{${key}}}`, 'g'), context[key]);
+        }
+        return hydrated;
+    };
 
-            setCurrentStep(step.id);
-            setStepStatus(prev => ({ ...prev, [step.id]: AutomationStepStatus.Running }));
+    const runSingleStep = async (step: AutomationStep, context: Record<string, string>): Promise<string> => {
+        const aiApiKey = selectedProvider === 'gemini' ? apiKeys.gemini : apiKeys.openai;
+        const prompt = hydratePrompt(step.promptTemplate, context);
+        
+        const MAX_RETRIES = 3;
+        const INITIAL_DELAY_MS = 1000;
+
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
-                const prompt = hydratePrompt(step.promptTemplate, context);
                 let output = '';
-
                 if (selectedProvider === 'gemini') {
                     const ai = new GoogleGenAI({ apiKey: aiApiKey });
                     const response = await ai.models.generateContent({
@@ -222,32 +211,133 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
                     });
                     output = response.text.trim();
                 } else { // OpenAI
-                     const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${aiApiKey}`,
-                        },
-                        body: JSON.stringify({
-                            model: selectedModel,
-                            messages: [{ role: 'user', content: prompt }],
-                        }),
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${aiApiKey}` },
+                        body: JSON.stringify({ model: selectedModel, messages: [{ role: 'user', content: prompt }] }),
                     });
+
                     if (!response.ok) {
+                        if (response.status >= 500 && response.status < 600) {
+                            const errorBody = await response.text();
+                            throw new Error(`Server error with status ${response.status}: ${errorBody}`);
+                        }
                         const errorData = await response.json();
                         throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
                     }
                     const data = await response.json();
                     output = data.choices[0].message.content.trim();
                 }
+                return output; // Success
+            } catch (error: any) {
+                const isRetryable = (error.message && (error.message.includes('500') || error.message.includes('INTERNAL') || error.message.includes('Server error')));
+
+                if (isRetryable && attempt < MAX_RETRIES) {
+                    const delay = INITIAL_DELAY_MS * Math.pow(2, attempt - 1);
+                    console.warn(`Attempt ${attempt} failed with a retryable error. Retrying in ${delay}ms...`, error.message);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                    console.error(`Final attempt (${attempt}) failed or error is not retryable.`, error);
+                    throw error; // Re-throw the last error to be handled by the caller
+                }
+            }
+        }
+        // This should not be reached if MAX_RETRIES > 0
+        throw new Error('Failed to get a response from the AI model after multiple retries.');
+    };
+    
+    const parseValueFromBlock = (block: string, key: string): string => {
+        const match = block.match(new RegExp(`^${key}:\\s*(.+)`, 'm'));
+        return match ? match[1].trim() : '';
+    };
+
+    const runChain = async (startingStepId?: number) => {
+        const isRerunning = typeof startingStepId === 'number';
+
+        if (!isRerunning) {
+            if (!automationInput.viralVideo.transcript.trim() || !automationInput.targetVideo.title.trim()) {
+                showToast(t('toasts.viralInfoAndTargetTitleRequired'), 'info');
+                return;
+            }
+        }
+        
+        const aiApiKey = selectedProvider === 'gemini' ? apiKeys.gemini : apiKeys.openai;
+        if (!aiApiKey) {
+            showToast(t('toasts.aiKeyMissing', { provider: selectedProvider }), 'error');
+            return;
+        }
+
+        setIsRunning(true);
+        setCurrentStep(null);
+        
+        let startingStepIndex = 0;
+        if (isRerunning) {
+            startingStepIndex = steps.findIndex(step => step.id === startingStepId);
+        } else {
+            const isResuming = pausedAtStep !== null;
+            if (isResuming) {
+                startingStepIndex = steps.findIndex(step => step.id === pausedAtStep);
+            } else {
+                setStepStatus({});
+                setStepOutputs({});
+            }
+            setPausedAtStep(null);
+        }
+
+        if (startingStepIndex === -1) {
+            console.error("Starting step not found");
+            setIsRunning(false);
+            return;
+        }
+        
+        const stepsToRun = steps.slice(startingStepIndex);
+        const currentOutputs = { ...stepOutputs };
+
+        for (const step of stepsToRun) {
+            if (step.id === 9 && !srtContent.trim()) {
+                showToast(t('toasts.srtRequired'), 'info');
+                setPausedAtStep(9);
+                setIsRunning(false);
+                return;
+            }
+
+            setCurrentStep(step.id);
+            setStepStatus(prev => ({ ...prev, [step.id]: AutomationStepStatus.Running }));
+            try {
+                const context = buildContext(currentOutputs);
+                const output = await runSingleStep(step, context);
                 
-                context[`STEP_${step.id}_OUTPUT`] = output;
+                currentOutputs[step.id] = output;
                 setStepOutputs(prev => ({ ...prev, [step.id]: output }));
                 setStepStatus(prev => ({ ...prev, [step.id]: AutomationStepStatus.Completed }));
+                
+                if (step.id === 4) {
+                    const bestChoiceMatch = output.match(/\[BEST_CHOICE\]\s*([\s\S]*)/);
+                    if (bestChoiceMatch) {
+                        const block = bestChoiceMatch[1];
+                        const bestTitle = parseValueFromBlock(block, 'TITLE');
+                        const bestL1 = parseValueFromBlock(block, 'THUMBNAIL_OVERLAY_L1');
+                        const bestL2 = parseValueFromBlock(block, 'THUMBNAIL_OVERLAY_L2');
+                        
+                        if (bestTitle) {
+                             setStep5Inputs(prev => ({
+                                ...prev,
+                                title: bestTitle,
+                                thumbOverlayL1: bestL1,
+                                thumbOverlayL2: bestL2,
+                             }));
+                             showToast(t('toasts.step5AutoFilled'), 'info');
+                        }
+                    }
+                }
 
-            } catch (error) {
+            } catch (error: any) {
                 console.error(`Error in step ${step.id}:`, error);
-                showToast(t('toasts.stepError', { stepName: t(step.name) }), 'error');
+                let errorMessage = t('toasts.stepError', { stepName: t(step.name) });
+                if (error.message && (error.message.includes('500') || error.message.includes('INTERNAL') || error.message.includes('Server error'))) {
+                    errorMessage = t('toasts.stepError500', { stepName: t(step.name) });
+                }
+                showToast(errorMessage, 'error');
                 setStepStatus(prev => ({ ...prev, [step.id]: AutomationStepStatus.Error }));
                 setIsRunning(false);
                 return;
@@ -258,6 +348,60 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
         setCurrentStep(null);
         setPausedAtStep(null);
         showToast(t('toasts.chainCompleted'), 'success');
+    };
+
+    const handleRerun = async (stepIdToRerun: number, mode: 'single' | 'from_here') => {
+        setIsRunning(true);
+        setCurrentStep(stepIdToRerun);
+
+        const stepIndex = steps.findIndex(s => s.id === stepIdToRerun);
+        if (stepIndex === -1) {
+            setIsRunning(false);
+            setCurrentStep(null);
+            return;
+        }
+
+        const newStatus = { ...stepStatus };
+        const newOutputs = { ...stepOutputs };
+        const stepsToReset = mode === 'single' ? [steps[stepIndex]] : steps.slice(stepIndex);
+        
+        stepsToReset.forEach(step => {
+             newStatus[step.id] = AutomationStepStatus.Pending;
+            if (newOutputs[step.id]) {
+                delete newOutputs[step.id];
+            }
+        });
+        
+        setStepStatus(newStatus);
+        setStepOutputs(newOutputs);
+
+        if (mode === 'single') {
+            try {
+                const step = steps[stepIndex];
+                setStepStatus(prev => ({ ...prev, [stepIdToRerun]: AutomationStepStatus.Running }));
+                const context = buildContext(newOutputs);
+                const output = await runSingleStep(step, context);
+
+                setStepOutputs(prev => ({ ...prev, [stepIdToRerun]: output }));
+                setStepStatus(prev => ({ ...prev, [stepIdToRerun]: AutomationStepStatus.Completed }));
+                showToast(t('toasts.stepRerunSuccess', { stepName: t(step.name) }), 'success');
+            } catch (error: any) {
+                console.error(`Error re-running step ${stepIdToRerun}:`, error);
+                let errorMessage = t('toasts.stepError', { stepName: t(steps[stepIndex].name) });
+                if (error.message && (error.message.includes('500') || error.message.includes('INTERNAL') || error.message.includes('Server error'))) {
+                    errorMessage = t('toasts.stepError500', { stepName: t(steps[stepIndex].name) });
+                }
+                showToast(errorMessage, 'error');
+                setStepStatus(prev => ({ ...prev, [stepIdToRerun]: AutomationStepStatus.Error }));
+            } finally {
+                setIsRunning(false);
+                setCurrentStep(null);
+            }
+        } else { // mode === 'from_here'
+            setIsRunning(false); // runChain will set its own running state
+            setCurrentStep(null);
+            await runChain(stepIdToRerun);
+        }
     };
     
     const handleCreateProject = () => {
@@ -314,8 +458,6 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
         onOpenProjectModal(newProject as Project);
     };
 
-    // FIX: Simplified reset functions to be more reliable and intuitive.
-    // This function now only resets the progress of the chain, leaving inputs intact.
     const handleResetChainProgress = () => {
         setStepStatus({});
         setStepOutputs({});
@@ -323,13 +465,19 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
         showToast(t('toasts.resetChainSuccess'), 'info');
     };
 
-    // FIX: This function now only clears user-provided data, preserving custom prompts.
     const handleResetInputs = () => {
         setAutomationInput({
             viralVideo: { link: '', transcript: '', details: null },
             targetVideo: { title: '', wordCount: '800' }
         });
         setSrtContent('');
+        setStep5Inputs({
+            title: '',
+            thumbOverlayL1: '',
+            thumbOverlayL2: '',
+            nextVideoUrl: '',
+            keywords: ''
+        });
         showToast(t('toasts.resetInputsSuccess'), 'info');
     };
 
@@ -452,7 +600,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
                     </div>
                     
                     <button
-                        onClick={handleRunChain}
+                        onClick={() => runChain()}
                         disabled={isRunning}
                         className="w-full flex items-center justify-center gap-3 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105 disabled:bg-opacity-70 disabled:cursor-wait"
                     >
@@ -488,6 +636,9 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
                                 onSettingChange={(key, value) => handleSettingChange(step.id, key, value)}
                                 isRunning={isRunning}
                                 showToast={showToast}
+                                onRerun={handleRerun}
+                                step5Inputs={step5Inputs}
+                                onStep5InputChange={handleStep5InputChange}
                             />
                             {step.id === 9 && (
                                 <div className="bg-light-card dark:bg-dark-card rounded-b-lg p-4 -mt-2 shadow-md border-t border-gray-200 dark:border-gray-700">
@@ -503,7 +654,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
                                     {pausedAtStep === 9 && (
                                         <div className="mt-4 flex justify-end">
                                             <button
-                                                onClick={handleRunChain}
+                                                onClick={() => runChain()}
                                                 disabled={isRunning || !srtContent.trim()}
                                                 className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                                             >

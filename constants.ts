@@ -100,8 +100,9 @@ EVIDENCE — TRÌNH BÀY ĐỜI THƯỜNG
   – “Nghiên cứu gần đây cho thấy…, theo [Tên tổ chức], [Năm].”
 • Nếu thiếu nguồn cụ thể trong input, diễn đạt trung tính (“Các chuyên gia cho rằng…”), tránh %.
 
-ĐỘ DÀI & KIỂM ĐỊNH
+ĐỘ DÀI & KIỂM ĐỊNH (STRICT)
 • Mục tiêu: 3.500–4.000 từ (VN). **Floor**: ≥3.500 từ.
+• **QUY TẮC TUYỆT ĐỐI: KHÔNG VƯỢT QUÁ 4.000 TỪ.** Hãy cô đọng nội dung nếu cần để tuân thủ giới hạn này.
 • Nếu dự kiến <3.500 từ → tự thêm “CTA Extension Block” (recap 5 dòng, plan 3 ngày, self-check 5–7 dòng, 
   nhắc save/share) đến khi ≥3.500 (không vượt +800 từ).
 • Báo **[WORD_AUDIT]**: số từ từng phần chính & tổng, không bịa số.
@@ -163,7 +164,7 @@ VARIATION GUARDS
         name: 'automation.step4.name',
         description: 'automation.step4.description',
         promptTemplate: `ROLE & GOAL
-You are a "Creative Content Packager". Your goal is to create a viral-ready title and thumbnail concept for a new YouTube video.
+You are a "Creative Content Packager & Analyst". Your goal is to create a viral-ready title and thumbnail concept, and then critically evaluate your own work to select the absolute best option.
 
 AUTO-FETCH
 - The full video script is provided below.
@@ -173,10 +174,18 @@ AUTO-FETCH
 TASKS
 1.  **Generate 5 Viral Titles:** Based on the script and referencing the style of the viral title, create 5 catchy, SEO-optimized YouTube titles.
 2.  **Generate 3 Thumbnail Prompts:** Based on the script and the best titles, create 3 distinct and compelling prompts for an AI image generator. The prompts should be concise, focus on dynamic visual elements, and be designed to grab attention. The prompts must be in English.
+3.  **Analyze & Select Best Choice:** Review the 5 titles and 3 thumbnail concepts you generated. Select the ONE title and ONE thumbnail concept that are the strongest combination.
+    -   **Criteria for selection:**
+        -   How closely does it match the style and emotional appeal of the reference viral title?
+        -   How well does it align with the specified Channel DNA (tone, audience, style)?
+        -   How high is its potential Click-Through Rate (CTR)?
+    -   From the best thumbnail concept, extract the most impactful text for a two-line overlay.
+4.  **Provide a Confidence Score:** Give your final selection a score out of 100, representing your confidence in its ability to go viral.
 
-OUTPUT FORMAT
+OUTPUT FORMAT (Strict)
 First, provide the list of 5 titles under the heading "[TITLES]".
-Then, provide the list of 3 thumbnail prompts under the heading "[THUMBNAIL_PROMPTS]".
+Second, provide the list of 3 thumbnail prompts under the heading "[THUMBNAIL_PROMPTS]".
+Finally, provide your analysis and best choice in a block labeled "[BEST_CHOICE]".
 
 **Full Video Script:**
 {{STEP_2_OUTPUT}}
@@ -186,6 +195,27 @@ Then, provide the list of 3 thumbnail prompts under the heading "[THUMBNAIL_PROM
 
 **Channel DNA for tone and style:**
 {{CHANNEL_DNA}}
+
+--- EXAMPLE OUTPUT STRUCTURE ---
+[TITLES]
+1. Title Option 1
+2. Title Option 2
+3. Title Option 3
+4. Title Option 4
+5. Title Option 5
+
+[THUMBNAIL_PROMPTS]
+1. Prompt Option A
+2. Prompt Option B
+3. Prompt Option C
+
+[BEST_CHOICE]
+TITLE: <The single best title from the list above>
+THUMBNAIL_PROMPT: <The single best thumbnail prompt from the list above>
+THUMBNAIL_OVERLAY_L1: <Text for line 1 of the thumbnail overlay>
+THUMBNAIL_OVERLAY_L2: <Text for line 2 of the thumbnail overlay>
+CONFIDENCE_SCORE: 95/100
+REASONING: <A brief, 1-2 sentence explanation of why this combination is the best choice based on the criteria.>
 `
     },
     {
@@ -197,21 +227,23 @@ Then, provide the list of 3 thumbnail prompts under the heading "[THUMBNAIL_PROM
 • Tạo gói xuất bản ngắn gọn, CTR cao cho người Việt: Mô tả YouTube, Ghim bình luận, Community Tab, Bài Facebook, Tag.
 
 HANDSHAKE — YÊU CẦU SAU KHI NHẬN CÂU LỆNH
-• Nếu chưa có TITLE_FINAL & THUMB_FINAL_OVERLAY trong input dưới đây → chỉ trả đúng chuỗi:
+• Nếu chưa có TITLE_FINAL & THUMB_FINAL_OVERLAY trong input dưới đây VÀ chúng cũng không thể được suy ra từ output của Bước 4 → chỉ trả đúng chuỗi:
 ACK_NEEDED: Vui lòng gửi TITLE_FINAL và THUMB_FINAL_OVERLAY (L1/L2).
 
 AUTO-FETCH (nguồn bắt buộc, theo thứ tự)
 1) The full script is provided below.
 {{STEP_2_OUTPUT}}
-2) The final titles and thumbnail concepts are provided below.
+2) The best title and thumbnail concepts are provided from the step below (use them as the final choice unless manual input is provided).
 {{STEP_4_OUTPUT}}
+3) The viral video description is provided for style reference.
+{{VIRAL_VIDEO_DESCRIPTION}}
 • Nếu thiếu script: trả “INPUT_NEEDED: Script is missing”.
 
-INPUT (tùy chọn, nếu bạn muốn bổ sung sau handshake)
-• TITLE_FINAL: "…"
-• THUMB_FINAL_OVERLAY: {"L1":"…","L2":"…"}  // chữ trên thumbnail (2 dòng, ≤5 từ/dòng)
-• VIDEO_URL_NEXT: "…"   // link video bạn muốn đẩy tiếp (có thể để trống → sẽ chèn placeholder)
-• TOPIC_MAIN_KEYWORDS (3–6 từ khoá VN): ["…","…","…"]
+INPUT (dữ liệu này sẽ ghi đè lên lựa chọn tự động từ Bước 4 nếu được cung cấp)
+• TITLE_FINAL: "{{TITLE_FINAL}}"
+• THUMB_FINAL_OVERLAY: {{THUMB_FINAL_OVERLAY}}
+• VIDEO_URL_NEXT: "{{VIDEO_URL_NEXT}}"
+• TOPIC_MAIN_KEYWORDS (3–6 từ khoá VN): {{TOPIC_MAIN_KEYWORDS}}
 
 STYLE & LENGTH GUARDS
 • Tiếng Việt đời thường, ngắn, rõ; tránh y khoa phức tạp.
@@ -220,6 +252,14 @@ STYLE & LENGTH GUARDS
 • Community post ≤ 2 dòng + 1 câu hỏi + link video sau (hoặc placeholder).
 • Facebook post 2–3 câu + link video sau (hoặc placeholder).
 • Tags: 12–18 tag, ưu tiên VN; có 2–3 brand tag kênh.
+
+RULES HỌC TỪ VIDEO VIRAL (ÁP DỤNG NGẮN GỌN)
+• **PHÂN TÍCH CẤU TRÚC MÔ TẢ VIRAL**: Xem xét cách mô tả của video viral (được cung cấp) sắp xếp câu mở đầu, CTA, và thông tin. **HỌC HỎI** cấu trúc đó để tạo [YT_DESCRIPTION] mới, nhưng vẫn tuân thủ giới hạn độ dài và các quy tắc khác.
+• Mô tả: từ khoá tự nhiên ở 140 ký tự đầu; KHÔNG đặt link dòng 1.
+• Pinned comment: chứa tóm tắt & câu hỏi → tăng bình luận đầu.
+• Community: câu hỏi 1 dòng + link → đẩy phiên xem kế tiếp.
+• FB: tối đa 3 câu, mở bằng điểm đau, đóng bằng link; không dùng thuật ngữ.
+• Nhắc “Lưu video” khi có QUICK-WIN; CTA mềm, tránh mệnh lệnh tuyệt đối.
 
 OUTPUT — 5 KHỐI
 
@@ -251,13 +291,6 @@ OUTPUT — 5 KHỐI
 mẹo tại nhà, dinh dưỡng lành mạnh, giấc ngủ người già, tập nhẹ buổi tối,
 an toàn thực phẩm, nước uống điện giải nhẹ, [chủ đề phụ 1], [chủ đề phụ 2],
 SucKhoeNguoiCaoTuoi, SKNCT, SongVuiSongKhoe
-
-RULES HỌC TỪ VIDEO VIRAL (ÁP DỤNG NGẮN GỌN)
-• Mô tả: từ khoá tự nhiên ở 140 ký tự đầu; KHÔNG đặt link dòng 1.
-• Pinned comment: chứa tóm tắt & câu hỏi → tăng bình luận đầu.
-• Community: câu hỏi 1 dòng + link → đẩy phiên xem kế tiếp.
-• FB: tối đa 3 câu, mở bằng điểm đau, đóng bằng link; không dùng thuật ngữ.
-• Nhắc “Lưu video” khi có QUICK-WIN; CTA mềm, tránh mệnh lệnh tuyệt đối.
 
 === OUTPUT FORMAT (MẪU SINH NỘI DUNG) ===
 [YT_DESCRIPTION]
@@ -327,15 +360,12 @@ Per-Sentence Cap: tối đa 1 ảnh/1 câu trong VO; nếu gộp vài câu liên
 Không filler; đi đúng thứ tự VO.
 Không thêm tên riêng/địa danh/brand mới; không hứa hẹn trị bệnh trên ảnh.
 
-OUTPUT FORMAT (BẮT BUỘC CHO MỖI ẢNH)
-Với mỗi câu hoặc nhóm câu liên hệ chặt trong VO:
-[Image Number]:
-PART A: Conceptual Breakdown (Vietnamese)
-Đoạn Kịch Bản: Chỉ câu đầu tiên của phân đoạn, dùng làm mốc; ≤80 ký tự (dài hơn thì cắt và thêm “…”)
-Ý Nghĩa Cốt Lõi: [1 câu nêu mục đích hình]
-Mô Tả Cảnh Chi Tiết: [Mô tả ảnh photo-realistic, tĩnh, rõ bối cảnh nông thôn Việt Nam]
-PART B: AI Image Generation Prompt (English)
-“[Image Number]. A rich, fully self-contained paragraph following the Golden Prompt Formula below.”
+OUTPUT FORMAT (TOKEN-SAVING)
+For each image, provide ONLY the AI Image Generation Prompt (English).
+DO NOT include "PART A: Conceptual Breakdown".
+The format for each prompt should be:
+"[Image Number]. A rich, fully self-contained paragraph following the Golden Prompt Formula below."
+
 
 THE GOLDEN PROMPT FORMULA (THỨ TỰ BẮT BUỘC)
 “[Image Number]”.
@@ -452,36 +482,224 @@ Cuối câu trả lời, XUẤT block máy-đọc:
         id: 8,
         name: 'automation.step8.name',
         description: 'automation.step8.description',
-        promptTemplate: `ROLE & GOAL
+        promptTemplate: `[STEP 8 — RAW SEO PROFILE + FFmpeg METADATA.TXT (VN-READY v1.4)]
+(ZERO-INPUT • AUTO-FETCH S1→S9→S10→S7/S5→S4→S3→S2 • PUBLISH_TIME 05:00/17:00 VN • AUTO UTC • PRIMARY KEYWORDS • LINK INJECTION)
+
+ROLE & GOAL
 Bạn là “The Metadata Architect”. Sinh Hồ Sơ SEO Thô đầy đủ, sạch, đồng nhất với dữ liệu đã chốt (title/thumbnail, description, tags). Đồng thời xuất metadata.txt chuẩn FFmpeg (key=value, mỗi dòng một field) để embed. Không spam từ khóa. Củng cố thương hiệu kênh.
+
 Bổ sung: luôn thêm 1 dòng Primary Keywords: <3 cụm> vào cuối comment (lấy từ spearhead + 2 keyword phụ trong tags).
 
-AUTO-FETCH (STRICT)
-- The locked Title/Thumbnail concepts are in the Step 4 Output.
-- The final Description and Tags are in the Step 5 Output.
-- If Step 4 or Step 5 outputs are missing, report an error.
+ZERO-INPUT — FETCH ORDER (STRICT)
 
-INPUTS:
-Step 4 Output:
-{{STEP_4_OUTPUT}}
+S1 (nếu có) → lấy phong cách & từ khóa nền (không bắt buộc).
+Viral Video Transcript: {{VIRAL_VIDEO_TRANSCRIPT}}
 
-Step 5 Output:
-{{STEP_5_OUTPUT}}
+S9_NOTIFY_EXPORT (bắt buộc) → Title/Thumb đã khóa.
+Step 4 Output: {{STEP_4_OUTPUT}}
 
-INSTRUCTIONS:
-Generate a Raw SEO Profile and an FFmpeg metadata.txt file based on the inputs. Follow all rules regarding timezones, filenames, field formatting, and content safety as specified in the original detailed prompt.
+Nếu thiếu → in nguyên văn:
+INPUT_NEEDED: No STEP4_OUTPUT found.
+
+S10_EXPORT (ưu tiên) → lấy A) VIDEO DESCRIPTION & F) TAGS (CSV).
+Step 5 Output: {{STEP_5_OUTPUT}}
+
+Nếu thiếu S10 → fallback:
+
+S7_EXPORT (VN) hoặc S5_EXPORT (VO) + S4_EXPORT (chapters) → dựng mô tả theo template Step 10.
+Step 7 Output: {{STEP_7_OUTPUT}}
+Step 4 Output: {{STEP_4_OUTPUT}}
+
+
+TAGS suy ra từ S8/S2/S5 (ưu tiên long-tail 3–6 từ).
+Step 2 Output: {{STEP_2_OUTPUT}}
+Step 5 Output: {{STEP_5_OUTPUT}}
+
+Nếu vẫn thiếu mô tả & tags → in nguyên văn:
+INPUT_NEEDED: No description/tags found (need STEP5 or STEP7).
+
+S4_EXPORT → đồng bộ chapters/time & CTA khi cần.
+Step 4 Output: {{STEP_4_OUTPUT}}
+
+S3_EXPORT → chuẩn hóa tên tổ chức cho “Helpful Resources”.
+Step 3 Output: {{STEP_3_OUTPUT}}
+
+S2_EXPORT → đối chiếu ngữ nghĩa với title anchor; không thay claim.
+Step 2 Output: {{STEP_2_OUTPUT}}
+
+TIME & TIMEZONE (VN-READY)
+
+Múi giờ kênh: Asia/Ho_Chi_Minh (UTC+7, không DST).
+
+PUBLISH_TIME_LOCAL (tùy chọn): "05:00" hoặc "17:00".
+
+Nếu có PUBLISH_TIME_LOCAL → đặt:
+
+creation_time_local_gmt+7 = <YYYY-MM-DD PUBLISH_TIME_LOCAL> (ngày chạy lệnh)
+
+creation_time_utc = creation_time_local_gmt+7 − 07:00 → ISO YYYY-MM-DDTHH:MM:SSZ
+
+Nếu không cung cấp → mặc định creation_time_local_gmt+7 = <YYYY-MM-DD 06:15:15> và creation_time_utc = local − 07:00.
+
+Mẫu quy đổi nhanh
+
+05:00 VN → 22:00 UTC ngày trước  (vd: 2025-03-10 05:00 → 2025-03-09T22:00:00Z)
+
+17:00 VN → 10:00 UTC cùng ngày  (vd: 2025-03-10 17:00 → 2025-03-10T10:00:00Z)
+
+YouTube lên lịch theo múi giờ kênh trong Studio, không theo metadata. Tuy vậy, đồng bộ creation_time giúp pipeline & lưu trữ.
+
+FILENAME RULES (GROUP 0)
+
+Không dấu, chữ thường; nối bằng _ hoặc -; không khoảng trắng.
+
+Spearhead Keyword = long-tail đầu tiên trong S10.TAGS CSV; nếu thiếu → suy từ Title đã chốt (ưu tiên cụm 3–6 từ tự nhiên).
+
+Tạo cặp:
+
+<spearhead>_video.mp4
+
+<spearhead>_thumbnail.jpg
+
+Có thể thêm hậu tố ngắn _guide nếu tự nhiên (không nhồi nhét).
+
+DESCRIPTION NORMALIZATION & LINK INJECTION
+
+Description lấy từ S10 (hoặc dựng từ S7/S5 + S4 theo bố cục Step 10).
+
+Luôn kiểm tra & CHÈN nếu thiếu, trước Disclaimer (hoặc trong “Helpful Resources”):
+
+Subscribe: https://www.youtube.com/@Suckhoenguoicaotuoind?sub_confirmation=1
+
+Không đổi độ mạnh claim; giữ giọng empathy-first, hedging.
+
+CORE FIELDS (GROUP 1) — RAW SEO PROFILE
+
+title = từ S9 (locked)
+
+keywords = S10.TAGS CSV → đổi dấu phẩy , thành dấu chấm phẩy ;, giữ nguyên thứ tự (long-tail trước, 4 tag cố định ở cuối)
+
+description = nguyên khối A) VIDEO DESCRIPTION từ S10 (đã chèn 2 link nếu thiếu; giữ format dòng trống đúng template)
+
+comment = y hệt description, sau đó xuống dòng +:
+Primary Keywords: <3 cụm> (lấy từ spearhead + 2 keyword phụ trong tags).
+
+BRAND & CONTEXT (GROUP 2)
+
+subject = cụm 3–5 từ tóm chủ đề (từ title/tags)
+
+author = Sức Khỏe Người Cao Tuổi
+
+artist = Sức Khỏe Người Cao Tuổi
+
+publisher = Sức Khỏe Người Cao Tuổi
+
+copyright = (c) 2025 Sức Khỏe Người Cao Tuổi
+
+genre = Education (hoặc How-to & Style nếu phù hợp)
+
+TECH & ADVANCED (GROUP 3)
+
+encoded_by = SKNCT-MASTER-2025
+
+language = vi
+
+year = 2025
+
+creation_time_local_gmt+7 = YYYY-MM-DD HH:MM:SS (theo PUBLISH_TIME_LOCAL hoặc 06:15:15)
+
+creation_time_utc = YYYY-MM-DDTHH:MM:SSZ (local −07:00)
+
+album = nếu có series/playlist → tên; nếu không → để trống
+
+track = nếu có số tập → số; nếu không → để trống
+
+STANDARDIZATION & SAFETY
+
+Cấm: cure, miracle, guaranteed, instantly, reverse completely.
+
+Không nhồi tags vào description/comment.
+
+Thuật ngữ nhất quán giữa title–description–keywords.
+
+FFmpeg rules cho description/comment trong metadata.txt:
+
+Một dòng duy nhất (gộp dòng bằng khoảng trắng).
+
+// FIX: Escaped the backtick character to prevent premature termination of the template literal.
+Không ký tự đặc biệt: / \\ | \\ > < : * ? % & # " '\`
+
+Cho phép: chữ, số, dấu chấm ., phẩy ,, gạch ngang -, gạch dưới _.
 
 OUTPUT — EXACT TWO SECTIONS + ONE CODE BLOCK
 
 PHẦN A: Tên File Tối Ưu Hóa
-...
+Tên File Video (.mp4):
+<auto: <spearhead>_video.mp4>
+
+Tên File Thumbnail (.jpg):
+<auto: <spearhead>_thumbnail.jpg>
 
 PHẦN B: Kế Hoạch Cấy Ghép Siêu Dữ Liệu Chi Tiết
-...
+
+title: <auto from S9>
+keywords: <auto from S10.tags_csv → thay , bằng ;>
+description:
+<auto paste nguyên khối A) VIDEO DESCRIPTION từ S10 (đã đảm bảo chèn 2 link nếu thiếu)>
+
+comment:
+<auto paste y hệt description ở trên>
+Primary Keywords: <spearhead keyword>, <keyword phụ 1>, <keyword phụ 2>
+
+subject: <auto 3–5 từ từ Title/Tags>
+author: Sức Khỏe Người Cao Tuổi
+artist: Sức Khỏe Người Cao Tuổi
+publisher: Sức Khỏe Người Cao Tuổi
+copyright: (c) 2025 Sức Khỏe Người Cao Tuổi
+genre: Education
+
+encoded_by: SKNCT-MASTER-2025
+language: vi
+year: 2025
+creation_time_local_gmt+7: <auto: YYYY-MM-DD HH:MM:SS theo PUBLISH_TIME_LOCAL hoặc 06:15:15>
+creation_time_utc: <auto: YYYY-MM-DDTHH:MM:SSZ>   // local − 07:00
+album: <auto or empty>
+track: <auto or empty>
+
 
 PHẦN C: metadata.txt (FFmpeg — code block duy nhất, không giải thích)
-...
-`
+— In ngay sau Phần B. Định dạng: key=value, mỗi dòng một field. description/comment: gộp 1 dòng, loại ký tự cấm, giữ .,,-,_.
+
+title=<from S9>
+description=<A) VIDEO DESCRIPTION đã gộp 1 dòng, đã chèn Subscribe + Playlist nếu thiếu>
+comment=<description 1 dòng> Primary Keywords: <spearhead>, <kw2>, <kw3>
+keywords=<tags chuyển ;, một dòng>
+subject=<3-5 words>
+author=Sức Khỏe Người Cao Tuổi
+artist=Sức Khỏe Người Cao Tuổi
+publisher=Sức Khỏe Người Cao Tuổi
+encoded_by=SKNCT-MASTER-2025
+genre=Education
+language=vi
+creation_time=<UTC ISO: YYYY-MM-DDTHH:MM:SSZ>
+year=2025
+copyright=(c) 2025 Sức Khỏe Người Cao Tuổi
+album=
+track=
+
+ERROR MESSAGES (PRINT EXACT IF MISSING)
+
+INPUT_NEEDED: No STEP9_NOTIFY_EXPORT found.
+
+INPUT_NEEDED: No description/tags found (need STEP10 or STEP7/STEP5).
+
+GHI CHÚ THAY THẾ LIÊN KẾT (NẾU CẦN)
+
+Thay <CHANNEL_HANDLE> bằng handle kênh, ví dụ: @suckhoenguoicaotuoi
+
+Thay <PLAYLIST_ID> bằng ID playlist chính của kênh.
+
+[/STEP 8 — VN-READY v1.4]`
     },
     {
         id: 9,
