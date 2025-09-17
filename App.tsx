@@ -1,11 +1,7 @@
 
 
-
-
-
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel } from './types';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Header } from './components/Header';
 import { ProjectList } from './components/ProjectList';
@@ -18,7 +14,7 @@ import { PendingApprovalScreen } from './components/PendingApprovalScreen';
 import { ExpiredScreen } from './components/ExpiredScreen';
 import { DbConnectionErrorScreen } from './components/DbConnectionErrorScreen';
 import { AuthConfigurationErrorScreen } from './components/AuthConfigurationErrorScreen';
-import { Loader, PlusCircle } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { useTranslation } from './hooks/useTranslation';
 
@@ -35,7 +31,7 @@ type FirebaseUser = firebase.User;
 // --- DEVELOPMENT MODE FLAG ---
 // Set to true to bypass login and use a mock user for development.
 // Set to false for production to enable real Google Sign-In.
-const IS_DEV_MODE = true;
+const IS_DEV_MODE = false;
 
 const MOCK_USER: User = {
   uid: 'dev-user-01',
@@ -76,10 +72,11 @@ const AppContent: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeView, setActiveView] = useState<'projects' | 'automation'>('projects');
-  const [channelDna, setChannelDna] = useLocalStorage<ChannelDna>('channel-dna', '');
+  const [channels, setChannels] = useLocalStorage<ChannelDna>('channels', []);
   const { t } = useTranslation();
   const [dbConnectionError, setDbConnectionError] = useState<DbError | null>(null);
   const [signInError, setSignInError] = useState<{ code: string; domain?: string } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -230,6 +227,18 @@ const AppContent: React.FC = () => {
         setProjects([]);
     }
   }, [user, showToast, t]);
+  
+  const projectsByChannel = useMemo(() => {
+    return projects.reduce((acc, project) => {
+      const channelId = project.channelId || 'uncategorized';
+      if (!acc[channelId]) {
+        acc[channelId] = [];
+      }
+      acc[channelId].push(project);
+      return acc;
+    }, {} as Record<string, Project[]>);
+  }, [projects]);
+
 
   const toggleTheme = () => {
     setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
@@ -250,26 +259,41 @@ const AppContent: React.FC = () => {
     setSelectedProject(null);
   };
   
-  const handleSaveSettings = (settings: { apiKeys: ApiKeys, selectedProvider: AIProvider, selectedModel: AIModel, channelDna: ChannelDna }) => {
+  const handleSaveSettings = (settings: { apiKeys: ApiKeys, selectedProvider: AIProvider, selectedModel: AIModel }) => {
     setApiKeys(settings.apiKeys);
     setSelectedProvider(settings.selectedProvider);
     setSelectedModel(settings.selectedModel);
-    setChannelDna(settings.channelDna);
     showToast(t('toasts.settingsSaved'), 'success');
-    handleCloseModal();
   };
 
-  // handleSaveProject updated to use v8 Firestore syntax
-  const handleSaveProject = async (projectToSave: Project) => {
+  const handleChannelsChange = (updatedChannels: Channel[]) => {
+    setChannels(updatedChannels);
+  };
+
+  const handleDeleteChannelInApp = (channelId: string) => {
+      setChannels(prev => prev.filter(ch => ch.id !== channelId));
+      showToast(t('toasts.channelDeleted'), 'info');
+  };
+
+
+  const handleSaveProject = (projectToSave: Project) => {
     if (!user) {
         showToast(t('toasts.loginRequiredToSave'), 'error');
         return;
     }
+    
+    if (projectToSave.thumbnailData && projectToSave.thumbnailData.length > 950000) {
+      showToast(t('toasts.thumbnailTooLarge'), 'error');
+      return;
+    }
 
-    try {
+    setIsSaving(true);
+
+    const performSave = async () => {
         const dataToSave = {
+            channelId: projectToSave.channelId,
             projectName: projectToSave.projectName,
-            publishDateTime: projectToSave.publishDateTime,
+            publishDateTime: firebase.firestore.Timestamp.fromDate(new Date(projectToSave.publishDateTime)),
             status: projectToSave.status,
             videoTitle: projectToSave.videoTitle,
             thumbnailData: projectToSave.thumbnailData,
@@ -286,6 +310,7 @@ const AppContent: React.FC = () => {
             timecodeMap: projectToSave.timecodeMap || '',
             metadata: projectToSave.metadata || '',
             seoMetadata: projectToSave.seoMetadata || '',
+            visualPrompts: projectToSave.visualPrompts || '',
             ...(projectToSave.stats && typeof projectToSave.stats.views === 'number' && { stats: projectToSave.stats }),
         };
 
@@ -297,11 +322,35 @@ const AppContent: React.FC = () => {
             await db.collection('users').doc(user.uid).collection('projects').add(dataToSave);
             showToast(t('toasts.projectCreated'), 'success');
         }
+    };
+
+    performSave()
+      .then(() => {
         handleCloseModal();
-    } catch (error) {
+      })
+      .catch((error) => {
         console.error("Error saving project:", error);
         showToast(t('toasts.projectSaveFailed'), 'error');
-    }
+      })
+      .finally(() => {
+        setIsSaving(false);
+      });
+  };
+
+  const handleCopyProject = async (projectToCopy: Project) => {
+      showToast(t('toasts.copyingProject'), 'info');
+      const { id, stats, ...projectData } = projectToCopy;
+
+      const newProject: Omit<Project, 'id'> = {
+          ...projectData,
+          projectName: `${projectData.projectName} (Copy)`,
+          publishDateTime: new Date().toISOString().slice(0, 16),
+          status: ProjectStatus.Idea,
+          youtubeLink: '',
+      };
+      
+      await handleSaveProject(newProject as Project);
+      showToast(t('toasts.projectCopied'), 'success');
   };
 
   // handleDeleteProject updated to use v8 Firestore syntax
@@ -323,8 +372,9 @@ const AppContent: React.FC = () => {
     }
   };
   
-  const handleCreateNewProject = () => {
+  const handleAddNewVideo = (channelId: string) => {
     const newProjectTemplate: Omit<Project, 'id'> = {
+        channelId: channelId,
         projectName: '',
         publishDateTime: new Date().toISOString().slice(0, 16),
         status: ProjectStatus.Idea,
@@ -343,6 +393,7 @@ const AppContent: React.FC = () => {
         timecodeMap: '',
         metadata: '',
         seoMetadata: '',
+        visualPrompts: '',
     };
     handleOpenModal(newProjectTemplate as Project);
   };
@@ -429,23 +480,18 @@ const AppContent: React.FC = () => {
       />
       <main className="container mx-auto p-4 md:p-8">
         {activeView === 'projects' && (
-          <>
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{t('projects.title')}</h1>
-              <button
-                onClick={handleCreateNewProject}
-                className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105"
-              >
-                <PlusCircle size={20} />
-                {t('projects.newProject')}
-              </button>
-            </div>
-            <ProjectList projects={projects} onSelectProject={handleOpenModal} isLoading={isLoading && projects.length === 0} />
-          </>
+          <ProjectList 
+              channels={channels}
+              projectsByChannel={projectsByChannel} 
+              onSelectProject={handleOpenModal} 
+              isLoading={isLoading && projects.length === 0}
+              onAddChannel={handleOpenSettingsModal}
+              onAddVideo={handleAddNewVideo}
+          />
         )}
         {activeView === 'automation' && (
            <AutomationEngine 
-              channelDna={channelDna}
+              channels={channels}
               onOpenProjectModal={handleOpenModal}
               showToast={showToast}
               apiKeys={apiKeys}
@@ -462,8 +508,11 @@ const AppContent: React.FC = () => {
           apiKeys={apiKeys}
           selectedProvider={selectedProvider}
           selectedModel={selectedModel}
-          currentChannelDna={channelDna}
+          currentChannels={channels}
           onSave={handleSaveSettings}
+          projects={projects}
+          onChannelsChange={handleChannelsChange}
+          onDeleteChannel={handleDeleteChannelInApp}
         />
       )}
 
@@ -473,9 +522,11 @@ const AppContent: React.FC = () => {
           apiKeys={apiKeys}
           selectedProvider={selectedProvider}
           selectedModel={selectedModel}
+          isSaving={isSaving}
           onClose={handleCloseModal}
           onSave={handleSaveProject}
           onDelete={handleDeleteProject}
+          onCopy={handleCopyProject}
           onRerun={handleRerunAutomation}
           showToast={showToast}
         />

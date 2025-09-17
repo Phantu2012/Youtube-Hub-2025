@@ -1,8 +1,9 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
-import { ChannelDna, Project, ProjectStatus, ToastMessage, AutomationStep, AutomationStepStatus, YouTubeVideoDetails, ApiKeys, AIProvider, AIModel } from '../types';
-import { Bot, Loader, Sparkles, FilePlus2, PlayCircle, Youtube, Search, Image as ImageIcon, RotateCcw, Trash2 } from 'lucide-react';
+import { Channel, ChannelDna, Project, ProjectStatus, ToastMessage, AutomationStep, AutomationStepStatus, YouTubeVideoDetails, ApiKeys, AIProvider, AIModel } from '../types';
+import { Bot, Loader, Sparkles, FilePlus2, PlayCircle, Youtube, Search, RotateCcw, Trash2, ChevronDown } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { DEFAULT_AUTOMATION_STEPS } from '../constants';
 import { AutomationStepCard } from './AutomationStepCard';
@@ -10,7 +11,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { fetchVideoDetails } from '../services/youtubeService';
 
 interface AutomationEngineProps {
-    channelDna: ChannelDna;
+    channels: Channel[];
     onOpenProjectModal: (project: Project | null) => void;
     showToast: (message: string, type: ToastMessage['type']) => void;
     apiKeys: ApiKeys;
@@ -27,6 +28,8 @@ interface AutomationInput {
     targetVideo: {
         title: string;
         wordCount: string;
+        nextTitle?: string;
+        imageCount: string;
     };
 }
 
@@ -41,11 +44,13 @@ interface Step5Inputs {
 type StepSettings = Record<number, Record<string, string | number>>;
 
 
-export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, onOpenProjectModal, showToast, apiKeys, selectedProvider, selectedModel }) => {
+export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, onOpenProjectModal, showToast, apiKeys, selectedProvider, selectedModel }) => {
     const { t } = useTranslation();
+    const [selectedChannelId, setSelectedChannelId] = useLocalStorage<string>('automation-selected-channel', '');
+
     const [automationInput, setAutomationInput] = useLocalStorage<AutomationInput>('automation-input', {
         viralVideo: { link: '', transcript: '', details: null },
-        targetVideo: { title: '', wordCount: '800' }
+        targetVideo: { title: '', wordCount: '3500', nextTitle: '', imageCount: '40' }
     });
     const [srtContent, setSrtContent] = useLocalStorage<string>('automation-srt-content', '');
     const [step5Inputs, setStep5Inputs] = useLocalStorage<Step5Inputs>('automation-step5-inputs', {
@@ -151,8 +156,10 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
     };
     
     const buildContext = (currentOutputs: Record<number, string>): Record<string, string> => {
+        const selectedChannel = channels.find(c => c.id === selectedChannelId);
+        
         const context: Record<string, string> = {
-            CHANNEL_DNA: channelDna,
+            CHANNEL_DNA: selectedChannel?.dna || '',
             VIRAL_VIDEO_LINK: automationInput.viralVideo.link,
             VIRAL_VIDEO_TRANSCRIPT: automationInput.viralVideo.transcript,
             VIRAL_VIDEO_TITLE: automationInput.viralVideo.details?.title || 'N/A',
@@ -160,6 +167,8 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
             VIRAL_VIDEO_TAGS: (automationInput.viralVideo.details?.tags || []).join(', '),
             TARGET_VIDEO_TITLE: automationInput.targetVideo.title,
             TARGET_VIDEO_WORD_COUNT: automationInput.targetVideo.wordCount,
+            TARGET_VIDEO_IMAGE_COUNT: automationInput.targetVideo.imageCount,
+            NEXT_VIDEO_TITLE: automationInput.targetVideo.nextTitle || 'Not provided',
             SRT_CONTENT: srtContent,
             TITLE_FINAL: step5Inputs.title,
             THUMB_FINAL_OVERLAY: JSON.stringify({ L1: step5Inputs.thumbOverlayL1, L2: step5Inputs.thumbOverlayL2 }),
@@ -252,6 +261,11 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
     };
 
     const runChain = async (startingStepId?: number) => {
+        if (!selectedChannelId) {
+            showToast(t('toasts.channelRequired'), 'info');
+            return;
+        }
+
         const isRerunning = typeof startingStepId === 'number';
 
         if (!isRerunning) {
@@ -405,6 +419,11 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
     };
     
     const handleCreateProject = () => {
+        if (!selectedChannelId) {
+            showToast(t('toasts.channelRequired'), 'error');
+            return;
+        }
+        
         const creativeOutput = stepOutputs[4] || '';
         const titlesMatch = creativeOutput.match(/\[TITLES\]\s*([\s\S]*?)(?=\[THUMBNAIL_PROMPTS\]|$)/);
         const titleOutput = titlesMatch ? titlesMatch[1].trim().split('\n')[0].replace(/^\d+\.\s*/, '') : '';
@@ -431,11 +450,13 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
         const facebookPost = facebookPostMatch ? facebookPostMatch[1].trim() : '';
         
         const voiceoverScriptOutput = stepOutputs[3] || '';
+        const visualPromptsOutput = stepOutputs[6] || '';
         const promptTableOutput = stepOutputs[7] || '';
         const seoMetadataOutput = stepOutputs[8] || '';
         const timecodeMapOutput = stepOutputs[9] || '';
 
         const newProject: Omit<Project, 'id'> = {
+            channelId: selectedChannelId,
             projectName: automationInput.targetVideo.title,
             publishDateTime: new Date().toISOString().slice(0, 16),
             status: ProjectStatus.Idea,
@@ -450,6 +471,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
             script: scriptOutput,
             thumbnailPrompt: thumbnailPromptOutput,
             voiceoverScript: voiceoverScriptOutput,
+            visualPrompts: visualPromptsOutput,
             promptTable: promptTableOutput,
             timecodeMap: timecodeMapOutput,
             metadata: '',
@@ -468,7 +490,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
     const handleResetInputs = () => {
         setAutomationInput({
             viralVideo: { link: '', transcript: '', details: null },
-            targetVideo: { title: '', wordCount: '800' }
+            targetVideo: { title: '', wordCount: '3500', nextTitle: '', imageCount: '40' }
         });
         setSrtContent('');
         setStep5Inputs({
@@ -483,6 +505,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
 
     const canCreateProject = stepStatus[8] === AutomationStepStatus.Completed;
     const details = automationInput.viralVideo.details;
+    const sortedChannels = [...channels].sort((a, b) => a.name.localeCompare(b.name));
 
     return (
         <div>
@@ -495,6 +518,25 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
             <div className="max-w-4xl mx-auto">
                 <div className="bg-light-card dark:bg-dark-card p-6 rounded-xl shadow-lg space-y-6 mb-8">
                     {/* Input Section */}
+                     <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <label htmlFor="channel-select" className="font-bold text-lg mb-2 block">{t('automation.selectChannel')}</label>
+                        <div className="relative">
+                            <select
+                                id="channel-select"
+                                value={selectedChannelId}
+                                onChange={(e) => setSelectedChannelId(e.target.value)}
+                                disabled={isRunning || channels.length === 0}
+                                className="w-full p-3 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md appearance-none"
+                            >
+                                <option value="" disabled>{channels.length > 0 ? t('automation.selectChannelPlaceholder') : t('automation.noChannelsPlaceholder')}</option>
+                                {sortedChannels.map(channel => (
+                                    <option key={channel.id} value={channel.id}>{channel.name}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Viral Video Column */}
                         <div className="space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -587,6 +629,17 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
                                 />
                             </div>
                             <div>
+                                <label className="font-semibold text-sm">{t('automation.targetVideo.nextTitle')}</label>
+                                <input
+                                    type="text"
+                                    value={automationInput.targetVideo.nextTitle}
+                                    onChange={(e) => handleInputChange('targetVideo', 'nextTitle', e.target.value)}
+                                    placeholder={t('automation.targetVideo.nextTitlePlaceholder')}
+                                    className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md text-sm"
+                                    disabled={isRunning}
+                                />
+                            </div>
+                            <div>
                                 <label className="font-semibold text-sm">{t('automation.targetVideo.wordCount')}</label>
                                 <input
                                     type="number"
@@ -596,12 +649,22 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channelDna, 
                                     disabled={isRunning}
                                 />
                             </div>
+                             <div>
+                                <label className="font-semibold text-sm">{t('automation.targetVideo.imageCount')}</label>
+                                <input
+                                    type="number"
+                                    value={automationInput.targetVideo.imageCount}
+                                    onChange={(e) => handleInputChange('targetVideo', 'imageCount', e.target.value)}
+                                    className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md text-sm"
+                                    disabled={isRunning}
+                                />
+                            </div>
                         </div>
                     </div>
                     
                     <button
                         onClick={() => runChain()}
-                        disabled={isRunning}
+                        disabled={isRunning || !selectedChannelId}
                         className="w-full flex items-center justify-center gap-3 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105 disabled:bg-opacity-70 disabled:cursor-wait"
                     >
                         {isRunning ? <><Loader size={20} className="animate-spin" /> {t('automation.runningButton')}</> : <><PlayCircle size={20} /> {t('automation.runButton')}</>}

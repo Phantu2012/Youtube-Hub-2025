@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel } from '../types';
 import { getStatusOptions } from '../constants';
 import { fetchVideoStats } from '../services/youtubeService';
 import { StatsChart } from './StatsChart';
-import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet } from 'lucide-react';
+import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet, Copy } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -13,9 +14,11 @@ interface ProjectModalProps {
     apiKeys: ApiKeys;
     selectedProvider: AIProvider;
     selectedModel: AIModel;
+    isSaving: boolean;
     onClose: () => void;
     onSave: (project: Project) => void;
     onDelete: (projectId: string) => Promise<void>;
+    onCopy: (project: Project) => void;
     onRerun: (project: Project) => void;
     showToast: (message: string, type: ToastMessage['type']) => void;
 }
@@ -30,7 +33,7 @@ const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string }
     </div>
 );
 
-export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, selectedProvider, selectedModel, onClose, onSave, onDelete, onRerun, showToast }) => {
+export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, selectedProvider, selectedModel, isSaving, onClose, onSave, onDelete, onCopy, onRerun, showToast }) => {
     const { t, language } = useTranslation();
     const [formData, setFormData] = useState<Project | Omit<Project, 'id'>>({
         ...project,
@@ -43,6 +46,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
         timecodeMap: project?.timecodeMap || '',
         metadata: project?.metadata || '',
         seoMetadata: project?.seoMetadata || '',
+        visualPrompts: project?.visualPrompts || '',
     });
     const [stats, setStats] = useState<YouTubeStats | null>(null);
     const [history, setHistory] = useState<ViewHistoryData[]>([]);
@@ -52,7 +56,35 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
     const [tagInput, setTagInput] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const statusOptions = getStatusOptions(t);
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<'delete' | 'clear' | null>(null);
+    const confirmTimer = useRef<number | null>(null);
+
+
+    useEffect(() => {
+        return () => {
+            if (confirmTimer.current) {
+                clearTimeout(confirmTimer.current);
+            }
+        };
+    }, []);
+
+    const handleConfirmClick = (action: 'delete' | 'clear') => {
+        if (confirmAction === action) {
+            // This is the second click, execute action
+            if (action === 'delete' && 'id' in project) onDelete(project.id);
+            if (action === 'clear') handleClearFormAction();
+            
+            setConfirmAction(null);
+            if (confirmTimer.current) clearTimeout(confirmTimer.current);
+        } else {
+            // This is the first click
+            setConfirmAction(action);
+            if (confirmTimer.current) clearTimeout(confirmTimer.current);
+            confirmTimer.current = window.setTimeout(() => {
+                setConfirmAction(null);
+            }, 4000);
+        }
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -79,44 +111,35 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
         onSave(formData as Project);
     };
 
-    const handleDelete = async () => {
-        if (window.confirm(t('projectModal.deleteConfirmation'))) {
-            setIsDeleting(true);
-            try {
-                await onDelete((project as Project).id);
-                // Modal will be closed by App.tsx on success
-            } catch (error) {
-                // Toast is shown in App.tsx
-                setIsDeleting(false); // Re-enable button on failure
-            }
-        }
-    };
-
-    const handleClearForm = () => {
-        if (window.confirm(t('projectModal.clearFormConfirmation'))) {
-            setFormData(prev => ({
-                ...prev,
-                videoTitle: '',
-                thumbnailData: '',
-                description: '',
-                tags: [],
-                pinnedComment: '',
-                communityPost: '',
-                facebookPost: '',
-                script: '',
-                thumbnailPrompt: '',
-                voiceoverScript: '',
-                promptTable: '',
-                timecodeMap: '',
-                metadata: prev.metadata || '', // Keep metadata
-                seoMetadata: '',
-            }));
-            showToast(t('toasts.formCleared'), 'info');
-        }
+    const handleClearFormAction = () => {
+        setFormData(prev => ({
+            ...prev,
+            videoTitle: '',
+            thumbnailData: '',
+            description: '',
+            tags: [],
+            pinnedComment: '',
+            communityPost: '',
+            facebookPost: '',
+            script: '',
+            thumbnailPrompt: '',
+            voiceoverScript: '',
+            promptTable: '',
+            timecodeMap: '',
+            metadata: prev.metadata || '', // Keep metadata
+            seoMetadata: '',
+            visualPrompts: '',
+        }));
+        showToast(t('toasts.formCleared'), 'info');
     };
     
     const handleRerun = () => {
         onRerun(formData as Project);
+    };
+
+    const handleCopy = () => {
+        onCopy(formData as Project);
+        onClose();
     };
 
     const handleExportToSheet = () => {
@@ -144,6 +167,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
         addLine('projectModal.script', data.script);
         addLine('projectModal.thumbnailPrompt', data.thumbnailPrompt);
         addLine('projectModal.voiceoverScript', data.voiceoverScript);
+        addLine('projectModal.visualPrompts', data.visualPrompts);
         addLine('projectModal.promptTable', data.promptTable);
         addLine('projectModal.timecodeMap', data.timecodeMap);
         addLine('projectModal.seoMetadata', data.seoMetadata);
@@ -448,6 +472,10 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
                                 <textarea name="voiceoverScript" value={formData.voiceoverScript} onChange={handleInputChange} rows={6} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.voiceoverScriptPlaceholder')}/>
                             </div>
                              <div>
+                                <label className="font-semibold flex items-center gap-2"><ImageIcon size={16} /> {t('projectModal.visualPrompts')}</label>
+                                <textarea name="visualPrompts" value={formData.visualPrompts} onChange={handleInputChange} rows={6} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.visualPromptsPlaceholder')}/>
+                            </div>
+                             <div>
                                 <label className="font-semibold flex items-center gap-2"><List size={16} /> {t('projectModal.promptTable')}</label>
                                 <textarea name="promptTable" value={formData.promptTable} onChange={handleInputChange} rows={6} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.promptTablePlaceholder')}/>
                             </div>
@@ -575,23 +603,42 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
                                <>
                                 <button
                                     type="button"
-                                    onClick={handleDelete}
-                                    disabled={isDeleting}
-                                    className="flex items-center gap-2 text-red-500 hover:text-red-700 dark:hover:text-red-400 font-semibold py-2 px-4 rounded-lg hover:bg-red-500/10 disabled:opacity-50"
+                                    onClick={() => handleConfirmClick('delete')}
+                                    disabled={isSaving}
+                                    className={`flex items-center gap-2 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 ${
+                                        confirmAction === 'delete' 
+                                        ? 'bg-red-500 text-white' 
+                                        : 'text-red-500 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10'
+                                    }`}
                                 >
-                                    {isDeleting ? <Loader size={16} className="animate-spin" /> : <Trash2 size={16} />} 
-                                    {isDeleting ? t('projectModal.deleting') : t('projectModal.delete')}
+                                    <Trash2 size={16} /> 
+                                    {confirmAction === 'delete' ? t('projectModal.deleteConfirmation') : t('projectModal.delete')}
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={handleClearForm}
-                                    className="flex items-center gap-2 text-yellow-600 hover:text-yellow-800 dark:hover:text-yellow-400 font-semibold py-2 px-4 rounded-lg hover:bg-yellow-500/10"
+                                    onClick={() => handleConfirmClick('clear')}
+                                    disabled={isSaving}
+                                    className={`flex items-center gap-2 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 ${
+                                        confirmAction === 'clear' 
+                                        ? 'bg-yellow-500 text-white' 
+                                        : 'text-yellow-600 hover:text-yellow-800 dark:hover:text-yellow-400 hover:bg-yellow-500/10'
+                                    }`}
                                 >
-                                    <RotateCcw size={16} /> {t('projectModal.clearForm')}
+                                    <RotateCcw size={16} />
+                                    {confirmAction === 'clear' ? t('projectModal.clearFormConfirmation') : t('projectModal.clearForm')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleCopy}
+                                    disabled={isSaving}
+                                    className="flex items-center gap-2 text-purple-600 hover:text-purple-800 dark:hover:text-purple-400 font-semibold py-2 px-4 rounded-lg hover:bg-purple-500/10"
+                                >
+                                    <Copy size={16} /> {t('projectModal.copy')}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleRerun}
+                                    disabled={isSaving}
                                     className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 font-semibold py-2 px-4 rounded-lg hover:bg-blue-500/10"
                                 >
                                     <Repeat size={16} /> {t('projectModal.rerunAutomation')}
@@ -599,6 +646,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
                                 <button
                                     type="button"
                                     onClick={handleExportToSheet}
+                                    disabled={isSaving}
                                     className="flex items-center gap-2 text-green-600 hover:text-green-800 dark:hover:text-green-400 font-semibold py-2 px-4 rounded-lg hover:bg-green-500/10"
                                 >
                                     <Sheet size={16} /> {t('projectModal.exportToSheet')}
@@ -607,9 +655,10 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
                             )}
                         </div>
                         <div className="flex gap-4">
-                            <button type="button" onClick={onClose} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">{t('common.cancel')}</button>
-                            <button type="submit" className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg">
-                                <Save size={16} /> {t('projectModal.save')}
+                            <button type="button" onClick={onClose} disabled={isSaving} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50">{t('common.cancel')}</button>
+                            <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:bg-opacity-70 disabled:cursor-wait">
+                                {isSaving ? <Loader size={16} className="animate-spin" /> : <Save size={16} />} 
+                                {isSaving ? t('projectModal.saving') : t('projectModal.save')}
                             </button>
                         </div>
                     </div>

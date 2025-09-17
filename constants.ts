@@ -1,3 +1,4 @@
+
 import { ProjectStatus, AutomationStep } from './types';
 
 // The 't' function will be provided by the useTranslation hook in the component
@@ -44,120 +45,52 @@ export const DEFAULT_AUTOMATION_STEPS: AutomationStep[] = [
 **Channel DNA:**
 {{CHANNEL_DNA}}
 
-**Target Word Count:**
-{{TARGET_VIDEO_WORD_COUNT}}
-
 **Script Outline from Step 1:**
 {{STEP_1_OUTPUT}}
+
+**Next Video Topic (Optional):**
+{{NEXT_VIDEO_TITLE}}
+
+**Instructions:**
+- Follow the provided outline strictly.
+- Ensure the final script is approximately {{TARGET_VIDEO_WORD_COUNT}} words.
+- If a 'Next Video Topic' is provided, subtly hint at or create a bridge to this topic near the end of the script in the call-to-action section, encouraging viewers to look forward to the next video.
 `
     },
     {
         id: 3,
         name: 'automation.step3.name',
         description: 'automation.step3.description',
-        promptTemplate: `VAI TRÒ & MỤC TIÊU
-• Role: “The VO-Only Compiler for Senior Health”.
-• Mục tiêu: TỔNG HỢP duy nhất PHẦN VO tiếng Việt (giọng nam, ấm, chậm rãi, dễ nghe cho 60+), 
-  theo đúng kênh “Sức Khỏe Người Cao Tuổi” – Tagline: “Sống Vui, Sống Khỏe. Từ Hôm Nay!”.
-• Không chèn hướng dẫn sản xuất (không [B-ROLL]/[ON-SCREEN]/[SFX]/nhãn kỹ thuật). 
-  Chỉ là đoạn văn VO liền mạch, có ngắt câu tự nhiên.
+        promptTemplate: `ROLE & GOAL
+• Role: “The Universal VO Script Compiler”.
+• Goal: Based on the provided full script and the Channel DNA, compile a clean, voiceover-only script. The output should be a seamless, spoken-word text ready for a voice actor, completely free of any production notes or technical labels.
 
-AUTO-FETCH (ƯU TIÊN NGUỒN)
+MANDATORY INPUTS
 1) The full script is provided below:
    {{STEP_2_OUTPUT}}
-2) If the script is missing, respond with:
-   INPUT_NEEDED: No script input found.
+2) The Channel DNA, which dictates the language, tone, persona, and branding:
+   {{CHANNEL_DNA}}
 
-CHUYỂN ĐỔI → VO-ONLY
-• Bỏ toàn bộ nhãn sản xuất: [ON-SCREEN]/[B-ROLL]/[SFX]/[LOWER-THIRD]/[PI]/[CALLBACK]/[FACT-STRIP]/
-  [SOURCE_TAGS]/[EQUIV_STRIP]/[ANALOGY_STRIP]/[QBANK]/[SAVE_PROMPT]/[VOTE_PROMPT]/[COMMIT_PROMPT]/[STORY_PROMPT].
-• Giữ **ý nghĩa nội dung** của các strip & prompts, nhưng **chuyển thành câu nói tự nhiên**:
-  – FACT-STRIP → 1 câu số liệu ngắn, thêm mức chứng cứ (A/B/C) bằng chữ thường, không ngoặc.
-  – SOURCE_TAGS → “Theo [Tên Việt hoá], [Năm]…”. Không đọc DOI/link.
-  – EQUIV/ANALOGY → nói đời thường, thêm “ước tính/khoảng” khi cần.
-  – CTA → giữ trong VO (like/share/đăng ký/lưu/vote/commit/kể chuyện), **giảm lặp**, ngắn gọn.
-• Chèn **brand mềm** 3 điểm: 
-  – Mở đầu/giữa/cuối: “Kênh Sức Khỏe Người Cao Tuổi — Sống Vui, Sống Khỏe. Từ Hôm Nay!”
-  – Cài tự nhiên, không máy móc; tối đa 1 lần/điểm.
-• Persona & ngôn ngữ:
-  – “Người con đồng hành” (xưng “mình/tôi” linh hoạt). 
-  – “ạ” tiết chế: ≤1 lần mỗi 4–6 câu; tổng VO ≤12 lần.
-  – Câu ngắn ≤18 từ; trung lập, ấm áp; ưu tiên động từ đơn giản.
-• Disclaimer: 1 câu **trước** cụm giải pháp: “Nội dung mang tính giáo dục, không thay thế tư vấn y khoa cá nhân.”
-• Phân biệt “liên quan” ≠ “gây ra”; không mệnh lệnh tuyệt đối/khẳng định quá mức.
+If the script is missing, respond with:
+INPUT_NEEDED: No script input found.
 
-CẤU TRÚC & NHỊP (KẾ THỪA STEP 4)
-• Theo thứ tự logic của kịch bản gốc.
-• Không in tiêu đề mục; viết thành đoạn văn liên tục, ngắt đoạn hợp lý.
-• Pattern break = câu hỏi ngắn/recap 1 dòng/hướng dẫn vi mô (“Bạn có thể thử…”), mỗi 120–180 từ một lần.
-• CTA sandwich: sớm (≤90s) / giữa (sau phần giải pháp) / cuối (tổng kết).
-• Cài “khi nào cần gặp bác sĩ” gọn & rõ (3 cờ đỏ).
+CONVERSION RULES (UNIVERSAL)
+• Strip all production labels: [ON-SCREEN], [B-ROLL], [SFX], [LOWER-THIRD], [PI], [CALLBACK], [FACT-STRIP], [SOURCE_TAGS], [EQUIV_STRIP], [ANALOGY_STRIP], [QBANK], [SAVE_PROMPT], [VOTE_PROMPT], [COMMIT_PROMPT], [STORY_PROMPT].
+• Convert the *meaning* of any stripped content into natural, spoken language. For example, a fact-strip should become a simple sentence. A source tag should be phrased conversationally (e.g., "According to [Organization Name]...").
+• Strictly adhere to the **Channel DNA** for all stylistic choices:
+    - **Language**: The entire output script must be in the primary language defined in the DNA.
+    - **Persona & Tone**: Adopt the exact persona, tone of voice, and style (e.g., warm, humorous, serious, formal) specified in the DNA.
+    - **Audience Address**: Use the specific way of addressing the audience (e.g., "Hey everyone," "Dear friends," "cô chú, anh chị") as defined in the DNA.
+    - **Branding**: If the Channel DNA specifies a brand name, tagline, or intro/outro, insert it naturally at the beginning, middle, and end of the script.
+    - **Disclaimer**: If the Channel DNA requires a specific disclaimer, insert it at the appropriate point in the script (e.g., before providing advice).
+• Ensure logical flow and pacing, following the structure of the original script.
 
-EVIDENCE — TRÌNH BÀY ĐỜI THƯỜNG
-• Chỉ nói: Tên Việt hoá + Năm (không đọc DOI/link). 
-• Câu mẫu: 
-  – “Các bác sĩ tại [Tên tổ chức], [Năm], ghi nhận rằng…” 
-  – “Nghiên cứu gần đây cho thấy…, theo [Tên tổ chức], [Năm].”
-• Nếu thiếu nguồn cụ thể trong input, diễn đạt trung tính (“Các chuyên gia cho rằng…”), tránh %.
+WORD COUNT (STRICT)
+• Target: Approximately **{{TARGET_VIDEO_WORD_COUNT}}** words.
+• Adhere closely to this target. Condense or slightly expand the content as needed to meet the word count while preserving the core message.
 
-ĐỘ DÀI & KIỂM ĐỊNH (STRICT)
-• Mục tiêu: 3.500–4.000 từ (VN). **Floor**: ≥3.500 từ.
-• **QUY TẮC TUYỆT ĐỐI: KHÔNG VƯỢT QUÁ 4.000 TỪ.** Hãy cô đọng nội dung nếu cần để tuân thủ giới hạn này.
-• Nếu dự kiến <3.500 từ → tự thêm “CTA Extension Block” (recap 5 dòng, plan 3 ngày, self-check 5–7 dòng, 
-  nhắc save/share) đến khi ≥3.500 (không vượt +800 từ).
-• Báo **[WORD_AUDIT]**: số từ từng phần chính & tổng, không bịa số.
-
-ĐẦU RA — CHỈ 2 KHỐI
-1) [VO_VIET_ONLY]
-   – Toàn bộ VO liền mạch, không nhãn kỹ thuật, không link.
-   – Có brand mềm (intro/mid/outro), disclaimer, CTA sandwich, cờ đỏ.
-2) [STEP5_EXPORT]
-   – Metadata máy-đọc để các bước sau auto-fetch (format bên dưới).
-
-VARIATION GUARDS
-• Cấm lặp 1 cụm 4–6 từ >2 lần/1 đoạn dài ~150–200 từ.
-• Xoay vòng chuyển ý: “Nói gọn lại…/Để khỏi quên…/Bạn có thể thử…/Khi nào nên gọi bác sĩ…”.
-• Không có câu >26 từ; nếu có, tự tách.
-• Gom “khi nào gọi bác sĩ” về một đoạn duy nhất gần cuối.
-
-— KHỐI XUẤT METADATA —
-[STEP5_EXPORT]
-{
-  "version": "3.0",
-  "name": "S5_VO_<slug_topic>_<YYYYMMDD>_<6char>",
-  "session_id": "S5-<YYYYMMDD>-<6char>",
-  "time_utc": "<ISO801>",
-  "refs": {
-    "step4_found": <true|false>,
-    "step3a_found": <true|false>,
-    "step3b_found": <true|false>,
-    "mrp_found": <true|false>,
-    "topic_config_found": <true|false>
-  },
-  "locks": {
-    "word_target": "3500–4000",
-    "word_floor_min": 3500,
-    "max_sentence_words": 26,
-    "cta_sandwich": true,
-    "disclaimer_required": true,
-    "brand_inserts_intro_mid_outro": true
-  },
-  "word_audit": {
-    "hook": <int>, "setup": <int>, "quickwin": <int>,
-    "mechanism": <int>, "solutions": <int>,
-    "foundation": <int>, "risk_payoff": <int>, "summary": <int>,
-    "total": <int>,
-    "cta_extension_applied": <true|false>, "cta_extension_words": <int>
-  },
-  "compliance": {
-    "no_production_labels": true,
-    "evidence_vo_style_ok": true,
-    "persona_tone_ok": true,
-    "sensitive_warnings_present": <true|false>
-  },
-  "notes": ["duplication_filter: ok|fix","pattern_breaks_ok|fix","cta_variety_ok|fix"]
-}
-[/STEP5_EXPORT]`
+OUTPUT — SINGLE TEXT BLOCK
+Provide only the final, clean, voiceover-only script as a single, continuous block of text. Do not include any headings, labels, or metadata blocks.`
     },
     {
         id: 4,
@@ -224,110 +157,95 @@ REASONING: <A brief, 1-2 sentence explanation of why this combination is the bes
         description: 'automation.step5.description',
         promptTemplate: `ROLE & GOAL
 • Role: “The Viral Distribution Finisher”
-• Tạo gói xuất bản ngắn gọn, CTR cao cho người Việt: Mô tả YouTube, Ghim bình luận, Community Tab, Bài Facebook, Tag.
+• Create a concise, high-CTR publishing package: YouTube Description, Pinned Comment, Community Tab Post, Facebook Post, and Tags. The language and style must match the Channel DNA.
 
-HANDSHAKE — YÊU CẦU SAU KHI NHẬN CÂU LỆNH
-• Nếu chưa có TITLE_FINAL & THUMB_FINAL_OVERLAY trong input dưới đây VÀ chúng cũng không thể được suy ra từ output của Bước 4 → chỉ trả đúng chuỗi:
-ACK_NEEDED: Vui lòng gửi TITLE_FINAL và THUMB_FINAL_OVERLAY (L1/L2).
+HANDSHAKE — ACKNOWLEDGEMENT REQUIRED
+• If TITLE_FINAL & THUMB_FINAL_OVERLAY are not provided in the input below AND cannot be inferred from Step 4's output → respond with ONLY this string:
+ACK_NEEDED: Please provide TITLE_FINAL and THUMB_FINAL_OVERLAY (L1/L2).
 
-AUTO-FETCH (nguồn bắt buộc, theo thứ tự)
+AUTO-FETCH (Mandatory sources, in order)
 1) The full script is provided below.
 {{STEP_2_OUTPUT}}
 2) The best title and thumbnail concepts are provided from the step below (use them as the final choice unless manual input is provided).
 {{STEP_4_OUTPUT}}
 3) The viral video description is provided for style reference.
 {{VIRAL_VIDEO_DESCRIPTION}}
-• Nếu thiếu script: trả “INPUT_NEEDED: Script is missing”.
+4) The Channel DNA is provided for language and tone.
+{{CHANNEL_DNA}}
+• If the script is missing: respond with “INPUT_NEEDED: Script is missing”.
 
-INPUT (dữ liệu này sẽ ghi đè lên lựa chọn tự động từ Bước 4 nếu được cung cấp)
+INPUTS (This data will override the automated choice from Step 4 if provided)
 • TITLE_FINAL: "{{TITLE_FINAL}}"
 • THUMB_FINAL_OVERLAY: {{THUMB_FINAL_OVERLAY}}
 • VIDEO_URL_NEXT: "{{VIDEO_URL_NEXT}}"
-• TOPIC_MAIN_KEYWORDS (3–6 từ khoá VN): {{TOPIC_MAIN_KEYWORDS}}
+• TOPIC_MAIN_KEYWORDS (3–6 keywords): {{TOPIC_MAIN_KEYWORDS}}
 
 STYLE & LENGTH GUARDS
-• Tiếng Việt đời thường, ngắn, rõ; tránh y khoa phức tạp.
-• Description ≤ 4 dòng (≤ 320 ký tự ưu tiên trước fold), kèm 2–3 hashtag.
-• Pinned comment ≤ 6 dòng; có 3 bước tóm tắt + 1 câu hỏi mở + link video sau.
-• Community post ≤ 2 dòng + 1 câu hỏi + link video sau (hoặc placeholder).
-• Facebook post 2–3 câu + link video sau (hoặc placeholder).
-• Tags: 12–18 tag, ưu tiên VN; có 2–3 brand tag kênh.
+• Use natural, clear language as defined by the Channel DNA. Avoid complex jargon.
+• Description ≤ 4 lines (≤ 320 characters preferred before the fold), with 2-3 hashtags.
+• Pinned comment ≤ 6 lines; include a 3-step summary + 1 open question + next video link.
+• Community post ≤ 2 lines + 1 question + next video link (or placeholder).
+• Facebook post 2-3 sentences + next video link (or placeholder).
+• Tags: 12–18 tags, prioritize the language from the Channel DNA; include 2-3 channel brand tags.
 
-RULES HỌC TỪ VIDEO VIRAL (ÁP DỤNG NGẮN GỌN)
-• **PHÂN TÍCH CẤU TRÚC MÔ TẢ VIRAL**: Xem xét cách mô tả của video viral (được cung cấp) sắp xếp câu mở đầu, CTA, và thông tin. **HỌC HỎI** cấu trúc đó để tạo [YT_DESCRIPTION] mới, nhưng vẫn tuân thủ giới hạn độ dài và các quy tắc khác.
-• Mô tả: từ khoá tự nhiên ở 140 ký tự đầu; KHÔNG đặt link dòng 1.
-• Pinned comment: chứa tóm tắt & câu hỏi → tăng bình luận đầu.
-• Community: câu hỏi 1 dòng + link → đẩy phiên xem kế tiếp.
-• FB: tối đa 3 câu, mở bằng điểm đau, đóng bằng link; không dùng thuật ngữ.
-• Nhắc “Lưu video” khi có QUICK-WIN; CTA mềm, tránh mệnh lệnh tuyệt đối.
+RULES LEARNED FROM VIRAL VIDEO (Apply concisely)
+• **ANALYZE VIRAL DESCRIPTION STRUCTURE**: Review the structure of the provided viral video's description (opening sentence, CTA placement, info layout). **LEARN FROM** that structure to create the new [YT_DESCRIPTION], while still adhering to length limits and other rules.
+• Description: Natural keywords in the first 140 characters; DO NOT put links in the first line.
+• Pinned comment: Should contain a summary & question → drive initial engagement.
+• Community post: 1-line question + link → drive the next viewing session.
+• FB post: Max 3 sentences, open with a pain point, close with a link.
+• Include a "Save video" reminder for quick-win content; use soft CTAs, avoid absolute commands.
 
-OUTPUT — 5 KHỐI
+OUTPUT — 5 BLOCKS
 
 1) [YT_DESCRIPTION]
-• Dòng 1: lợi ích gần (gắn QUICK-WIN/NEAR_TERM_PROMISE, không link).
-• Dòng 2: 1 câu tóm “nội dung chính” (3 trụ từ STEP4).
-• Dòng 3: CTA mềm: “Đăng ký + Lưu + Chia sẻ cho người thân”.
-• Dòng 4: 2–3 hashtag từ TOPIC_MAIN_KEYWORDS.
-• Cuối mô tả (nhỏ, 1 dòng): — Sức Khỏe Người Cao Tuổi | “Sống Vui, Sống Khỏe. Từ Hôm Nay!”
+• Line 1: Immediate benefit (tied to a QUICK-WIN/NEAR_TERM_PROMISE, no link).
+• Line 2: 1-sentence summary of the "main content".
+• Line 3: Soft CTA: "Subscribe + Save + Share with someone who needs this".
+• Line 4: 2–3 hashtags from TOPIC_MAIN_KEYWORDS.
+• End of description (small, 1 line): — [Channel Name from DNA] | "[Tagline from DNA]"
 
 2) [PINNED_COMMENT]
-• “3 Bước Nhớ Nhanh” (từ STEP4, mỗi bước ≤ 12 từ).
-• 1–2 câu hỏi mở (từ QBANK phù hợp chủ đề).
-• “Gõ ‘Tôi sẽ…’ để cam kết tối nay”.
-• 👉 Video tiếp theo: [VIDEO_URL_NEXT hoặc <điền sau>]
+• "3 Quick Steps to Remember" (from STEP4, each step ≤ 12 words).
+• 1–2 open-ended questions.
+• "Type 'I will...' to commit to this tonight."
+• 👉 Next video: [VIDEO_URL_NEXT or <fill in later>]
 
 3) [COMMUNITY_POST]
-• 1 câu lợi ích + 1 câu hỏi (vote/trả lời nhanh).
-• Link ngắn gọn tới [VIDEO_URL_NEXT hoặc <điền sau>].
+• 1 sentence benefit + 1 quick question (vote/reply).
+• Link to [VIDEO_URL_NEXT or <fill in later>].
 
 4) [FACEBOOK_POST]
-• 2–3 câu: điểm đau → lợi ích tối nay → mời người thân xem.
-• Kết 1 câu CTA: “Bấm xem ngay: [VIDEO_URL_NEXT hoặc <điền sau>]”.
-• Ký tên: — Sức Khỏe Người Cao Tuổi.
+• 2–3 sentences: pain point → benefit tonight → invite others to watch.
+• End with a CTA: "Click to watch now: [VIDEO_URL_NEXT or <fill in later>]".
+• Sign off: — [Channel Name from DNA].
 
 5) [VIDEO_TAGS]
-• 15–18 tag không vượt quá 500 ký tự, dạng chuỗi phẩy-kép:
-  sức khỏe người cao tuổi, [từ khoá 1], [từ khoá 2], [từ khoá 3],
-mẹo tại nhà, dinh dưỡng lành mạnh, giấc ngủ người già, tập nhẹ buổi tối,
-an toàn thực phẩm, nước uống điện giải nhẹ, [chủ đề phụ 1], [chủ đề phụ 2],
-SucKhoeNguoiCaoTuoi, SKNCT, SongVuiSongKhoe
+• 15–18 tags, not exceeding 500 characters, as a comma-separated string. Include a mix of broad and specific keywords related to the topic, plus channel brand tags.
 
-=== OUTPUT FORMAT (MẪU SINH NỘI DUNG) ===
+=== OUTPUT FORMAT (EXAMPLE) ===
 [YT_DESCRIPTION]
-«Mô tả 3–4 dòng, ngắn, theo guard trên.»
+«3-4 line description, short, following the guards above.»
 
 [PINNED_COMMENT]
-• Bước 1: …
-• Bước 2: …
-• Bước 3: …
-— Cô chú/anh chị đang vướng nhất ở bước nào? Trả lời 1 dòng nhé.
-— Gõ “Tôi sẽ [hành động 3 chữ]”.
-👉 Video tiếp theo: [VIDEO_URL_NEXT hoặc <điền sau>]
+• Step 1: ...
+• Step 2: ...
+• Step 3: ...
+— What's the biggest challenge for you right now? Let me know in one line.
+— Type “I will [3-word action]”.
+👉 Next video: [VIDEO_URL_NEXT or <fill in later>]
 
 [COMMUNITY_POST]
-“[Lợi ích tối nay, 1 câu]. Bạn chọn làm bước nào trước? (1) … (2) … (3) …
-Xem tiếp: [VIDEO_URL_NEXT hoặc <điền sau>]”
+“[Benefit tonight, 1 sentence]. Which step will you try first? (1) … (2) … (3) …
+Watch next: [VIDEO_URL_NEXT or <fill in later>]”
 
 [FACEBOOK_POST]
-“[Điểm đau] khiến mình mất ngủ? Có cách làm ngay tối nay: [quick-win rất ngắn].
-3 bước gọn nhẹ, an toàn tại nhà — mời cô chú/anh chị xem: [VIDEO_URL_NEXT hoặc <điền sau>]
-— Sức Khỏe Người Cao Tuổi”
+“[Pain point] keeping you up? Here's a quick tip for tonight: [very short quick-win].
+3 simple, safe steps — watch here: [VIDEO_URL_NEXT or <fill in later>]
+— [Channel Name from DNA]”
 
 [VIDEO_TAGS]
-… , … , …
-
-=== EXPORT BLOCK ===
-[STEP7_EXPORT]
-{
-  "version":"1.1",
-  "name":"S7_Distribution_<YYYYMMDD>_<6char>",
-  "session_id":"S7-<YYYYMMDD>-<6char>",
-  "refs":{"step4_found":true|false,"dna_channel":true,"topic_config":true},
-  "inputs":{"title_final": "<provided|missing>","thumb_overlay":"<provided|missing>","video_url_next":"<provided|placeholder>"},
-  "assets":{"yt_description":true,"pinned_comment":true,"community_post":true,"facebook_post":true,"video_tags_count":<int>},
-  "length_ok":{"desc_chars_approx":"<=320","pinned_lines":"<=6","community_lines":"<=2","fb_sentences":"<=3"},
-  "notes":["links_not_in_first_line_desc","cta_soft_ok","brand_tagline_in_desc_tail"]
-}
+... , ... , ...
 `
     },
     {
@@ -335,89 +253,86 @@ Xem tiếp: [VIDEO_URL_NEXT hoặc <điền sau>]”
         name: 'automation.step6.name',
         description: 'automation.step6.description',
         promptTemplate: `ROLE & GOAL
-Bạn là “The Visual Prompt Architect (VN)”. Phân tích voiceover tiếng Việt ở output của bước 3 và tạo bộ prompt ảnh tĩnh photo-realistic cho khán giả người Việt 60+.
-Mục tiêu: minh hoạ liên tục, không ngắt quãng cho video 20–30 phút với khoảng {{IMAGE_COUNT}} ảnh. Chỉ dùng số ảnh đủ cần thiết.
-Mỗi prompt tự thân đầy đủ và kết thúc bằng: “16:9 aspect ratio, 4K resolution.”
+• Role: “The Universal Visual Prompt Architect”.
+• Goal: Analyze the provided voiceover script ({{STEP_3_OUTPUT}}) and the Channel DNA to create a set of photo-realistic visual prompts. The final output must be tailored to the channel's unique identity.
+• Target Image Count: Generate approximately {{TARGET_VIDEO_IMAGE_COUNT}} images, distributing them evenly and focusing on key moments. Only use the necessary number of images to visually support the script.
 
-ZERO-INPUT — AUTO FETCH (BẮT BUỘC)
-Tải output của bước 3 dưới đây làm nguồn duy nhất.
+MANDATORY INPUTS
+1) Voiceover Script:
 {{STEP_3_OUTPUT}}
+2) Channel DNA (The master guide for all stylistic choices):
+{{CHANNEL_DNA}}
 
-Nếu không có output của bước 3 → trả đúng chuỗi:
-INPUT_NEEDED: No VO script output found.
+If the script is missing, respond with the exact string:
+INPUT_NEEDED: No STEP_3_OUTPUT found.
 
-AUDIENCE & STYLE LOCK (ABSOLUTE)
-Bản địa hoá Việt Nam: nhân vật lớn tuổi người Việt Nam (60–90), đa miền Bắc/Trung/Nam; bối cảnh quen thuộc (nhà mái ngói, cảnh đồng quê, chợ quê, công viên, phòng khám…), chọn phù hợp chủ đề.
-Photo-realistic, ánh sáng tự nhiên, cảm xúc chân thực; trang phục giản dị (áo sơ mi, cardigan, áo bà ba hiện đại, giày đi bộ).
-Ảnh tĩnh: mô tả khoảnh khắc đóng băng; cấm từ gợi chuyển động/animation.
-Nội tạng/y học: cutaway/ghosted overlay trong suốt, tối giản, không gây sợ hãi.
-On-image text (nếu cần): bold, dark-colored, chữ to, tiếng Việt, ≤5 từ/dòng.
-Kết thúc mỗi prompt bằng: “16:9 aspect ratio, 4K resolution.”
+AUDIENCE & STYLE LOCK (DERIVED FROM CHANNEL DNA)
+Strictly adhere to the provided {{CHANNEL_DNA}} to determine all visual and stylistic elements. Your analysis must extract:
+• Language & Culture: Generate "PART A: Conceptual Breakdown" in the primary language of the DNA. All visual elements (characters, settings, clothing, cultural details) must be localized to match the target audience and culture described.
+• Visual Style: Adopt the exact visual style specified in the DNA (e.g., photo-realistic, cinematic, minimalist, anime).
+• On-Image Text: If required by the DNA, ensure text is in the correct language, font style, and adheres to any specified word limits.
+• Each prompt must end with: “16:9 aspect ratio, 4K resolution.” unless the DNA specifies otherwise.
 
 CRITICAL RULES
-Độc lập tuyệt đối: không tham chiếu ảnh khác; nhân vật lặp lại phải mô tả lại đủ.
-Per-Sentence Cap: tối đa 1 ảnh/1 câu trong VO; nếu gộp vài câu liên hệ chặt, vẫn chỉ 1 ảnh cho nhóm đó.
-Không filler; đi đúng thứ tự VO.
-Không thêm tên riêng/địa danh/brand mới; không hứa hẹn trị bệnh trên ảnh.
+• Absolute Independence: Each prompt must be self-contained. Do not reference other images (e.g., "in the same room as before"). If a character reappears, describe them again sufficiently.
+• Per-Sentence Cap: Maximum of 1 image per sentence in the voiceover. If a few closely related sentences form a single idea, use only one image for that group.
+• No Fillers: Generate prompts only for substantive parts of the script. Follow the voiceover's order.
+• Adhere to DNA: Do not introduce new brands, names, or locations not mentioned in the script or DNA.
+• Image Distribution: Ensure prompts are generated for content throughout the entire script, not just the beginning. Focus on visually important moments, instructions, and key concepts. Each image should represent a scene lasting up to 4-5 seconds of screen time.
 
-OUTPUT FORMAT (TOKEN-SAVING)
-For each image, provide ONLY the AI Image Generation Prompt (English).
-DO NOT include "PART A: Conceptual Breakdown".
-The format for each prompt should be:
-"[Image Number]. A rich, fully self-contained paragraph following the Golden Prompt Formula below."
+OUTPUT FORMAT (MANDATORY FOR EACH IMAGE)
+For each key sentence or closely related group of sentences in the VO:
 
+[Image Number]:
+PART A: Conceptual Breakdown (in the language from Channel DNA)
+Script Snippet: The first sentence of the segment, as a reference point; truncate with "..." if longer than 80 characters.
+Core Meaning: [1 sentence stating the visual's purpose]
+Detailed Scene Description: [Describe the static, photo-realistic scene, context, and characters as dictated by the Channel DNA]
 
-THE GOLDEN PROMPT FORMULA (THỨ TỰ BẮT BUỘC)
-“[Image Number]”.
-Shot Type & Composition: photo-realistic close-up / medium / wide / cutaway.
-Subject, Character & Action: ai/cái gì ở khoảnh khắc tĩnh (mô tả lại đủ).
-Emotion & Body Language: nét mặt, tư thế cụ thể.
-Clothing & Cultural Details: trang phục phù hợp với người già Việt Nam.
-Key Elements & Symbolism: vật thể/chủ thể cần có; không tham chiếu prompt khác.
-Lighting & Style: tự nhiên, ấm, chân thực, sạch.
-Final Instruction: “16:9 aspect ratio, 4K resolution.”
+PART B: AI Image Generation Prompt (MUST BE IN ENGLISH)
+“[Image Number]. A rich, fully self-contained paragraph following the Golden Prompt Formula below.”
 
-ONE-PASS GENERATION (BẮT BUỘC)
-Không yêu cầu bước “OK” xác nhận.
-Phân đoạn & sinh prompt trong 1 lần: xuất từ 1 đến tối đa {{IMAGE_COUNT}} ảnh ngay lập tức, theo thứ tự VO.
-Nếu VO quá ngắn/dài → scale số ảnh ≤{{IMAGE_COUNT}}, vẫn tuân ≤1 ảnh/câu.
+THE GOLDEN PROMPT FORMULA (MANDATORY ORDER)
+1. “[Image Number]”.
+2. Shot Type & Composition: e.g., photo-realistic close-up / medium / wide / cutaway.
+3. Subject, Character & Action: Describe who/what is in the static moment, deriving all characteristics (age, ethnicity, etc.) from the Channel DNA's target audience.
+4. Emotion & Body Language: Specific facial expressions and posture.
+5. Clothing & Cultural Details: Culturally appropriate attire as defined by the DNA.
+6. Key Elements & Symbolism: Necessary objects/subjects; no cross-prompt references.
+7. Lighting & Style: Natural, warm, clean, cinematic, etc., as per the DNA.
+8. Final Instruction: “16:9 aspect ratio, 4K resolution.”
+
+ONE-PASS GENERATION (MANDATORY)
+Do not ask for confirmation. Segment the script and generate all requested prompts in a single response, following the voiceover's order.
 
 POST-PROCESS — MANDATORY EXPORT BLOCK
-Sau khi in toàn bộ ảnh, XUẤT block máy-đọc:
+After printing all image prompts, EXPORT the machine-readable block below:
+
 [STEP9_VISUAL_EXPORT]
 {
-  "version": "VN-1.1",
+  "version": "UNIVERSAL-1.2",
   "name": "S9_VisualSet_<YYYYMMDD>_<6char>",
   "session_id": "S9-<YYYYMMDD>-<6char>",
-  "refs": { "step4_found": true, "step5_found": true },
-  "source_vo_lang": "vi",
-  "image_count": <int>,
+  "refs": { "step4_found": <true|false>, "step5_found": <true|false> },
+  "source_vo_lang": "<language code from DNA, e.g., vi, en, es>",
+  "image_count": "<int>",
   "per_sentence_cap_respected": true,
-  "brand_touch": {"intro": true, "outro": true},
   "golden_formula_enforced": true,
   "static_only": true,
   "no_cross_prompt_refs": true,
   "segments": [
     {
       "id": "img_01",
-      "src_first_sentence": "<câu đầu (≤70 ký tự, cắt nếu cần)…>",
-      "purpose": "…",
+      "src_first_sentence": "<first sentence of script segment...>",
+      "purpose": "...",
       "shot": "close/medium/wide/cutaway",
-      "prompt_en": "…16:9 aspect ratio, 4K resolution."
+      "prompt_en": "...16:9 aspect ratio, 4K resolution."
     }
   ],
-  "diversity_check": { "gender_mix": "ok|needs_more_variety", "age_range": "60-90", "regions": ["north","central","south"] },
   "compliance": "<yes|no>"
 }
-[/STEP9_VISUAL_EXPORT]`,
-        settings: [
-            {
-                key: 'IMAGE_COUNT',
-                label: 'automation.step6.settings.imageCount',
-                type: 'number',
-                defaultValue: 45
-            }
-        ]
+[/STEP9_VISUAL_EXPORT]
+`
     },
     {
         id: 7,
@@ -435,11 +350,15 @@ Nếu không có dữ liệu → in chính xác chuỗi:
 INPUT_NEEDED: No Visual Prompts output found.
 
 WHAT TO EXTRACT (CHUẨN HOÁ)
-STT = chỉ số ảnh (01, 02, …, 50).
+// FIX: Replaced unicode ellipsis with standard three dots to prevent parsing errors.
+STT = chỉ số ảnh (01, 02, ..., 50).
 Nếu thiếu số trong nguồn → suy ra theo thứ tự rồi chèn đủ 2 chữ số.
-Nếu trùng số: giữ bản đầu, các bản sau ghi 07_b, 07_c… trong cột STT (Prompt giữ nguyên).
-Prompt = toàn bộ đoạn PART B prompt (English) cho ảnh đó, bao gồm cả bracket index đầu câu (ví dụ: [01]. A photo-realistic…).
-Tuyệt đối không thêm bớt; giữ nguyên chấm phẩy, dấu cách, câu chữ, kết thúc…
+// FIX: Replaced unicode ellipsis with standard three dots to prevent parsing errors.
+Nếu trùng số: giữ bản đầu, các bản sau ghi 07_b, 07_c... trong cột STT (Prompt giữ nguyên).
+// FIX: Replaced unicode ellipsis with standard three dots to prevent parsing errors.
+Prompt = toàn bộ đoạn PART B prompt (English) cho ảnh đó, bao gồm cả bracket index đầu câu (ví dụ: [01]. A photo-realistic...).
+// FIX: Replaced unicode ellipsis with standard three dots to prevent parsing errors.
+Tuyệt đối không thêm bớt; giữ nguyên chấm phẩy, dấu cách, câu chữ, kết thúc...
 Kết thúc đúng như gốc từ STEP 9 (mặc định là “16:9 aspect ratio, 4K resolution.”).
 
 OUTPUT FORMAT — 2 PHẦN BẮT BUỘC
@@ -482,224 +401,93 @@ Cuối câu trả lời, XUẤT block máy-đọc:
         id: 8,
         name: 'automation.step8.name',
         description: 'automation.step8.description',
-        promptTemplate: `[STEP 8 — RAW SEO PROFILE + FFmpeg METADATA.TXT (VN-READY v1.4)]
-(ZERO-INPUT • AUTO-FETCH S1→S9→S10→S7/S5→S4→S3→S2 • PUBLISH_TIME 05:00/17:00 VN • AUTO UTC • PRIMARY KEYWORDS • LINK INJECTION)
-
-ROLE & GOAL
-Bạn là “The Metadata Architect”. Sinh Hồ Sơ SEO Thô đầy đủ, sạch, đồng nhất với dữ liệu đã chốt (title/thumbnail, description, tags). Đồng thời xuất metadata.txt chuẩn FFmpeg (key=value, mỗi dòng một field) để embed. Không spam từ khóa. Củng cố thương hiệu kênh.
-
-Bổ sung: luôn thêm 1 dòng Primary Keywords: <3 cụm> vào cuối comment (lấy từ spearhead + 2 keyword phụ trong tags).
-
-ZERO-INPUT — FETCH ORDER (STRICT)
-
-S1 (nếu có) → lấy phong cách & từ khóa nền (không bắt buộc).
-Viral Video Transcript: {{VIRAL_VIDEO_TRANSCRIPT}}
-
-S9_NOTIFY_EXPORT (bắt buộc) → Title/Thumb đã khóa.
-Step 4 Output: {{STEP_4_OUTPUT}}
-
-Nếu thiếu → in nguyên văn:
-INPUT_NEEDED: No STEP4_OUTPUT found.
-
-S10_EXPORT (ưu tiên) → lấy A) VIDEO DESCRIPTION & F) TAGS (CSV).
-Step 5 Output: {{STEP_5_OUTPUT}}
-
-Nếu thiếu S10 → fallback:
-
-S7_EXPORT (VN) hoặc S5_EXPORT (VO) + S4_EXPORT (chapters) → dựng mô tả theo template Step 10.
-Step 7 Output: {{STEP_7_OUTPUT}}
-Step 4 Output: {{STEP_4_OUTPUT}}
-
-
-TAGS suy ra từ S8/S2/S5 (ưu tiên long-tail 3–6 từ).
-Step 2 Output: {{STEP_2_OUTPUT}}
-Step 5 Output: {{STEP_5_OUTPUT}}
-
-Nếu vẫn thiếu mô tả & tags → in nguyên văn:
-INPUT_NEEDED: No description/tags found (need STEP5 or STEP7).
-
-S4_EXPORT → đồng bộ chapters/time & CTA khi cần.
-Step 4 Output: {{STEP_4_OUTPUT}}
-
-S3_EXPORT → chuẩn hóa tên tổ chức cho “Helpful Resources”.
-Step 3 Output: {{STEP_3_OUTPUT}}
-
-S2_EXPORT → đối chiếu ngữ nghĩa với title anchor; không thay claim.
-Step 2 Output: {{STEP_2_OUTPUT}}
-
-TIME & TIMEZONE (VN-READY)
-
-Múi giờ kênh: Asia/Ho_Chi_Minh (UTC+7, không DST).
-
-PUBLISH_TIME_LOCAL (tùy chọn): "05:00" hoặc "17:00".
-
-Nếu có PUBLISH_TIME_LOCAL → đặt:
-
-creation_time_local_gmt+7 = <YYYY-MM-DD PUBLISH_TIME_LOCAL> (ngày chạy lệnh)
-
-creation_time_utc = creation_time_local_gmt+7 − 07:00 → ISO YYYY-MM-DDTHH:MM:SSZ
-
-Nếu không cung cấp → mặc định creation_time_local_gmt+7 = <YYYY-MM-DD 06:15:15> và creation_time_utc = local − 07:00.
-
-Mẫu quy đổi nhanh
-
-05:00 VN → 22:00 UTC ngày trước  (vd: 2025-03-10 05:00 → 2025-03-09T22:00:00Z)
-
-17:00 VN → 10:00 UTC cùng ngày  (vd: 2025-03-10 17:00 → 2025-03-10T10:00:00Z)
-
-YouTube lên lịch theo múi giờ kênh trong Studio, không theo metadata. Tuy vậy, đồng bộ creation_time giúp pipeline & lưu trữ.
-
-FILENAME RULES (GROUP 0)
-
-Không dấu, chữ thường; nối bằng _ hoặc -; không khoảng trắng.
-
-Spearhead Keyword = long-tail đầu tiên trong S10.TAGS CSV; nếu thiếu → suy từ Title đã chốt (ưu tiên cụm 3–6 từ tự nhiên).
-
-Tạo cặp:
-
-<spearhead>_video.mp4
-
-<spearhead>_thumbnail.jpg
-
-Có thể thêm hậu tố ngắn _guide nếu tự nhiên (không nhồi nhét).
-
-DESCRIPTION NORMALIZATION & LINK INJECTION
-
-Description lấy từ S10 (hoặc dựng từ S7/S5 + S4 theo bố cục Step 10).
-
-Luôn kiểm tra & CHÈN nếu thiếu, trước Disclaimer (hoặc trong “Helpful Resources”):
-
-Subscribe: https://www.youtube.com/@Suckhoenguoicaotuoind?sub_confirmation=1
-
-Không đổi độ mạnh claim; giữ giọng empathy-first, hedging.
-
-CORE FIELDS (GROUP 1) — RAW SEO PROFILE
-
-title = từ S9 (locked)
-
-keywords = S10.TAGS CSV → đổi dấu phẩy , thành dấu chấm phẩy ;, giữ nguyên thứ tự (long-tail trước, 4 tag cố định ở cuối)
-
-description = nguyên khối A) VIDEO DESCRIPTION từ S10 (đã chèn 2 link nếu thiếu; giữ format dòng trống đúng template)
-
-comment = y hệt description, sau đó xuống dòng +:
-Primary Keywords: <3 cụm> (lấy từ spearhead + 2 keyword phụ trong tags).
-
-BRAND & CONTEXT (GROUP 2)
-
-subject = cụm 3–5 từ tóm chủ đề (từ title/tags)
-
-author = Sức Khỏe Người Cao Tuổi
-
-artist = Sức Khỏe Người Cao Tuổi
-
-publisher = Sức Khỏe Người Cao Tuổi
-
-copyright = (c) 2025 Sức Khỏe Người Cao Tuổi
-
-genre = Education (hoặc How-to & Style nếu phù hợp)
-
-TECH & ADVANCED (GROUP 3)
-
-encoded_by = SKNCT-MASTER-2025
-
-language = vi
-
-year = 2025
-
-creation_time_local_gmt+7 = YYYY-MM-DD HH:MM:SS (theo PUBLISH_TIME_LOCAL hoặc 06:15:15)
-
-creation_time_utc = YYYY-MM-DDTHH:MM:SSZ (local −07:00)
-
-album = nếu có series/playlist → tên; nếu không → để trống
-
-track = nếu có số tập → số; nếu không → để trống
-
-STANDARDIZATION & SAFETY
-
-Cấm: cure, miracle, guaranteed, instantly, reverse completely.
-
-Không nhồi tags vào description/comment.
-
-Thuật ngữ nhất quán giữa title–description–keywords.
-
-FFmpeg rules cho description/comment trong metadata.txt:
-
-Một dòng duy nhất (gộp dòng bằng khoảng trắng).
-
-// FIX: Escaped the backtick character to prevent premature termination of the template literal.
-Không ký tự đặc biệt: / \\ | \\ > < : * ? % & # " '\`
-
-Cho phép: chữ, số, dấu chấm ., phẩy ,, gạch ngang -, gạch dưới _.
-
-OUTPUT — EXACT TWO SECTIONS + ONE CODE BLOCK
-
-PHẦN A: Tên File Tối Ưu Hóa
-Tên File Video (.mp4):
-<auto: <spearhead>_video.mp4>
-
-Tên File Thumbnail (.jpg):
-<auto: <spearhead>_thumbnail.jpg>
-
-PHẦN B: Kế Hoạch Cấy Ghép Siêu Dữ Liệu Chi Tiết
-
-title: <auto from S9>
-keywords: <auto from S10.tags_csv → thay , bằng ;>
-description:
-<auto paste nguyên khối A) VIDEO DESCRIPTION từ S10 (đã đảm bảo chèn 2 link nếu thiếu)>
-
-comment:
-<auto paste y hệt description ở trên>
-Primary Keywords: <spearhead keyword>, <keyword phụ 1>, <keyword phụ 2>
-
-subject: <auto 3–5 từ từ Title/Tags>
-author: Sức Khỏe Người Cao Tuổi
-artist: Sức Khỏe Người Cao Tuổi
-publisher: Sức Khỏe Người Cao Tuổi
-copyright: (c) 2025 Sức Khỏe Người Cao Tuổi
-genre: Education
-
-encoded_by: SKNCT-MASTER-2025
-language: vi
-year: 2025
-creation_time_local_gmt+7: <auto: YYYY-MM-DD HH:MM:SS theo PUBLISH_TIME_LOCAL hoặc 06:15:15>
-creation_time_utc: <auto: YYYY-MM-DDTHH:MM:SSZ>   // local − 07:00
-album: <auto or empty>
-track: <auto or empty>
-
-
-PHẦN C: metadata.txt (FFmpeg — code block duy nhất, không giải thích)
-— In ngay sau Phần B. Định dạng: key=value, mỗi dòng một field. description/comment: gộp 1 dòng, loại ký tự cấm, giữ .,,-,_.
-
-title=<from S9>
-description=<A) VIDEO DESCRIPTION đã gộp 1 dòng, đã chèn Subscribe + Playlist nếu thiếu>
-comment=<description 1 dòng> Primary Keywords: <spearhead>, <kw2>, <kw3>
-keywords=<tags chuyển ;, một dòng>
-subject=<3-5 words>
-author=Sức Khỏe Người Cao Tuổi
-artist=Sức Khỏe Người Cao Tuổi
-publisher=Sức Khỏe Người Cao Tuổi
-encoded_by=SKNCT-MASTER-2025
-genre=Education
-language=vi
+        promptTemplate: `ROLE & GOAL
+You are "The Universal Metadata Architect". Your goal is to generate a complete, clean, and consistent Raw SEO Profile and an FFmpeg-ready metadata.txt file.
+All branding, language, links, and stylistic information MUST be derived from the provided Channel DNA. Do not hardcode any values.
+
+AUTO-FETCH (MANDATORY)
+1.  **Channel DNA**: The master guide for all branding, language, and style.
+    {{CHANNEL_DNA}}
+2.  **Final Title/Thumbnail Concept**: From Step 4.
+    {{STEP_4_OUTPUT}}
+    If missing, respond with: INPUT_NEEDED: No STEP4_OUTPUT found.
+3.  **Distribution Package**: From Step 5 for Description and Tags.
+    {{STEP_5_OUTPUT}}
+    If missing, respond with: INPUT_NEEDED: No STEP5_OUTPUT found.
+
+CORE LOGIC & RULES
+1.  **Analyze Channel DNA**: Before generating anything, thoroughly analyze the Channel DNA to extract the following:
+    -   **Channel Name**: For author, artist, publisher fields.
+    -   **Copyright Info**: For the copyright field.
+    -   **Primary Language**: For the language field (e.g., 'en', 'vi', 'es').
+    -   **Key Links**: Such as a "Subscribe" link or main "Playlist" link.
+    -   **Brand-Specific Identifiers**: Like an encoder name or series name for the album field.
+
+2.  **Time & Timezone**:
+    -   All times are based on the execution date.
+    -   Assume timezone is UTC+7 (Asia/Ho_Chi_Minh) unless specified otherwise in DNA.
+    -   Default publish time is 06:15:15 local time.
+    -   Calculate \`creation_time_utc\` by subtracting 7 hours from local time (YYYY-MM-DDTHH:MM:SSZ).
+
+3.  **Filename Generation**:
+    -   Identify the "Spearhead Keyword" (the first long-tail keyword from Step 5's tags). If unavailable, infer a 3-6 word natural phrase from the final title.
+    -   Generate two filenames, lowercase, using hyphens or underscores, no spaces:
+        -   \`<spearhead-keyword>_video.mp4\`
+        -   \`<spearhead-keyword>_thumbnail.jpg\`
+
+4.  **Description & Link Injection**:
+    -   Use the description generated in Step 5.
+    -   Scan the description. If key links (like Subscribe) found in the Channel DNA are missing, inject them appropriately (e.g., at the end or in a "Helpful Resources" section).
+
+5.  **FFmpeg Metadata Rules**:
+    -   For \`metadata.txt\`, \`description\` and \`comment\` fields must be a single line (merge with spaces).
+// FIX: Corrected the problematic line that was prematurely terminating the template literal. Rephrased to be syntactically safe while preserving the instruction's intent.
+    -   Sanitize these fields by removing special characters: / \\ | > < : * ? % & # " ' \\\`
+    - Allowed characters: letters, numbers, periods, commas, hyphens, underscores.
+
+OUTPUT — THREE EXACT SECTIONS
+
+PART A: Optimized Filenames
+-   **Video Filename (.mp4):** <auto-generated from spearhead keyword>
+-   **Thumbnail Filename (.jpg):** <auto-generated from spearhead keyword>
+
+PART B: Detailed Metadata Plan
+-   **title:** <auto-fetch from Step 4 Best Choice>
+-   **keywords:** <auto-fetch from Step 5 tags; replace commas with semicolons>
+-   **description:** <paste the full description block from Step 5, ensuring links from DNA are injected>
+-   **comment:** <paste the exact same description, followed by a new line with "Primary Keywords: <spearhead keyword>, <keyword 2>, <keyword 3>">
+-   **subject:** <auto-generate a 3-5 word summary from the title/tags>
+-   **author:** <auto-fetch Channel Name from DNA>
+-   **artist:** <auto-fetch Channel Name from DNA>
+-   **publisher:** <auto-fetch Channel Name from DNA>
+-   **copyright:** <auto-fetch Copyright info from DNA>
+-   **genre:** Education (or infer from DNA/topic)
+-   **encoded_by:** <auto-fetch brand identifier from DNA, or generate one like "BRAND-MASTER-YYYY">
+-   **language:** <auto-fetch primary language code from DNA (e.g., vi, en)>
+-   **year:** <current year>
+-   **creation_time_local_gmt+7:** <auto-generate based on rules>
+-   **creation_time_utc:** <auto-generate based on rules>
+-   **album:** <auto-fetch series name from DNA, or leave empty>
+-   **track:** <auto-fetch episode number if applicable, or leave empty>
+
+PART C: metadata.txt (FFmpeg - single code block, no explanation)
+title=<from Step 4>
+description=<single-line, sanitized description from Step 5 with injected links>
+comment=<single-line description> Primary Keywords: <spearhead>, <kw2>, <kw3>
+keywords=<semicolon-separated tags>
+subject=<3-5 word summary>
+author=<from DNA>
+artist=<from DNA>
+publisher=<from DNA>
+encoded_by=<from DNA or generated>
+genre=<Education or inferred>
+language=<from DNA>
 creation_time=<UTC ISO: YYYY-MM-DDTHH:MM:SSZ>
-year=2025
-copyright=(c) 2025 Sức Khỏe Người Cao Tuổi
+year=<current year>
+copyright=<from DNA>
 album=
 track=
-
-ERROR MESSAGES (PRINT EXACT IF MISSING)
-
-INPUT_NEEDED: No STEP9_NOTIFY_EXPORT found.
-
-INPUT_NEEDED: No description/tags found (need STEP10 or STEP7/STEP5).
-
-GHI CHÚ THAY THẾ LIÊN KẾT (NẾU CẦN)
-
-Thay <CHANNEL_HANDLE> bằng handle kênh, ví dụ: @suckhoenguoicaotuoi
-
-Thay <PLAYLIST_ID> bằng ID playlist chính của kênh.
-
-[/STEP 8 — VN-READY v1.4]`
+`
     },
     {
         id: 9,
@@ -747,8 +535,8 @@ RULES:
 - Script Snippet: paste the original snippet from the step 7 output.
 
 VALIDATION REPORT (≤6 dòng, sau bảng)
-Not found (STT): …
-SRT leftover cue indices: …
+Not found (STT): ...
+SRT leftover cue indices: ...
 Malformed timecodes fixed: N
 Fuzzy matches used (≥0.82): N
 Potential duplicates (same cue matched twice): none|list
@@ -766,7 +554,7 @@ Cuối câu trả lời, XUẤT block máy-đọc để pipeline dùng tiếp:
   },
   "rows": [
     { "stt": "01", "start_time": "00:00:03,120", "script_snippet": "<Đoạn Kịch Bản từ S9>" },
-    { "stt": "02", "start_time": "00:00:06,480", "script_snippet": "<…>" }
+    { "stt": "02", "start_time": "00:00:06,480", "script_snippet": "<...>" }
   ],
   "stats": {
     "matched": <int>,

@@ -7,8 +7,15 @@ export enum ProjectStatus {
     Published = 'Published',
 }
 
+export interface Channel {
+    id: string;
+    name: string;
+    dna: string;
+}
+
 export interface Project {
     id: string;
+    channelId: string; // Link to the parent channel
     projectName: string;
     publishDateTime: string; // Changed from publishDate to include time
     status: ProjectStatus;
@@ -28,6 +35,7 @@ export interface Project {
     timecodeMap?: string;
     metadata?: string;
     seoMetadata?: string;
+    visualPrompts?: string;
 }
 
 export interface YouTubeStats {
@@ -64,10 +72,9 @@ export interface User {
 }
 
 /**
- * A single string containing the entire identity of the channel.
- * Users can paste their complete channel description, including role, tone, audience, etc.
+ * An array of Channel objects, each defining the identity of a different YouTube channel.
  */
-export type ChannelDna = string;
+export type ChannelDna = Channel[];
 
 export enum AutomationStepStatus {
     Pending = 'Pending',
