@@ -2,13 +2,12 @@
 import React from 'react';
 import { ShieldAlert, ExternalLink, Copy, RotateCcw } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
+import { firebaseConfig } from '../firebase';
 
 interface AuthErrorScreenProps {
   domain: string;
   onResolve: () => void;
 }
-
-const FIREBASE_PROJECT_ID = 'youtube-video-hub-1017358933371';
 
 export const AuthErrorScreen: React.FC<AuthErrorScreenProps> = ({ domain, onResolve }) => {
   const { t } = useTranslation();
@@ -49,7 +48,7 @@ export const AuthErrorScreen: React.FC<AuthErrorScreenProps> = ({ domain, onReso
               <p className="font-semibold">{t('authError.step2Title')}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{t('authError.step2Desc')}</p>
               <a
-                href={`https://console.firebase.google.com/project/${FIREBASE_PROJECT_ID}/authentication/settings`}
+                href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/settings`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow"
