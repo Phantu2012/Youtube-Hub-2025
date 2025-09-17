@@ -8,11 +8,11 @@
 // =================================================================
 
 export const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID" // Tùy chọn
+  apiKey: "AIzaSyAUnmo1FRReKnMpHqHB1jVJD5CdfGA4x2E",
+  authDomain: "video-hub-1aabc.firebaseapp.com",
+  projectId: "video-hub-1aabc",
+  storageBucket: "video-hub-1aabc.firebasestorage.app",
+  messagingSenderId: "1017358933371",
+  appId: "1:1017358933371:web:7ea24fae4b72aab06771de",
+  measurementId: "G-439MDT7ETH"
 };
