@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -55,12 +52,6 @@ const DEV_DEFAULT_API_KEYS: ApiKeys = {
 };
 
 
-// Define a structured error type for database connection issues.
-type DbError = {
-  type: 'generic' | 'unavailable';
-  message: string;
-};
-
 const AppContent: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,7 +70,7 @@ const AppContent: React.FC = () => {
   const [activeView, setActiveView] = useState<'projects' | 'automation' | 'calendar'>('projects');
   const [channels, setChannels] = useLocalStorage<Channel[]>('channels', []);
   const { t } = useTranslation();
-  const [dbConnectionError, setDbConnectionError] = useState<DbError | null>(null);
+  const [dbConnectionError, setDbConnectionError] = useState<boolean>(false);
   // FIX: Corrected syntax for useState by adding the closing angle bracket `>`.
   const [signInError, setSignInError] = useState<{ code: string; domain?: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -163,12 +154,7 @@ const AppContent: React.FC = () => {
         }
       } catch (error: any) {
         console.error("Firestore connection error:", error);
-        if (error.code === 'unavailable' || error.message?.includes('Could not reach Cloud Firestore backend')) {
-          // The message is now handled by the DbConnectionErrorScreen for 'unavailable' type for a better UX
-          setDbConnectionError({ type: 'unavailable', message: '' });
-        } else {
-          setDbConnectionError({ type: 'generic', message: t('dbError.message') });
-        }
+        setDbConnectionError(true);
         setUser(null);
         setProjects([]);
       } finally {
@@ -496,7 +482,7 @@ const AppContent: React.FC = () => {
   // handleLogin now uses signInWithRedirect
   const handleLoginWithGoogle = async () => {
     try {
-      setDbConnectionError(null);
+      setDbConnectionError(false);
       setSignInError(null);
       await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
       // Use redirect flow to avoid cross-origin issues with popups
@@ -509,7 +495,7 @@ const AppContent: React.FC = () => {
   
   const handleLoginWithEmail = async (email: string, password: string): Promise<void> => {
     try {
-      setDbConnectionError(null);
+      setDbConnectionError(false);
       setSignInError(null);
       await auth.signInWithEmailAndPassword(email, password);
       // onAuthStateChanged will handle the rest
@@ -526,7 +512,7 @@ const AppContent: React.FC = () => {
 
   const handleRegisterWithEmail = async (email: string, password: string): Promise<void> => {
     try {
-      setDbConnectionError(null);
+      setDbConnectionError(false);
       setSignInError(null);
       await auth.createUserWithEmailAndPassword(email, password);
       // onAuthStateChanged will handle creating the user document in Firestore
@@ -552,7 +538,7 @@ const AppContent: React.FC = () => {
     }
     try {
       await auth.signOut();
-      setDbConnectionError(null);
+      setDbConnectionError(false);
       showToast(t('toasts.loggedOut'), 'info');
     } catch (error) {
       console.error("Logout error:", error);
@@ -573,7 +559,7 @@ const AppContent: React.FC = () => {
   }
 
   if (dbConnectionError) {
-      return <DbConnectionErrorScreen error={dbConnectionError} onReset={() => { setDbConnectionError(null); setIsLoading(false); }} />;
+      return <DbConnectionErrorScreen onReset={() => setDbConnectionError(false)} />;
   }
 
   if (!user) {

@@ -1,7 +1,4 @@
 
-
-
-
 export default {
   "common": {
     "cancel": "Cancel"
@@ -53,28 +50,30 @@ export default {
     "message": "Your access to the application has expired. Please contact the administrator to renew your subscription."
   },
   "dbError": {
-    "title": "Action Required: Finish Setup",
-    "message": "The application could not connect to the database. This is usually due to a configuration issue with your Firebase project.",
-    "unavailableIntro": "This app requires a Firestore database to save your work, but it couldn't connect. This is a one-time setup issue that you can fix in 2 minutes.",
-    "setupTitle": "How to Fix This in 3 Easy Steps",
+    "title": "Action Required: Complete Database Setup",
+    "intro": "Could not connect to Firestore. This is a common configuration error and usually happens if the database hasn't been created or security rules are blocking access. Please follow these steps to resolve it.",
+    "howToFixTitle": "Troubleshooting Guide",
     "step1": {
-      "title": "Open your Firebase Project",
-      "description": "This will take you directly to the Firestore section of your project.",
-      "button": "Open Firebase Console"
+      "title": "Step 1: Create a Firestore Database (Most Common)",
+      "description": "The number one cause is that your Firebase project does not have a Firestore database yet. Let's create one.",
+      "instruction1": "Click the button below to open the Firestore page.",
+      "instruction2": "Click \"Create database\".",
+      "instruction3": "Choose a server location (closest to your users).",
+      "instruction4": "Start in \"test mode\" to allow reads/writes during development. You can change the security rules later.",
+      "button": "Open Firestore Console"
     },
     "step2": {
-      "title": "Click 'Create database'",
-      "description": "Follow the on-screen prompts. Starting in 'test mode' is recommended for now."
+      "title": "Step 2: Check Security Rules",
+      "description": "If a database already exists, your security rules might be denying access. Ensure that logged-in users can read and write their own data.",
+      "button": "Edit Security Rules"
     },
     "step3": {
-      "title": "Come back here and 'Try Again'",
-      "description": "Once the database is created, this error will be resolved."
+      "title": "Step 3: Check API Key Restrictions",
+      "description": "Less common, but your API key might have restrictions (e.g., by IP or referrer) that are blocking requests to Firestore.",
+      "button": "Check API Keys on Google Cloud"
     },
-    "troubleshootingTitle": "How to Fix This",
-    "check1": "Ensure you have created and enabled the 'Firestore Database' in your Firebase project console.",
-    "check2": "Verify that your API key in the Firebase Console has no restrictions, or that this app's domain is allowed.",
-    "check3": "Check your Firestore Security Rules to ensure they are not blocking read/write access.",
-    "backToLogin": "Try Again"
+    "outro": "After completing Step 1 (and checking the others if needed), come back here and try again.",
+    "tryAgainButton": "Try Again"
   },
   "authConfigError": {
     "title": "Action Required: Complete Authentication Setup",

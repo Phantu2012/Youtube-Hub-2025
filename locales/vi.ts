@@ -1,7 +1,4 @@
 
-
-
-
 export default {
   "common": {
     "cancel": "Hủy"
@@ -53,28 +50,30 @@ export default {
     "message": "Quyền truy cập vào ứng dụng của bạn đã hết hạn. Vui lòng liên hệ với quản trị viên để gia hạn."
   },
   "dbError": {
-    "title": "Yêu cầu Hành động: Hoàn tất Cài đặt",
-    "message": "Ứng dụng không thể kết nối đến cơ sở dữ liệu. Đây thường là do sự cố cấu hình với dự án Firebase của bạn.",
-    "unavailableIntro": "Ứng dụng này cần cơ sở dữ liệu Firestore để lưu công việc của bạn, nhưng không thể kết nối. Đây là sự cố cài đặt một lần mà bạn có thể khắc phục trong 2 phút.",
-    "setupTitle": "Cách khắc phục trong 3 bước đơn giản",
+    "title": "Yêu cầu Hành động: Hoàn tất Cài đặt Cơ sở dữ liệu",
+    "intro": "Không thể kết nối đến Firestore. Đây là lỗi cấu hình phổ biến và thường xảy ra nếu cơ sở dữ liệu chưa được tạo hoặc các quy tắc bảo mật đang chặn quyền truy cập. Vui lòng làm theo các bước sau để khắc phục.",
+    "howToFixTitle": "Hướng dẫn Khắc phục sự cố",
     "step1": {
-      "title": "Mở Dự án Firebase của bạn",
-      "description": "Thao tác này sẽ đưa bạn thẳng đến mục Firestore trong dự án.",
-      "button": "Mở Bảng điều khiển Firebase"
+      "title": "Bước 1: Tạo Cơ sở dữ liệu Firestore (Phổ biến nhất)",
+      "description": "Nguyên nhân hàng đầu là do dự án Firebase của bạn chưa có cơ sở dữ liệu Firestore. Hãy tạo một cái.",
+      "instruction1": "Nhấp vào nút bên dưới để mở trang Firestore.",
+      "instruction2": "Nhấp vào \"Tạo cơ sở dữ liệu\" (Create database).",
+      "instruction3": "Chọn một vị trí máy chủ (gần người dùng của bạn nhất).",
+      "instruction4": "Bắt đầu ở \"chế độ thử nghiệm\" (test mode) để cho phép đọc/ghi trong quá trình phát triển. Bạn có thể thay đổi các quy tắc bảo mật sau.",
+      "button": "Mở Bảng điều khiển Firestore"
     },
     "step2": {
-      "title": "Nhấp vào 'Tạo cơ sở dữ liệu' (Create database)",
-      "description": "Làm theo hướng dẫn trên màn hình. Bạn nên bắt đầu ở 'chế độ thử nghiệm' (test mode) để tiện cho việc kiểm tra."
+      "title": "Bước 2: Kiểm tra Quy tắc Bảo mật",
+      "description": "Nếu cơ sở dữ liệu đã tồn tại, các quy tắc bảo mật của bạn có thể đang từ chối quyền truy cập. Đảm bảo người dùng đã đăng nhập có thể đọc và ghi dữ liệu của chính họ.",
+      "button": "Chỉnh sửa Quy tắc Bảo mật"
     },
     "step3": {
-      "title": "Quay lại đây và nhấp 'Thử lại'",
-      "description": "Sau khi cơ sở dữ liệu được tạo, lỗi này sẽ được giải quyết."
+      "title": "Bước 3: Kiểm tra các Hạn chế Khóa API",
+      "description": "Ít phổ biến hơn, nhưng khóa API của bạn có thể có các hạn chế (ví dụ: theo IP hoặc tên miền giới thiệu) đang chặn các yêu cầu đến Firestore.",
+      "button": "Kiểm tra Khóa API trên Google Cloud"
     },
-    "troubleshootingTitle": "Cách khắc phục",
-    "check1": "Đảm bảo bạn đã tạo và kích hoạt 'Firestore Database' trong bảng điều khiển dự án Firebase của mình.",
-    "check2": "Xác minh rằng khóa API của bạn trong Bảng điều khiển Firebase không có hạn chế nào, hoặc tên miền của ứng dụng này đã được cho phép.",
-    "check3": "Kiểm tra Quy tắc Bảo mật Firestore của bạn để đảm bảo chúng không chặn quyền truy cập đọc/ghi.",
-    "backToLogin": "Thử lại"
+    "outro": "Sau khi hoàn thành bước 1 (và kiểm tra các bước khác nếu cần), hãy quay lại đây và thử lại.",
+    "tryAgainButton": "Thử lại"
   },
   "authConfigError": {
     "title": "Yêu cầu Hành động: Hoàn tất Cài đặt Xác thực",
