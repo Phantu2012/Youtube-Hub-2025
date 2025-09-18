@@ -59,18 +59,34 @@ const TabButton: React.FC<{
 export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, selectedProvider, selectedModel, isSaving, onClose, onSave, onDelete, onCopy, onRerun, showToast }) => {
     const { t, language } = useTranslation();
     const [activeTab, setActiveTab] = useState<ModalTab>('content');
-    const [formData, setFormData] = useState<Project | Omit<Project, 'id'>>({
-        ...project,
-        tags: project?.tags || [],
-        script: project?.script || '',
-        thumbnailPrompt: project?.thumbnailPrompt || '',
-        thumbnailData: project?.thumbnailData || '',
-        voiceoverScript: project?.voiceoverScript || '',
-        promptTable: project?.promptTable || '',
-        timecodeMap: project?.timecodeMap || '',
-        metadata: project?.metadata || '',
-        seoMetadata: project?.seoMetadata || '',
-        visualPrompts: project?.visualPrompts || '',
+    const [formData, setFormData] = useState<Project | Omit<Project, 'id'>>(() => {
+        // A robust way to initialize the form state.
+        // It creates a default structure for all fields to ensure they are controlled,
+        // and then merges the project data passed in props.
+        // This makes all fields, including AI-generated ones, editable from the start.
+        const defaultProject = {
+            channelId: '',
+            projectName: '',
+            publishDateTime: new Date().toISOString().slice(0, 16),
+            status: ProjectStatus.Idea,
+            videoTitle: '',
+            thumbnailData: '',
+            description: '',
+            tags: [],
+            pinnedComment: '',
+            communityPost: '',
+            facebookPost: '',
+            youtubeLink: '',
+            script: '',
+            thumbnailPrompt: '',
+            voiceoverScript: '',
+            promptTable: '',
+            timecodeMap: '',
+            metadata: '',
+            seoMetadata: '',
+            visualPrompts: '',
+        };
+        return { ...defaultProject, ...project };
     });
     const [stats, setStats] = useState<YouTubeStats | null>(null);
     const [history, setHistory] = useState<ViewHistoryData[]>([]);
