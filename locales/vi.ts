@@ -1,4 +1,5 @@
 
+
 export default {
   "common": {
     "cancel": "Hủy",
@@ -110,6 +111,7 @@ export default {
   "adminPanel": {
     "title": "Bảng điều khiển Admin",
     "description": "Quản lý tài khoản người dùng, phê duyệt đăng ký mới và đặt ngày hết hạn.",
+    "administrator": "Quản trị viên",
     "loadingUsers": "Đang tải danh sách người dùng...",
     "user": "Người dùng",
     "status": "Trạng thái",
@@ -127,6 +129,16 @@ export default {
       "userUpdated": "Đã cập nhật người dùng '{{name}}' thành công.",
       "updateFailed": "Cập nhật người dùng '{{name}}' thất bại.",
       "fetchFailed": "Không thể tải danh sách người dùng."
+    },
+    "permissionError": {
+      "title": "Yêu cầu Quyền Admin",
+      "intro": "Không thể tải danh sách người dùng vì Quy tắc Bảo mật Firestore đang chặn quyền truy cập. Với tư cách quản trị viên, bạn cần quyền để xem tất cả tài liệu người dùng. Vui lòng cập nhật quy tắc của bạn để cấp quyền.",
+      "step1": "Nhấp vào nút bên dưới để đi đến trình chỉnh sửa Quy tắc Firestore trong dự án Firebase của bạn.",
+      "button": "Đi đến Quy tắc Firebase",
+      "step2": "Thay thế toàn bộ nội dung của trình chỉnh sửa bằng các quy tắc được cập nhật được cung cấp bên dưới.",
+      "rulesTitle": "Quy tắc Bảo mật được Cập nhật cho Admin",
+      "step3": "Sau khi xuất bản các quy tắc mới, hãy quay lại đây và nhấp vào 'Thử lại'.",
+      "retryButton": "Thử lại"
     },
     "firstAdminSetup": {
         "title": "Thiết lập Admin Lần đầu",

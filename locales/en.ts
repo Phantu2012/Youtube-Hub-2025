@@ -1,4 +1,5 @@
 
+
 export default {
   "common": {
     "cancel": "Cancel",
@@ -110,6 +111,7 @@ export default {
   "adminPanel": {
     "title": "Admin Panel",
     "description": "Manage user accounts, approve new registrations, and set subscription expiry dates.",
+    "administrator": "Administrator",
     "loadingUsers": "Loading users...",
     "user": "User",
     "status": "Status",
@@ -127,6 +129,16 @@ export default {
       "userUpdated": "User '{{name}}' updated successfully.",
       "updateFailed": "Failed to update user '{{name}}'.",
       "fetchFailed": "Failed to fetch users."
+    },
+    "permissionError": {
+      "title": "Admin Permissions Required",
+      "intro": "Could not load users because your Firestore Security Rules are blocking access. As an admin, you need permission to view all user documents. Please update your rules to grant access.",
+      "step1": "Click the button below to go to the Firestore Rules editor in your Firebase project.",
+      "button": "Go to Firebase Rules",
+      "step2": "Replace the entire content of the editor with the updated rules provided below.",
+      "rulesTitle": "Updated Security Rules for Admins",
+      "step3": "After publishing the new rules, come back here and click 'Retry'.",
+      "retryButton": "Retry"
     },
     "firstAdminSetup": {
         "title": "First-Time Admin Setup",

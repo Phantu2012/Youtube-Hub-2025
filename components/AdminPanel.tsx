@@ -5,7 +5,9 @@ import { User } from '../types';
 import { db } from '../firebase';
 import firebase from 'firebase/compat/app';
 import { useTranslation } from '../hooks/useTranslation';
-import { Loader, UserCheck, UserX, Clock, Save, Shield, AlertTriangle } from 'lucide-react';
+import { Loader, Save, Shield, AlertTriangle, ExternalLink, RotateCcw } from 'lucide-react';
+import { CodeBlock } from './CodeBlock'; 
+import { firebaseConfig } from '../firebase';
 
 interface AdminPanelProps {
     showToast: (message: string, type: 'success' | 'error' | 'info') => void;
@@ -15,7 +17,7 @@ const UserCard: React.FC<{
     user: User;
     onUpdate: (uid: string, status: User['status'], expiresAt: string | null) => Promise<void>;
 }> = ({ user, onUpdate }) => {
-    const { t, language } = useTranslation();
+    const { t } = useTranslation();
     const [status, setStatus] = useState<User['status']>(user.status);
     const [expiresAt, setExpiresAt] = useState<string>(user.expiresAt ? user.expiresAt.substring(0, 10) : '');
     const [isSaving, setIsSaving] = useState(false);
@@ -39,8 +41,6 @@ const UserCard: React.FC<{
         expired: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
     };
 
-    const currentStatusLabel = statusOptions.find(opt => opt.value === user.status)?.label || user.status;
-
     return (
         <div className="bg-light-card dark:bg-dark-card p-4 rounded-lg shadow-md flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex items-center gap-3 flex-1">
@@ -48,8 +48,7 @@ const UserCard: React.FC<{
                 <div className="flex-1 overflow-hidden">
                     <p className="font-bold text-light-text dark:text-dark-text truncate flex items-center gap-2">
                         {user.name}
-                        {/* FIX: Wrapped the Shield icon in a span to provide a title for the tooltip, as the component doesn't accept a `title` prop. */}
-                        {user.isAdmin && <span title="Administrator"><Shield size={16} className="text-blue-500 flex-shrink-0" /></span>}
+                        {user.isAdmin && <span title={t('adminPanel.administrator')}><Shield size={16} className="text-blue-500 flex-shrink-0" /></span>}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                 </div>
@@ -63,7 +62,7 @@ const UserCard: React.FC<{
                         className={`w-full p-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 ${statusClasses[status]}`}
                     >
                         {statusOptions.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            <option key={opt.value} value={opt.value} className="bg-light-card dark:bg-dark-card text-light-text dark:text-dark-text">{opt.label}</option>
                         ))}
                     </select>
                 </div>
@@ -91,51 +90,108 @@ const UserCard: React.FC<{
     );
 };
 
+const PermissionErrorGuide: React.FC<{ onRetry: () => void }> = ({ onRetry }) => {
+    const { t } = useTranslation();
+    const rulesUrl = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore/rules`;
+
+    const newRules = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Allow a user to read and write their own document.
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Allow an ADMIN to list all users, get any user, and update any user.
+      allow list, get, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Rules for the 'projects' subcollection within each user
+    match /users/{userId}/projects/{projectId} {
+      // Allow a user to perform all actions on their own projects.
+      allow read, write, create, delete: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}`;
+
+    return (
+        <div className="max-w-3xl mx-auto mt-8 p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-800 dark:text-yellow-200">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="text-yellow-600 dark:text-yellow-400" size={24} />
+              <h3 className="text-xl font-bold">{t('adminPanel.permissionError.title')}</h3>
+            </div>
+            <p className="mt-2 mb-4 text-sm">{t('adminPanel.permissionError.intro')}</p>
+            <div className="text-left bg-light-bg dark:bg-dark-bg p-4 rounded-lg text-light-text dark:text-dark-text">
+                <p className="text-sm">{t('adminPanel.permissionError.step1')}</p>
+                <a href={rulesUrl} target="_blank" rel="noopener noreferrer" className="inline-flex my-2 items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow">
+                    {t('adminPanel.permissionError.button')} <ExternalLink size={16} />
+                </a>
+                <p className="text-sm">{t('adminPanel.permissionError.step2')}</p>
+                <CodeBlock code={newRules} title={t('adminPanel.permissionError.rulesTitle')} />
+                <p className="text-sm mt-3">{t('adminPanel.permissionError.step3')}</p>
+            </div>
+             <button
+                onClick={onRetry}
+                className="w-full mt-6 flex items-center justify-center gap-3 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg shadow-md transition-colors"
+                >
+                <RotateCcw size={20} />
+                {t('adminPanel.permissionError.retryButton')}
+            </button>
+        </div>
+    );
+};
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({ showToast }) => {
     const { t } = useTranslation();
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFirstAdmin, setIsFirstAdmin] = useState(false);
+    const [permissionError, setPermissionError] = useState(false);
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const snapshot = await db.collection('users').get();
-                const usersData = snapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        uid: doc.id,
-                        name: data.name,
-                        email: data.email,
-                        avatar: data.avatar,
-                        status: data.status,
-                        expiresAt: data.expiresAt ? data.expiresAt.toDate().toISOString() : null,
-                        isAdmin: data.isAdmin || false,
-                    };
-                }) as User[];
-                
-                // Sort by admin status first, then by name
-                usersData.sort((a, b) => {
-                    if (a.isAdmin && !b.isAdmin) return -1;
-                    if (!a.isAdmin && b.isAdmin) return 1;
-                    return a.name.localeCompare(b.name);
-                });
-                
-                setUsers(usersData);
-                // Check if there are no admins set up yet
-                if (!usersData.some(u => u.isAdmin)) {
-                    setIsFirstAdmin(true);
-                }
-            } catch (error) {
+    const fetchUsers = async () => {
+        setIsLoading(true);
+        setPermissionError(false);
+        try {
+            const snapshot = await db.collection('users').get();
+            const usersData = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    uid: doc.id,
+                    name: data.name,
+                    email: data.email,
+                    avatar: data.avatar,
+                    status: data.status,
+                    expiresAt: data.expiresAt ? data.expiresAt.toDate().toISOString() : null,
+                    isAdmin: data.isAdmin || false,
+                };
+            }) as User[];
+            
+            usersData.sort((a, b) => {
+                if (a.isAdmin && !b.isAdmin) return -1;
+                if (!a.isAdmin && b.isAdmin) return 1;
+                return a.name.localeCompare(b.name);
+            });
+            
+            setUsers(usersData);
+            if (!usersData.some(u => u.isAdmin)) {
+                setIsFirstAdmin(true);
+            }
+        } catch (error: any) {
+            if (error.code === 'permission-denied') {
+                setPermissionError(true);
+            } else {
                 console.error("Error fetching users:", error);
                 showToast(t('adminPanel.toasts.fetchFailed'), 'error');
-            } finally {
-                setIsLoading(false);
             }
-        };
-
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    useEffect(() => {
         fetchUsers();
-    }, [showToast, t]);
+    }, []);
 
     const handleUpdateUser = async (uid: string, status: User['status'], expiresAt: string | null) => {
         try {
@@ -148,7 +204,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ showToast }) => {
                 expiresAt: expiresAt ? firebase.firestore.Timestamp.fromDate(new Date(expiresAt)) : null
             });
 
-            // Update local state to reflect changes immediately
             setUsers(prevUsers => prevUsers.map(u =>
                 u.uid === uid ? { ...u, status, expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null } : u
             ));
@@ -168,6 +223,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ showToast }) => {
                 <p className="ml-4 text-lg text-gray-500 dark:text-gray-400">{t('adminPanel.loadingUsers')}</p>
             </div>
         );
+    }
+    
+    if (permissionError) {
+        return <PermissionErrorGuide onRetry={fetchUsers} />;
     }
     
     if (isFirstAdmin) {

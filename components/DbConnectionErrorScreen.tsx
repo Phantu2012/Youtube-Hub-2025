@@ -1,8 +1,10 @@
 
-import React, { useState } from 'react';
-import { DatabaseZap, ExternalLink, RotateCcw, Copy, Check } from 'lucide-react';
+
+import React from 'react';
+import { DatabaseZap, ExternalLink, RotateCcw } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { firebaseConfig } from '../firebase';
+import { CodeBlock } from './CodeBlock';
 
 interface DbConnectionErrorScreenProps {
   onReset: () => void;
@@ -26,32 +28,6 @@ const InfoCard: React.FC<{
   </div>
 );
 
-const CodeBlock: React.FC<{ code: string }> = ({ code }) => {
-    const { t } = useTranslation();
-    const [isCopied, setIsCopied] = useState(false);
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(code);
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-    };
-
-    return (
-        <div className="bg-gray-100 dark:bg-gray-900 rounded-md mt-2">
-            <div className="flex justify-between items-center px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                <p className="text-xs font-semibold text-gray-500">{t('dbError.step2.rulesExampleTitle')}</p>
-                <button onClick={handleCopy} className="text-xs flex items-center gap-1 text-gray-500 hover:text-primary">
-                    {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                    {isCopied ? t('common.copied') : t('common.copy')}
-                </button>
-            </div>
-            <pre className="p-4 text-xs whitespace-pre-wrap font-mono">
-                <code>{code}</code>
-            </pre>
-        </div>
-    );
-};
-
 
 export const DbConnectionErrorScreen: React.FC<DbConnectionErrorScreenProps> = ({ onReset }) => {
   const { t } = useTranslation();
@@ -62,9 +38,20 @@ export const DbConnectionErrorScreen: React.FC<DbConnectionErrorScreenProps> = (
   const rulesExample = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read and write only their own data
-    match /users/{userId}/{documents=**} {
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Allow a user to read and write their own document.
       allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Allow an ADMIN to list all users, get any user, and update any user.
+      allow list, get, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Rules for the 'projects' subcollection within each user
+    match /users/{userId}/projects/{projectId} {
+      // Allow a user to perform all actions on their own projects.
+      allow read, write, create, delete: if request.auth != null && request.auth.uid == userId;
     }
   }
 }`;
@@ -100,7 +87,7 @@ service cloud.firestore {
                 <li>{t('dbError.step2.instruction1')}</li>
                 <li>{t('dbError.step2.instruction2')}</li>
             </ul>
-            <CodeBlock code={rulesExample} />
+            <CodeBlock code={rulesExample} title={t('dbError.step2.rulesExampleTitle')} />
             <a href={rulesUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow mt-4">
               {t('dbError.step2.button')} <ExternalLink size={16} />
             </a>
