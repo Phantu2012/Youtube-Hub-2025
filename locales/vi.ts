@@ -1,5 +1,6 @@
 
 
+
 export default {
   "common": {
     "cancel": "Hủy"
@@ -23,13 +24,16 @@ export default {
     "securityNote": "Đăng nhập bằng Tài khoản Google của bạn để lưu và đồng bộ hóa các dự án của bạn một cách an toàn trên các thiết bị.",
     "setupGuide": {
       "title": "Hướng dẫn Cài đặt Lần đầu",
-      "intro": "Nếu đăng nhập thất bại, vui lòng hoàn thành hai bước cài đặt một lần sau trong dự án Firebase của bạn.",
+      "intro": "Nếu đăng nhập thất bại, vui lòng hoàn thành các bước cài đặt một lần sau trong dự án Firebase và Google Cloud của bạn.",
       "step1Title": "Bước 1: Bật Đăng nhập bằng Google",
-      "step1Desc": "Điều này cho phép ứng dụng của bạn sử dụng Google để xác thực.",
+      "step1Desc": "Trong Firebase, đi tới Xác thực -> Phương thức đăng nhập và bật nhà cung cấp 'Google'.",
       "step1Button": "Mở Phương thức Đăng nhập",
-      "step2Title": "Bước 2: Ủy quyền Tên miền Ứng dụng của bạn",
-      "step2Desc": "Điều này cho Google biết rằng tên miền ứng dụng của bạn là đáng tin cậy.",
-      "step2Button": "Mở Cài đặt Xác thực"
+      "step2Title": "Bước 2: Ủy quyền Tên miền của bạn",
+      "step2Desc": "Trong cài đặt Xác thực Firebase, hãy thêm tên miền ứng dụng của bạn vào danh sách 'Miền được ủy quyền'.",
+      "step2Button": "Mở Cài đặt Xác thực",
+      "step3Title": "Bước 3: Cấu hình OAuth trên Google Cloud",
+      "step3Desc": "Đây là cách khắc phục phổ biến nhất. Đi tới thông tin xác thực của dự án Google Cloud, tìm ID OAuth 'Web client' và thêm các URI chính xác.",
+      "step3Button": "Mở Google Cloud Credentials"
     }
   },
   "pending": {

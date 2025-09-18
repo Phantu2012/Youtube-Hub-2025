@@ -1,5 +1,6 @@
 
 
+
 export default {
   "common": {
     "cancel": "Cancel"
@@ -23,13 +24,16 @@ export default {
     "securityNote": "Sign in with your Google Account to securely save and sync your projects across devices.",
     "setupGuide": {
       "title": "First-Time Setup Guide",
-      "intro": "If sign-in fails, please complete these two one-time steps in your Firebase project.",
+      "intro": "If sign-in fails, please complete these one-time setup steps in your Firebase and Google Cloud projects.",
       "step1Title": "Step 1: Enable Google Sign-In",
-      "step1Desc": "This allows your app to use Google for authentication.",
+      "step1Desc": "In Firebase, go to Authentication -> Sign-in method and enable the 'Google' provider.",
       "step1Button": "Open Sign-In Methods",
-      "step2Title": "Step 2: Authorize Your App's Domain",
-      "step2Desc": "This tells Google that your application's domain is trusted.",
-      "step2Button": "Open Auth Settings"
+      "step2Title": "Step 2: Authorize Your Domain",
+      "step2Desc": "In Firebase Authentication settings, add your app's domain to the 'Authorized domains' list.",
+      "step2Button": "Open Auth Settings",
+      "step3Title": "Step 3: Configure OAuth in Google Cloud",
+      "step3Desc": "This is the most common fix. Go to your Google Cloud project's credentials, find the 'Web client' OAuth ID, and add the correct URIs.",
+      "step3Button": "Open Google Cloud Credentials"
     }
   },
   "pending": {
