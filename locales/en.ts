@@ -66,23 +66,29 @@ export default {
   },
   "authConfigError": {
     "title": "Action Required: Complete Authentication Setup",
-    "intro": "Your sign-in failed due to a common configuration issue in your Firebase project. Please check the following settings to resolve the problem.",
-    "problem1Title": "Problem 1: Google Sign-In Method is Disabled",
-    "problem1Intro": "This is the most common cause of 'invalid request' or 'redirect_uri_mismatch' errors.",
-    "step1Title": "Go to Firebase Sign-In Methods",
-    "step1Button": "Open Firebase Sign-In Methods",
-    "step2Title": "Enable the Google Provider",
-    "step2Desc": "Find 'Google' in the list, click it, toggle the switch to 'Enable', provide a project support email, and click 'Save'.",
-    "problem2Title": "Problem 2: Application Domain is Not Authorized",
-    "problem2Intro": "If you are running the app on a new domain (like from a hosting provider), you must authorize it.",
-    "step3Title": "Copy this app's domain",
-    "step3Desc": "Your current domain is:",
-    "step4Title": "Add the domain in Firebase",
-    "step4Button": "Open Firebase Auth Settings",
-    "step4Desc": "Go to the 'Authorized domains' section, click 'Add domain', and paste the domain you copied.",
-    "outro": "After checking both settings, return here and try signing in again.",
-    "tryAgainButton": "Return to Login",
-    "copyDomain": "Copy domain"
+    "intro": "Your sign-in failed. This is usually due to a Firebase or Google Cloud configuration issue. Please verify the following three settings to resolve it.",
+    "copy": "Copy",
+    "check1": {
+      "title": "Check 1: Enable Google Sign-In Method (Firebase)",
+      "desc": "Ensure the 'Google' sign-in provider is enabled in your Firebase project. This is a common cause of 'operation-not-allowed' errors.",
+      "button": "Open Firebase Sign-In Methods"
+    },
+    "check2": {
+      "title": "Check 2: Authorize Your App's Domain (Firebase)",
+      "desc": "Your app's domain must be added to the list of authorized domains. This is the most common cause of 'unauthorized-domain' errors.",
+      "domainLabel": "Your current domain is:",
+      "button": "Open Firebase Auth Settings"
+    },
+    "check3": {
+      "title": "Check 3: Verify OAuth Configuration (Google Cloud)",
+      "desc": "The OAuth client used by Firebase must have the correct URIs. Mismatches here can cause various redirect errors.",
+      "note": "Find the OAuth 2.0 Client ID for your web app (often named 'Web client (auto created by Google Service)'). Ensure the following values are present.",
+      "originsLabel": "Authorized JavaScript origins:",
+      "redirectsLabel": "Authorized redirect URIs:",
+      "button": "Open Google Cloud Credentials"
+    },
+    "outro": "After verifying all three settings, please try signing in again.",
+    "tryAgainButton": "Try Again"
   },
   "projects": {
     "title": "Channel Projects",

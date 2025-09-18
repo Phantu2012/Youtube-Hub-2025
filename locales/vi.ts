@@ -66,23 +66,29 @@ export default {
   },
   "authConfigError": {
     "title": "Yêu cầu Hành động: Hoàn tất Cài đặt Xác thực",
-    "intro": "Đăng nhập không thành công do sự cố cấu hình phổ biến trong dự án Firebase của bạn. Vui lòng kiểm tra hai cài đặt sau để giải quyết vấn đề.",
-    "problem1Title": "Vấn đề 1: Phương thức Đăng nhập bằng Google bị vô hiệu hóa",
-    "problem1Intro": "Đây là nguyên nhân phổ biến nhất gây ra lỗi 'yêu cầu không hợp lệ' hoặc 'redirect_uri_mismatch'.",
-    "step1Title": "Đi đến Phương thức Đăng nhập Firebase",
-    "step1Button": "Mở Phương thức Đăng nhập Firebase",
-    "step2Title": "Bật Nhà cung cấp Google",
-    "step2Desc": "Tìm 'Google' trong danh sách, nhấp vào đó, bật công tắc sang 'Bật', cung cấp email hỗ trợ dự án và nhấp 'Lưu'.",
-    "problem2Title": "Vấn đề 2: Tên miền Ứng dụng chưa được ủy quyền",
-    "problem2Intro": "Nếu bạn đang chạy ứng dụng trên một tên miền mới (ví dụ: từ nhà cung cấp hosting), bạn phải ủy quyền nó.",
-    "step3Title": "Sao chép tên miền của ứng dụng này",
-    "step3Desc": "Tên miền hiện tại của bạn là:",
-    "step4Title": "Thêm tên miền vào Firebase",
-    "step4Button": "Mở Cài đặt Xác thực Firebase",
-    "step4Desc": "Đi đến mục 'Miền được ủy quyền', nhấp vào 'Thêm miền' và dán tên miền bạn đã sao chép.",
-    "outro": "Sau khi kiểm tra cả hai cài đặt, hãy quay lại đây và thử đăng nhập lại.",
-    "tryAgainButton": "Quay lại Đăng nhập",
-    "copyDomain": "Sao chép tên miền"
+    "intro": "Đăng nhập không thành công. Đây thường là do sự cố cấu hình Firebase hoặc Google Cloud. Vui lòng xác minh ba cài đặt sau để giải quyết.",
+    "copy": "Sao chép",
+    "check1": {
+      "title": "Kiểm tra 1: Bật Phương thức Đăng nhập Google (Firebase)",
+      "desc": "Đảm bảo nhà cung cấp đăng nhập 'Google' đã được bật trong dự án Firebase của bạn. Đây là nguyên nhân phổ biến của lỗi 'operation-not-allowed'.",
+      "button": "Mở Phương thức Đăng nhập Firebase"
+    },
+    "check2": {
+      "title": "Kiểm tra 2: Ủy quyền Tên miền Ứng dụng (Firebase)",
+      "desc": "Tên miền của ứng dụng phải được thêm vào danh sách các miền được ủy quyền. Đây là nguyên nhân phổ biến nhất của lỗi 'unauthorized-domain'.",
+      "domainLabel": "Tên miền hiện tại của bạn là:",
+      "button": "Mở Cài đặt Xác thực Firebase"
+    },
+    "check3": {
+      "title": "Kiểm tra 3: Xác minh Cấu hình OAuth (Google Cloud)",
+      "desc": "Client ID OAuth 2.0 mà Firebase sử dụng phải có các URI chính xác. Sai lệch ở đây có thể gây ra nhiều lỗi chuyển hướng khác nhau.",
+      "note": "Tìm OAuth 2.0 Client ID cho ứng dụng web của bạn (thường có tên 'Web client (auto created by Google Service)'). Đảm bảo các giá trị sau đây đã có.",
+      "originsLabel": "Nguồn gốc JavaScript được ủy quyền:",
+      "redirectsLabel": "URI chuyển hướng được ủy quyền:",
+      "button": "Mở Google Cloud Credentials"
+    },
+    "outro": "Sau khi xác minh cả ba cài đặt, vui lòng thử đăng nhập lại.",
+    "tryAgainButton": "Thử lại"
   },
   "projects": {
     "title": "Dự án theo Kênh",

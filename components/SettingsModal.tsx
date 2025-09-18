@@ -215,8 +215,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, a
                                                     placeholder={t('settings.channelNamePlaceholder')}
                                                 />
                                                 <div className="flex items-center gap-2">
-                                                    <button type="button" onClick={() => handleLaunchWizard(channel)} className="p-2 text-gray-500 hover:text-purple-500"><Sparkles size={16} title={t('settings.buildWithAI')} /></button>
-                                                    <button type="button" onClick={() => onDeleteChannel(channel.id)} className="p-2 text-gray-500 hover:text-red-500"><Trash2 size={16} title={t('settings.deleteChannel')} /></button>
+                                                    {/* FIX: Moved title prop from icon to button for correct tooltip behavior. */}
+                                                    <button type="button" onClick={() => handleLaunchWizard(channel)} className="p-2 text-gray-500 hover:text-purple-500" title={t('settings.buildWithAI')}><Sparkles size={16} /></button>
+                                                    <button type="button" onClick={() => onDeleteChannel(channel.id)} className="p-2 text-gray-500 hover:text-red-500" title={t('settings.deleteChannel')}><Trash2 size={16} /></button>
                                                 </div>
                                             </div>
                                             
