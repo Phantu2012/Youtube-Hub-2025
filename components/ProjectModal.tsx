@@ -23,6 +23,8 @@ interface ProjectModalProps {
     showToast: (message: string, type: ToastMessage['type']) => void;
 }
 
+type ModalTab = 'content' | 'publishing' | 'thumbnail' | 'ai_assets' | 'stats';
+
 const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
     <div className="flex items-center p-3 bg-light-bg dark:bg-dark-bg rounded-lg">
         <div className="mr-3 text-primary">{icon}</div>
@@ -33,8 +35,30 @@ const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string }
     </div>
 );
 
+const TabButton: React.FC<{
+    label: string;
+    icon: React.ReactNode;
+    isActive: boolean;
+    onClick: () => void;
+}> = ({ label, icon, isActive, onClick }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
+            isActive
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-light-text dark:hover:text-dark-text'
+        }`}
+    >
+        {icon}
+        {label}
+    </button>
+);
+
+
 export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, selectedProvider, selectedModel, isSaving, onClose, onSave, onDelete, onCopy, onRerun, showToast }) => {
     const { t, language } = useTranslation();
+    const [activeTab, setActiveTab] = useState<ModalTab>('content');
     const [formData, setFormData] = useState<Project | Omit<Project, 'id'>>({
         ...project,
         tags: project?.tags || [],
@@ -405,200 +429,231 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
       </button>
     );
 
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'content':
+                return (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="font-semibold">{t('projectModal.projectName')}</label>
+                            <input type="text" name="projectName" value={formData.projectName} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" required />
+                        </div>
+                        <div>
+                            <div className="flex justify-between items-center">
+                                <label className="font-semibold">{t('projectModal.videoTitle')}</label>
+                                <GenerateButton field="videoTitle" />
+                            </div>
+                            <input type="text" name="videoTitle" value={formData.videoTitle} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                        </div>
+                        <div>
+                            <label className="font-semibold flex items-center gap-2"><FileText size={16} /> {t('projectModal.script')}</label>
+                            <textarea name="script" value={formData.script} onChange={handleInputChange} rows={12} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.scriptPlaceholder')}/>
+                        </div>
+                         <div>
+                            <div className="flex justify-between items-center">
+                                <label className="font-semibold">{t('projectModal.description')}</label>
+                                <GenerateButton field="description" />
+                            </div>
+                            <textarea name="description" value={formData.description} onChange={handleInputChange} rows={6} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                        </div>
+                         <div>
+                            <div className="flex justify-between items-center">
+                                <label className="font-semibold flex items-center gap-2"><Tag size={16}/> {t('projectModal.tags')}</label>
+                                <GenerateButton field="tags" />
+                            </div>
+                            <div className="flex flex-wrap gap-2 p-2 mt-1 border border-gray-300 dark:border-gray-600 rounded-md min-h-[40px]">
+                                {(formData as Project).tags.map(tag => (
+                                    <span key={tag} className="flex items-center gap-1 bg-primary/20 text-primary-dark dark:text-red-300 px-2 py-1 text-sm rounded-full">
+                                        {tag}
+                                        <button type="button" onClick={() => removeTag(tag)} className="ml-1"><X size={12} /></button>
+                                    </span>
+                                ))}
+                                <input
+                                    type="text"
+                                    value={tagInput}
+                                    onChange={(e) => setTagInput(e.target.value)}
+                                    onKeyDown={handleTagKeyDown}
+                                    placeholder={t('projectModal.addTagPlaceholder')}
+                                    className="bg-transparent outline-none flex-grow"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 'publishing':
+                return (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="font-semibold flex items-center gap-2"><Calendar size={16}/> {t('projectModal.publishDate')}</label>
+                            <input type="datetime-local" name="publishDateTime" value={formData.publishDateTime} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" required />
+                        </div>
+                        <div>
+                            <label className="font-semibold">{t('projectModal.status')}</label>
+                            <select name="status" value={formData.status} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md">
+                                {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                            </select>
+                        </div>
+                         <div>
+                            <label className="font-semibold flex items-center gap-2"><Youtube size={16}/> {t('projectModal.youtubeLink')}</label>
+                            <input type="url" name="youtubeLink" value={formData.youtubeLink} onChange={handleInputChange} onBlur={(e) => loadStats(e.target.value)} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder="https://www.youtube.com/watch?v=..." />
+                        </div>
+                        <div>
+                            <label className="font-semibold">{t('projectModal.pinnedComment')}</label>
+                            <textarea name="pinnedComment" value={formData.pinnedComment} onChange={handleInputChange} rows={5} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                        </div>
+                        <div>
+                            <label className="font-semibold">{t('projectModal.communityPost')}</label>
+                            <textarea name="communityPost" value={formData.communityPost} onChange={handleInputChange} rows={5} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                        </div>
+                        <div>
+                            <label className="font-semibold">{t('projectModal.facebookPost')}</label>
+                            <textarea name="facebookPost" value={formData.facebookPost} onChange={handleInputChange} rows={5} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                        </div>
+                    </div>
+                );
+            case 'thumbnail':
+                return (
+                     <div className="space-y-4">
+                        <div className="relative">
+                            {formData.thumbnailData ? (
+                                <img src={formData.thumbnailData} alt={t('projectModal.thumbnailPreview')} className="w-full aspect-video rounded-md object-cover bg-gray-100 dark:bg-gray-900" />
+                            ) : (
+                                <div className="w-full aspect-video rounded-md bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                    <ImageIcon className="text-gray-400 dark:text-gray-500" size={48} />
+                                </div>
+                            )}
+                            {isGeneratingImage && (
+                                <div className="absolute inset-0 bg-black/50 flex justify-center items-center rounded-md">
+                                    <Loader className="animate-spin text-white" />
+                                </div>
+                            )}
+                        </div>
+                        <div 
+                            className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md cursor-pointer hover:border-primary"
+                            onClick={() => fileInputRef.current?.click()}
+                            onPaste={handlePaste}
+                        >
+                            <div className="space-y-1 text-center">
+                                <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+                                <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                                    <p className="pl-1">{t('projectModal.uploadOrPaste')}</p>
+                                </div>
+                                <p className="text-xs text-gray-500 dark:text-gray-500">{t('projectModal.uploadHint')}</p>
+                            </div>
+                        </div>
+                        <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
+
+                        <div className="flex justify-between items-center pt-2">
+                            <label className="font-semibold flex items-center gap-2"><Wand2 size={16}/> {t('projectModal.thumbnailPrompt')}</label>
+                            <div className="flex items-center gap-4">
+                                <GenerateButton field="thumbnailPrompt" />
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateImage}
+                                    disabled={isGeneratingImage || !!isGenerating}
+                                    className="text-xs flex items-center gap-1 text-purple-500 hover:text-purple-700 disabled:opacity-50 disabled:cursor-wait"
+                                >
+                                    {isGeneratingImage ? <Loader size={12} className="animate-spin" /> : <ImageIcon size={12} />}
+                                    {t('projectModal.generateImage')}
+                                </button>
+                            </div>
+                        </div>
+                        <textarea name="thumbnailPrompt" value={formData.thumbnailPrompt} onChange={handleInputChange} rows={5} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.thumbnailPromptPlaceholder')}/>
+                    </div>
+                );
+            case 'ai_assets':
+                 return (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div>
+                            <label className="font-semibold flex items-center gap-2"><Mic size={16} /> {t('projectModal.voiceoverScript')}</label>
+                            <textarea name="voiceoverScript" value={formData.voiceoverScript} onChange={handleInputChange} rows={8} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.voiceoverScriptPlaceholder')}/>
+                        </div>
+                        <div>
+                            <label className="font-semibold flex items-center gap-2"><ImageIcon size={16} /> {t('projectModal.visualPrompts')}</label>
+                            <textarea name="visualPrompts" value={formData.visualPrompts} onChange={handleInputChange} rows={8} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.visualPromptsPlaceholder')}/>
+                        </div>
+                         <div>
+                            <label className="font-semibold flex items-center gap-2"><List size={16} /> {t('projectModal.promptTable')}</label>
+                            <textarea name="promptTable" value={formData.promptTable} onChange={handleInputChange} rows={8} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.promptTablePlaceholder')}/>
+                        </div>
+                         <div>
+                            <label className="font-semibold flex items-center gap-2"><Clock size={16} /> {t('projectModal.timecodeMap')}</label>
+                            <textarea name="timecodeMap" value={formData.timecodeMap} onChange={handleInputChange} rows={8} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.timecodeMapPlaceholder')}/>
+                        </div>
+                         <div className="lg:col-span-2">
+                            <label className="font-semibold flex items-center gap-2"><Code size={16} /> {t('projectModal.seoMetadata')}</label>
+                            <textarea name="seoMetadata" value={formData.seoMetadata} onChange={handleInputChange} rows={8} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.seoMetadataPlaceholder')}/>
+                        </div>
+                        <div className="lg:col-span-2">
+                            <label className="font-semibold flex items-center gap-2"><InfoIcon size={16} /> {t('projectModal.metadata')}</label>
+                            <textarea name="metadata" value={formData.metadata} onChange={handleInputChange} rows={4} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.metadataPlaceholder')}/>
+                        </div>
+                    </div>
+                );
+            case 'stats':
+                return (
+                    <div className="bg-light-bg/50 dark:bg-dark-bg/50 p-4 rounded-lg space-y-4">
+                       <h3 className="font-bold flex items-center gap-2"><BarChart2 size={20}/> {t('projectModal.performanceStats')}</h3>
+                        {isLoadingStats ? (
+                            <div className="flex justify-center items-center h-48"><Loader className="animate-spin text-primary" /></div>
+                        ) : !apiKeys.youtube ? (
+                            <div className="text-center text-gray-500 py-16">
+                                <Settings size={24} className="mx-auto mb-2"/>
+                                <p>{t('projectModal.setApiKey')}</p>
+                            </div>
+                        ) : stats ? (
+                            <>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                    <StatCard icon={<Eye size={24}/>} label={t('projectCard.views')} value={stats.views.toLocaleString(language)} />
+                                    <StatCard icon={<ThumbsUp size={24}/>} label={t('projectCard.likes')} value={stats.likes.toLocaleString(language)} />
+                                    <StatCard icon={<MessageSquare size={24}/>} label={t('projectCard.comments')} value={stats.comments.toLocaleString(language)} />
+                                </div>
+                                <div className="h-64">
+                                    <StatsChart data={history} />
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-center text-gray-500 py-16">{t('projectModal.enterLinkForStats')}</p>
+                        )}
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+    
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
-            <div className="bg-light-card dark:bg-dark-card rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <form onSubmit={handleSubmit}>
-                    <div className="p-6 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-light-card dark:bg-dark-card z-10">
+            <div className="bg-light-card dark:bg-dark-card rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden">
+                    {/* Header */}
+                    <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                         <div className="flex justify-between items-center">
                             <h2 className="text-2xl font-bold">{isNewProject ? t('projectModal.createTitle') : t('projectModal.editTitle')}</h2>
                             <button type="button" onClick={onClose} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"><X /></button>
                         </div>
                     </div>
-
-                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* Column 1: Core Content */}
-                        <div className="space-y-4 lg:col-span-1">
-                            <div>
-                                <label className="font-semibold">{t('projectModal.projectName')}</label>
-                                <input type="text" name="projectName" value={formData.projectName} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" required />
-                            </div>
-                            <div>
-                                <div className="flex justify-between items-center">
-                                    <label className="font-semibold">{t('projectModal.videoTitle')}</label>
-                                    <GenerateButton field="videoTitle" />
-                                </div>
-                                <input type="text" name="videoTitle" value={formData.videoTitle} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
-                            </div>
-                            <div>
-                                <label className="font-semibold flex items-center gap-2"><FileText size={16} /> {t('projectModal.script')}</label>
-                                <textarea name="script" value={formData.script} onChange={handleInputChange} rows={10} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.scriptPlaceholder')}/>
-                            </div>
-                             <div>
-                                <div className="flex justify-between items-center">
-                                    <label className="font-semibold">{t('projectModal.description')}</label>
-                                    <GenerateButton field="description" />
-                                </div>
-                                <textarea name="description" value={formData.description} onChange={handleInputChange} rows={5} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
-                            </div>
-                             <div>
-                                <div className="flex justify-between items-center">
-                                    <label className="font-semibold flex items-center gap-2"><Tag size={16}/> {t('projectModal.tags')}</label>
-                                    <GenerateButton field="tags" />
-                                </div>
-                                <div className="flex flex-wrap gap-2 p-2 mt-1 border border-gray-300 dark:border-gray-600 rounded-md min-h-[40px]">
-                                    {(formData as Project).tags.map(tag => (
-                                        <span key={tag} className="flex items-center gap-1 bg-primary/20 text-primary-dark dark:text-red-300 px-2 py-1 text-sm rounded-full">
-                                            {tag}
-                                            <button type="button" onClick={() => removeTag(tag)} className="ml-1"><X size={12} /></button>
-                                        </span>
-                                    ))}
-                                    <input
-                                        type="text"
-                                        value={tagInput}
-                                        onChange={(e) => setTagInput(e.target.value)}
-                                        onKeyDown={handleTagKeyDown}
-                                        placeholder={t('projectModal.addTagPlaceholder')}
-                                        className="bg-transparent outline-none flex-grow"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {/* Column 2: Automation & Publishing */}
-                        <div className="space-y-4 lg:col-span-1">
-                             <div>
-                                <label className="font-semibold flex items-center gap-2"><Mic size={16} /> {t('projectModal.voiceoverScript')}</label>
-                                <textarea name="voiceoverScript" value={formData.voiceoverScript} onChange={handleInputChange} rows={6} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.voiceoverScriptPlaceholder')}/>
-                            </div>
-                             <div>
-                                <label className="font-semibold flex items-center gap-2"><ImageIcon size={16} /> {t('projectModal.visualPrompts')}</label>
-                                <textarea name="visualPrompts" value={formData.visualPrompts} onChange={handleInputChange} rows={6} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.visualPromptsPlaceholder')}/>
-                            </div>
-                             <div>
-                                <label className="font-semibold flex items-center gap-2"><List size={16} /> {t('projectModal.promptTable')}</label>
-                                <textarea name="promptTable" value={formData.promptTable} onChange={handleInputChange} rows={6} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.promptTablePlaceholder')}/>
-                            </div>
-                             <div>
-                                <label className="font-semibold flex items-center gap-2"><Clock size={16} /> {t('projectModal.timecodeMap')}</label>
-                                <textarea name="timecodeMap" value={formData.timecodeMap} onChange={handleInputChange} rows={6} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.timecodeMapPlaceholder')}/>
-                            </div>
-                             <div>
-                                <label className="font-semibold flex items-center gap-2"><Code size={16} /> {t('projectModal.seoMetadata')}</label>
-                                <textarea name="seoMetadata" value={formData.seoMetadata} onChange={handleInputChange} rows={6} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.seoMetadataPlaceholder')}/>
-                            </div>
-                            <div>
-                                <label className="font-semibold">{t('projectModal.pinnedComment')}</label>
-                                <textarea name="pinnedComment" value={formData.pinnedComment} onChange={handleInputChange} rows={3} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
-                            </div>
-                            <div>
-                                <label className="font-semibold">{t('projectModal.communityPost')}</label>
-                                <textarea name="communityPost" value={formData.communityPost} onChange={handleInputChange} rows={3} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
-                            </div>
-                            <div>
-                                <label className="font-semibold">{t('projectModal.facebookPost')}</label>
-                                <textarea name="facebookPost" value={formData.facebookPost} onChange={handleInputChange} rows={3} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
-                            </div>
-                             <div>
-                                <label className="font-semibold flex items-center gap-2"><InfoIcon size={16} /> {t('projectModal.metadata')}</label>
-                                <textarea name="metadata" value={formData.metadata} onChange={handleInputChange} rows={4} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.metadataPlaceholder')}/>
-                            </div>
-                        </div>
-
-                        {/* Column 3: Metadata & Stats */}
-                        <div className="space-y-4 lg:col-span-1">
-                             <div>
-                                <label className="font-semibold flex items-center gap-2"><Calendar size={16}/> {t('projectModal.publishDate')}</label>
-                                <input type="datetime-local" name="publishDateTime" value={formData.publishDateTime} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" required />
-                            </div>
-                            <div>
-                                <label className="font-semibold">{t('projectModal.status')}</label>
-                                <select name="status" value={formData.status} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md">
-                                    {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                </select>
-                            </div>
-                             <div className="space-y-2 p-3 bg-light-bg/50 dark:bg-dark-bg/50 rounded-lg">
-                                <label className="font-semibold flex items-center gap-2"><ImageIcon size={16}/> {t('projectModal.thumbnail')}</label>
-                                <div className="relative">
-                                    {formData.thumbnailData ? (
-                                        <img src={formData.thumbnailData} alt={t('projectModal.thumbnailPreview')} className="w-full aspect-video rounded-md object-cover bg-gray-100 dark:bg-gray-900" />
-                                    ) : (
-                                        <div className="w-full aspect-video rounded-md bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                            <ImageIcon className="text-gray-400 dark:text-gray-500" size={48} />
-                                        </div>
-                                    )}
-                                    {isGeneratingImage && (
-                                        <div className="absolute inset-0 bg-black/50 flex justify-center items-center rounded-md">
-                                            <Loader className="animate-spin text-white" />
-                                        </div>
-                                    )}
-                                </div>
-                                <div 
-                                    className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md cursor-pointer hover:border-primary"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    onPaste={handlePaste}
-                                >
-                                    <div className="space-y-1 text-center">
-                                        <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
-                                        <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                                            <p className="pl-1">{t('projectModal.uploadOrPaste')}</p>
-                                        </div>
-                                        <p className="text-xs text-gray-500 dark:text-gray-500">{t('projectModal.uploadHint')}</p>
-                                    </div>
-                                </div>
-                                <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
-
-                                <div className="flex justify-between items-center pt-2">
-                                    <label className="font-semibold flex items-center gap-2"><Wand2 size={16}/> {t('projectModal.thumbnailPrompt')}</label>
-                                    <div className="flex items-center gap-4">
-                                        <GenerateButton field="thumbnailPrompt" />
-                                        <button
-                                            type="button"
-                                            onClick={handleGenerateImage}
-                                            disabled={isGeneratingImage || !!isGenerating}
-                                            className="text-xs flex items-center gap-1 text-purple-500 hover:text-purple-700 disabled:opacity-50 disabled:cursor-wait"
-                                        >
-                                            {isGeneratingImage ? <Loader size={12} className="animate-spin" /> : <ImageIcon size={12} />}
-                                            {t('projectModal.generateImage')}
-                                        </button>
-                                    </div>
-                                </div>
-                                <textarea name="thumbnailPrompt" value={formData.thumbnailPrompt} onChange={handleInputChange} rows={3} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.thumbnailPromptPlaceholder')}/>
-                            </div>
-                             <div>
-                                <label className="font-semibold flex items-center gap-2"><Youtube size={16}/> {t('projectModal.youtubeLink')}</label>
-                                <input type="url" name="youtubeLink" value={formData.youtubeLink} onChange={handleInputChange} onBlur={(e) => loadStats(e.target.value)} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder="https://www.youtube.com/watch?v=..." />
-                            </div>
-
-                            <div className="bg-light-bg/50 dark:bg-dark-bg/50 p-4 rounded-lg space-y-4">
-                               <h3 className="font-bold flex items-center gap-2"><BarChart2 size={20}/> {t('projectModal.performanceStats')}</h3>
-                                {isLoadingStats ? (
-                                    <div className="flex justify-center items-center h-48"><Loader className="animate-spin text-primary" /></div>
-                                ) : !apiKeys.youtube ? (
-                                    <div className="text-center text-gray-500 py-16">
-                                        <Settings size={24} className="mx-auto mb-2"/>
-                                        <p>{t('projectModal.setApiKey')}</p>
-                                    </div>
-                                ) : stats ? (
-                                    <>
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                            <StatCard icon={<Eye size={24}/>} label={t('projectCard.views')} value={stats.views.toLocaleString(language)} />
-                                            <StatCard icon={<ThumbsUp size={24}/>} label={t('projectCard.likes')} value={stats.likes.toLocaleString(language)} />
-                                            <StatCard icon={<MessageSquare size={24}/>} label={t('projectCard.comments')} value={stats.comments.toLocaleString(language)} />
-                                        </div>
-                                        <div className="h-48">
-                                            <StatsChart data={history} />
-                                        </div>
-                                    </>
-                                ) : (
-                                    <p className="text-center text-gray-500 py-16">{t('projectModal.enterLinkForStats')}</p>
-                                )}
-                            </div>
+                    
+                    {/* Tabs */}
+                    <div className="border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                         <div className="flex space-x-2 px-4">
+                            <TabButton label={t('projectModal.tabContent')} icon={<FileText size={16} />} isActive={activeTab === 'content'} onClick={() => setActiveTab('content')} />
+                            <TabButton label={t('projectModal.tabPublishing')} icon={<Youtube size={16} />} isActive={activeTab === 'publishing'} onClick={() => setActiveTab('publishing')} />
+                            <TabButton label={t('projectModal.tabThumbnail')} icon={<ImageIcon size={16} />} isActive={activeTab === 'thumbnail'} onClick={() => setActiveTab('thumbnail')} />
+                            <TabButton label={t('projectModal.tabAiAssets')} icon={<Sparkles size={16} />} isActive={activeTab === 'ai_assets'} onClick={() => setActiveTab('ai_assets')} />
+                            <TabButton label={t('projectModal.tabStats')} icon={<BarChart2 size={16} />} isActive={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
                         </div>
                     </div>
 
-                    <div className="p-4 bg-light-bg dark:bg-dark-bg/50 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center sticky bottom-0">
-                         <div className="flex gap-2">
+                    {/* Content */}
+                    <div className="p-6 flex-grow overflow-y-auto">
+                        {renderContent()}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="p-4 bg-light-bg dark:bg-dark-bg/50 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+                         <div className="flex gap-2 flex-wrap">
                             {!isNewProject && (
                                <>
                                 <button

@@ -1,5 +1,5 @@
 
-import { ProjectStatus, AutomationStep } from './types';
+import { ProjectStatus, AutomationStep, Dream100VideoStatus } from './types';
 
 // The 't' function will be provided by the useTranslation hook in the component
 export const getStatusOptions = (t: (key: string) => string) => [
@@ -17,6 +17,19 @@ export const STATUS_COLORS: { [key in ProjectStatus]: string } = {
     [ProjectStatus.Completed]: 'bg-green-500',
     [ProjectStatus.Published]: 'bg-red-500',
 };
+
+export const getDream100StatusOptions = (t: (key: string) => string) => [
+    { value: Dream100VideoStatus.Pending, label: t('dream100.status.pending') },
+    { value: Dream100VideoStatus.Analyzed, label: t('dream100.status.analyzed') },
+    { value: Dream100VideoStatus.Remade, label: t('dream100.status.remade') },
+];
+
+export const DREAM100_STATUS_COLORS: { [key in Dream100VideoStatus]: string } = {
+    [Dream100VideoStatus.Pending]: 'bg-gray-500',
+    [Dream100VideoStatus.Analyzed]: 'bg-blue-500',
+    [Dream100VideoStatus.Remade]: 'bg-green-500',
+};
+
 
 // Automation steps now use translation keys for name and description
 export const DEFAULT_AUTOMATION_STEPS: AutomationStep[] = [

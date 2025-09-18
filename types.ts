@@ -1,4 +1,5 @@
 
+
 export enum ProjectStatus {
     Idea = 'Idea',
     Production = 'Production',
@@ -7,10 +8,40 @@ export enum ProjectStatus {
     Published = 'Published',
 }
 
+export enum Dream100VideoStatus {
+    Pending = 'Pending',
+    Analyzed = 'Analyzed',
+    Remade = 'Remade',
+}
+
+export interface Dream100Video {
+    id: string; // YouTube video ID
+    title: string;
+    thumbnailUrl: string;
+    channelTitle: string;
+    tags: string[];
+    description: string;
+    viewCount: number;
+    likeCount: number;
+    commentCount: number;
+    publishedAt: string; // ISO string
+    youtubeLink: string;
+    status: Dream100VideoStatus;
+}
+
+export interface ChannelStats {
+    subscriberCount: number;
+    viewCount: number;
+    videoCount: number;
+}
+
 export interface Channel {
     id: string;
     name: string;
     dna: string;
+    channelUrl?: string;
+    stats?: ChannelStats;
+    dream100Videos?: Dream100Video[];
 }
 
 export interface Project {
@@ -49,6 +80,8 @@ export interface YouTubeVideoDetails {
     description: string;
     tags: string[];
     thumbnailUrl: string;
+    channelTitle: string;
+    publishedAt: string;
 }
 
 export interface ViewHistoryData {

@@ -1,3 +1,5 @@
+
+
 export default {
   "common": {
     "cancel": "Cancel"
@@ -6,6 +8,7 @@ export default {
     "title": "YouTube Video Hub",
     "projects": "Projects",
     "automation": "Automation",
+    "calendar": "Calendar",
     "openSettings": "Open settings",
     "toggleTheme": "Toggle theme",
     "logout": "Logout"
@@ -86,10 +89,24 @@ export default {
     "manageChannels": "Manage Channels",
     "addChannel": "Add New Channel",
     "addVideo": "Add New Video",
+    "manageDream100": "Manage Dream 100",
     "loading": "Loading Projects...",
     "noChannels": "No Channels Found",
     "getStartedChannels": "Add your first channel in the Settings to get started.",
-    "noProjectsInChannel": "No video projects in this channel yet."
+    "noProjectsInChannel": "No video projects in this channel yet.",
+    "subscribers": "Subscribers",
+    "totalViews": "Total Views",
+    "videos": "Videos"
+  },
+  "dashboard": {
+    "totalProjects": "Total Projects",
+    "publishedVideos": "Published Videos",
+    "totalViews": "Total Views",
+    "avgLikes": "Avg. Likes / Video"
+  },
+  "calendar": {
+    "title": "Content Calendar",
+    "today": "Today"
   },
   "projectCard": {
     "thumbnailAlt": "Video Thumbnail",
@@ -100,6 +117,11 @@ export default {
   "projectModal": {
     "createTitle": "Create New Project",
     "editTitle": "Edit Project",
+    "tabContent": "Content",
+    "tabPublishing": "Publishing",
+    "tabThumbnail": "Thumbnail",
+    "tabAiAssets": "AI Assets",
+    "tabStats": "Stats",
     "deleteConfirmation": "Confirm Delete",
     "clearFormConfirmation": "Confirm Clear",
     "projectName": "Project Name",
@@ -167,6 +189,8 @@ export default {
     "addChannel": "Add New Channel",
     "newChannelName": "New Channel",
     "channelNamePlaceholder": "Enter Channel Name",
+    "channelUrl": "YouTube Channel URL",
+    "channelUrlPlaceholder": "e.g., https://www.youtube.com/channel/...",
     "deleteChannel": "Delete Channel",
     "deleteChannelConfirmation": "Are you sure you want to delete this channel? This action cannot be undone.",
     "deleteChannelError": "Cannot delete a channel that contains projects. Please move or delete the projects first.",
@@ -176,6 +200,40 @@ export default {
     "dna": {
       "label": "Channel Profile",
       "placeholder": "e.g., My role is an Expert Chef. My tone is humorous and inspiring. I create content for beginner home cooks. I talk about vegan recipes and JavaScript tutorials. I address my audience with 'Hey everyone!'..."
+    }
+  },
+  "dream100": {
+    "title": "Dream 100: {{channelName}}",
+    "addVideo": "Add Video",
+    "addingVideo": "Adding...",
+    "youtubeUrlPlaceholder": "Paste YouTube URL here...",
+    "filterByChannel": "Filter by Channel",
+    "allChannels": "All Channels",
+    "table": {
+      "video": "Video",
+      "stats": "Stats",
+      "published": "Published",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "details": {
+      "description": "Description",
+      "tags": "Tags",
+      "noTags": "No tags provided."
+    },
+    "noVideos": "No videos in your Dream 100 list yet.",
+    "getStarted": "Paste a YouTube URL above to start building your list.",
+    "deleteConfirmation": "Are you sure you want to remove this video from your Dream 100 list?",
+    "status": {
+      "pending": "Pending",
+      "analyzed": "Analyzed",
+      "remade": "Remade"
+    },
+    "toasts": {
+        "videoAdded": "Video added to Dream 100!",
+        "videoExists": "This video is already in your Dream 100 list.",
+        "fetchError": "Could not fetch video details. Check the URL and your API key.",
+        "videoRemoved": "Video removed from list."
     }
   },
   "channelDnaWizard": {

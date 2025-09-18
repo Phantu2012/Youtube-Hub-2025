@@ -1,4 +1,4 @@
-import { YouTubeStats, ViewHistoryData, YouTubeVideoDetails } from '../types';
+import { YouTubeStats, ViewHistoryData, YouTubeVideoDetails, Dream100Video, ChannelStats } from '../types';
 
 // This service fetches real video statistics from the YouTube Data API v3.
 
@@ -120,6 +120,8 @@ export const fetchVideoDetails = async (youtubeLink: string, apiKey: string): Pr
             description: snippet.description || '',
             tags: snippet.tags || [],
             thumbnailUrl: snippet.thumbnails?.high?.url || snippet.thumbnails?.default?.url || '',
+            channelTitle: snippet.channelTitle || '',
+            publishedAt: snippet.publishedAt || new Date().toISOString(),
         };
 
         return details;
@@ -128,4 +130,123 @@ export const fetchVideoDetails = async (youtubeLink: string, apiKey: string): Pr
         console.error('Failed to fetch video details:', error);
         throw error;
     }
+};
+
+export const fetchFullVideoDetailsForDream100 = async (youtubeLink: string, apiKey: string): Promise<Omit<Dream100Video, 'status'> | null> => {
+    if (!apiKey) {
+        throw new Error("YouTube API Key is missing. Please set it in the settings.");
+    }
+    
+    const videoId = extractVideoId(youtubeLink);
+    if (!videoId) {
+        return null;
+    }
+    
+    try {
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${apiKey}`);
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            const errorMessage = errorData.error?.message || `API request failed with status ${response.status}`;
+            console.error('YouTube API Error:', errorMessage);
+            if (response.status === 400 || response.status === 403) {
+                    throw new Error('API key is invalid or has restrictions. Please check your key.');
+            }
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+
+        if (!data.items || data.items.length === 0) {
+            throw new Error('Video not found. Please check the YouTube link.');
+        }
+        
+        const item = data.items[0];
+        const snippet = item.snippet;
+        const statistics = item.statistics;
+        
+        const details: Omit<Dream100Video, 'status'> = {
+            id: videoId,
+            title: snippet.title || '',
+            description: snippet.description || '',
+            tags: snippet.tags || [],
+            thumbnailUrl: snippet.thumbnails?.high?.url || snippet.thumbnails?.default?.url || '',
+            channelTitle: snippet.channelTitle || '',
+            viewCount: parseInt(statistics.viewCount, 10) || 0,
+            likeCount: parseInt(statistics.likeCount, 10) || 0,
+            commentCount: parseInt(statistics.commentCount, 10) || 0,
+            publishedAt: snippet.publishedAt || new Date().toISOString(),
+            youtubeLink: `https://www.youtube.com/watch?v=${videoId}`,
+        };
+
+        return details;
+
+    } catch (error) {
+        console.error('Failed to fetch full video details:', error);
+        throw error;
+    }
+};
+
+const extractChannelIdentifier = (url: string): { type: 'id' | 'handle', value: string } | null => {
+    if (!url) return null;
+    let match = url.match(/\/channel\/(UC[a-zA-Z0-9_-]{22})/);
+    if (match && match[1]) {
+        return { type: 'id', value: match[1] };
+    }
+    match = url.match(/@([a-zA-Z0-9_.-]+)/);
+    if (match && match[1]) {
+        return { type: 'handle', value: match[1] };
+    }
+    return null;
+};
+
+export const fetchChannelStats = async (channelUrl: string, apiKey: string): Promise<ChannelStats | null> => {
+    if (!apiKey) {
+        throw new Error("YouTube API Key is missing.");
+    }
+    
+    const identifier = extractChannelIdentifier(channelUrl);
+    if (!identifier) {
+        return null;
+    }
+
+    let channelId = '';
+
+    if (identifier.type === 'id') {
+        channelId = identifier.value;
+    } else if (identifier.type === 'handle') {
+        // Use Search API to find channel ID from handle
+        const searchResponse = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&q=${identifier.value}&type=channel&key=${apiKey}`);
+        if (!searchResponse.ok) {
+            throw new Error('Failed to resolve channel handle.');
+        }
+        const searchData = await searchResponse.json();
+        if (!searchData.items || searchData.items.length === 0) {
+            throw new Error(`Could not find a channel with handle: @${identifier.value}`);
+        }
+        channelId = searchData.items[0].id.channelId;
+    }
+
+    if (!channelId) {
+        return null;
+    }
+
+    const statsResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelId}&key=${apiKey}`);
+     if (!statsResponse.ok) {
+        const errorData = await statsResponse.json();
+        throw new Error(errorData.error?.message || 'Could not fetch channel statistics.');
+    }
+
+    const statsData = await statsResponse.json();
+    if (!statsData.items || statsData.items.length === 0) {
+        return null;
+    }
+
+    const statistics = statsData.items[0].statistics;
+    
+    return {
+        subscriberCount: parseInt(statistics.subscriberCount, 10) || 0,
+        viewCount: parseInt(statistics.viewCount, 10) || 0,
+        videoCount: parseInt(statistics.videoCount, 10) || 0,
+    };
 };

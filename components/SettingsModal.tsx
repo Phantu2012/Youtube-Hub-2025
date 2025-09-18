@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Save, Key, Eye, EyeOff, Info, Bot, Youtube, Sparkles, PlusCircle, Trash2 } from 'lucide-react';
+import { X, Save, Key, Eye, EyeOff, Info, Bot, Youtube, Sparkles, PlusCircle, Trash2, Link } from 'lucide-react';
 import { ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Project } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 import { ChannelDnaWizard } from './ChannelDnaWizard';
@@ -72,7 +72,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, a
         setLocalApiKeys(prev => ({ ...prev, [provider]: value }));
     };
     
-    const handleChannelChange = (id: string, field: 'name' | 'dna', value: string) => {
+    const handleChannelChange = (id: string, field: 'name' | 'dna' | 'channelUrl', value: string) => {
         const updatedChannels = currentChannels.map(ch => ch.id === id ? { ...ch, [field]: value } : ch);
         onChannelsChange(updatedChannels);
     };
@@ -81,7 +81,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, a
         const newChannel: Channel = {
             id: `channel_${Date.now()}`,
             name: t('settings.newChannelName'),
-            dna: ''
+            dna: '',
+            channelUrl: '',
+            dream100Videos: [],
         };
         onChannelsChange([...currentChannels, newChannel]);
     };
@@ -203,8 +205,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, a
                                 </p>
                                 <div className="space-y-4">
                                     {currentChannels.map(channel => (
-                                        <div key={channel.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                            <div className="flex items-center justify-between mb-3">
+                                        <div key={channel.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
+                                            <div className="flex items-center justify-between">
                                                 <input
                                                     type="text"
                                                     value={channel.name}
@@ -217,12 +219,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, a
                                                     <button type="button" onClick={() => onDeleteChannel(channel.id)} className="p-2 text-gray-500 hover:text-red-500"><Trash2 size={16} title={t('settings.deleteChannel')} /></button>
                                                 </div>
                                             </div>
+                                            
+                                            <div>
+                                                <label className="font-semibold text-sm mb-1 block flex items-center gap-2"><Link size={14}/>{t('settings.channelUrl')}</label>
+                                                <input
+                                                    type="url"
+                                                    value={channel.channelUrl || ''}
+                                                    onChange={(e) => handleChannelChange(channel.id, 'channelUrl', e.target.value)}
+                                                    className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md text-sm"
+                                                    placeholder={t('settings.channelUrlPlaceholder')}
+                                                />
+                                            </div>
+
                                             <textarea
                                                 value={channel.dna}
                                                 onChange={(e) => handleChannelChange(channel.id, 'dna', e.target.value)}
                                                 className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md text-sm"
                                                 placeholder={t('settings.dna.placeholder')}
-                                                rows={6}
+                                                rows={4}
                                             />
                                         </div>
                                     ))}

@@ -1,13 +1,16 @@
 
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel } from './types';
+import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Header } from './components/Header';
 import { ProjectList } from './components/ProjectList';
 import { AutomationEngine } from './components/AutomationEngine';
+import { CalendarView } from './components/CalendarView';
 import { ProjectModal } from './components/ProjectModal';
 import { SettingsModal } from './components/SettingsModal';
+import { Dream100Modal } from './components/Dream100Modal';
 import { Toast } from './components/Toast';
 import { LoginScreen } from './components/LoginScreen';
 import { PendingApprovalScreen } from './components/PendingApprovalScreen';
@@ -17,6 +20,7 @@ import { AuthConfigurationErrorScreen } from './components/AuthConfigurationErro
 import { Loader } from 'lucide-react';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { useTranslation } from './hooks/useTranslation';
+import { fetchChannelStats } from './services/youtubeService';
 
 // FIX: Corrected Firebase imports to use the compat library for v8 syntax compatibility.
 import firebase from 'firebase/compat/app';
@@ -31,7 +35,7 @@ type FirebaseUser = firebase.User;
 // --- DEVELOPMENT MODE FLAG ---
 // Set to true to bypass login and use a mock user for development.
 // Set to false for production to enable real Google Sign-In.
-const IS_DEV_MODE = false;
+const IS_DEV_MODE = true;
 
 const MOCK_USER: User = {
   uid: 'dev-user-01',
@@ -71,12 +75,13 @@ const AppContent: React.FC = () => {
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'projects' | 'automation'>('projects');
-  const [channels, setChannels] = useLocalStorage<ChannelDna>('channels', []);
+  const [activeView, setActiveView] = useState<'projects' | 'automation' | 'calendar'>('projects');
+  const [channels, setChannels] = useLocalStorage<Channel[]>('channels', []);
   const { t } = useTranslation();
   const [dbConnectionError, setDbConnectionError] = useState<DbError | null>(null);
   const [signInError, setSignInError] = useState<{ code: string; domain?: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [dream100Channel, setDream100Channel] = useState<Channel | null>(null);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -227,6 +232,43 @@ const AppContent: React.FC = () => {
         setProjects([]);
     }
   }, [user, showToast, t]);
+
+  // This effect fetches channel stats when channels are loaded or updated
+  useEffect(() => {
+    const fetchStatsForChannels = async () => {
+      if (!apiKeys.youtube) return;
+
+      const channelsToUpdate = channels.filter(ch => ch.channelUrl && !ch.stats);
+      if (channelsToUpdate.length === 0) return;
+
+      const statsPromises = channelsToUpdate.map(channel =>
+        fetchChannelStats(channel.channelUrl!, apiKeys.youtube)
+          .catch(err => {
+            console.error(`Failed to fetch stats for ${channel.name}:`, err.message);
+            // Do not show a toast for every channel to avoid spamming user
+            return null; // return null on error to not break Promise.all
+          })
+      );
+
+      const results = await Promise.all(statsPromises);
+      
+      let statsUpdated = false;
+      const updatedChannels = channels.map(channel => {
+        const index = channelsToUpdate.findIndex(ctu => ctu.id === channel.id);
+        if (index !== -1 && results[index]) {
+          statsUpdated = true;
+          return { ...channel, stats: results[index] as ChannelStats };
+        }
+        return channel;
+      });
+
+      if (statsUpdated) {
+        setChannels(updatedChannels);
+      }
+    };
+
+    fetchStatsForChannels();
+  }, [channels, apiKeys.youtube, setChannels]);
   
   const projectsByChannel = useMemo(() => {
     return projects.reduce((acc, project) => {
@@ -273,6 +315,20 @@ const AppContent: React.FC = () => {
   const handleDeleteChannelInApp = (channelId: string) => {
       setChannels(prev => prev.filter(ch => ch.id !== channelId));
       showToast(t('toasts.channelDeleted'), 'info');
+  };
+
+  const handleManageDream100 = (channelId: string) => {
+    const channelToManage = channels.find(ch => ch.id === channelId);
+    if (channelToManage) {
+      setDream100Channel(channelToManage);
+    }
+  };
+
+  const handleUpdateDream100 = (channelId: string, updatedVideos: Dream100Video[]) => {
+    const updatedChannels = channels.map(ch =>
+        ch.id === channelId ? { ...ch, dream100Videos: updatedVideos } : ch
+    );
+    setChannels(updatedChannels);
   };
 
 
@@ -468,36 +524,44 @@ const AppContent: React.FC = () => {
   
   // Only render the main app if user status is 'active'
   return (
-    <div className="min-h-screen bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text transition-colors duration-300 font-sans">
-      <Header 
-        theme={theme} 
-        toggleTheme={toggleTheme} 
-        onOpenSettings={handleOpenSettingsModal} 
+    <div className="flex flex-col h-screen bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text font-sans">
+      <Header
         user={user}
+        theme={theme}
+        toggleTheme={toggleTheme}
+        onOpenSettings={handleOpenSettingsModal}
         onLogout={handleLogout}
         activeView={activeView}
         setActiveView={setActiveView}
       />
-      <main className="container mx-auto p-4 md:p-8">
+      <main className="flex-1 overflow-y-auto p-4 md:p-8">
         {activeView === 'projects' && (
           <ProjectList 
+              projects={projects}
               channels={channels}
               projectsByChannel={projectsByChannel} 
               onSelectProject={handleOpenModal} 
               isLoading={isLoading && projects.length === 0}
               onAddChannel={handleOpenSettingsModal}
               onAddVideo={handleAddNewVideo}
+              onManageDream100={handleManageDream100}
           />
         )}
         {activeView === 'automation' && (
-           <AutomationEngine 
+            <AutomationEngine 
               channels={channels}
               onOpenProjectModal={handleOpenModal}
               showToast={showToast}
               apiKeys={apiKeys}
               selectedProvider={selectedProvider}
               selectedModel={selectedModel}
-           />
+            />
+        )}
+        {activeView === 'calendar' && (
+          <CalendarView
+            projects={projects}
+            onSelectProject={handleOpenModal}
+          />
         )}
       </main>
       
@@ -530,6 +594,15 @@ const AppContent: React.FC = () => {
           onRerun={handleRerunAutomation}
           showToast={showToast}
         />
+      )}
+      {dream100Channel && (
+          <Dream100Modal
+              isOpen={!!dream100Channel}
+              onClose={() => setDream100Channel(null)}
+              channel={dream100Channel}
+              apiKeys={apiKeys}
+              onUpdate={(updatedVideos) => handleUpdateDream100(dream100Channel.id, updatedVideos)}
+          />
       )}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>

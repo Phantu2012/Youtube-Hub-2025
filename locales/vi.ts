@@ -1,3 +1,5 @@
+
+
 export default {
   "common": {
     "cancel": "Hủy"
@@ -6,6 +8,7 @@ export default {
     "title": "Trung tâm Video YouTube",
     "projects": "Dự án",
     "automation": "Tự động hóa",
+    "calendar": "Lịch",
     "openSettings": "Mở cài đặt",
     "toggleTheme": "Chuyển đổi giao diện",
     "logout": "Đăng xuất"
@@ -86,10 +89,24 @@ export default {
     "manageChannels": "Quản lý Kênh",
     "addChannel": "Thêm Kênh Mới",
     "addVideo": "Thêm Video Mới",
+    "manageDream100": "Quản lý Dream 100",
     "loading": "Đang tải dự án...",
     "noChannels": "Chưa có Kênh nào",
     "getStartedChannels": "Thêm kênh đầu tiên của bạn trong Cài đặt để bắt đầu.",
-    "noProjectsInChannel": "Chưa có dự án video nào trong kênh này."
+    "noProjectsInChannel": "Chưa có dự án video nào trong kênh này.",
+    "subscribers": "Người đăng ký",
+    "totalViews": "Tổng lượt xem",
+    "videos": "Video"
+  },
+  "dashboard": {
+    "totalProjects": "Tổng số Dự án",
+    "publishedVideos": "Video đã Xuất bản",
+    "totalViews": "Tổng Lượt xem",
+    "avgLikes": "Thích TB / Video"
+  },
+  "calendar": {
+    "title": "Lịch Nội dung",
+    "today": "Hôm nay"
   },
   "projectCard": {
     "thumbnailAlt": "Hình thu nhỏ của video",
@@ -100,6 +117,11 @@ export default {
   "projectModal": {
     "createTitle": "Tạo dự án mới",
     "editTitle": "Chỉnh sửa dự án",
+    "tabContent": "Nội dung",
+    "tabPublishing": "Xuất bản",
+    "tabThumbnail": "Ảnh bìa",
+    "tabAiAssets": "Tài sản AI",
+    "tabStats": "Thống kê",
     "deleteConfirmation": "Xác nhận Xóa",
     "clearFormConfirmation": "Xác nhận Làm trống",
     "projectName": "Tên dự án",
@@ -167,11 +189,47 @@ export default {
     "addChannel": "Thêm Kênh Mới",
     "newChannelName": "Kênh Mới",
     "channelNamePlaceholder": "Nhập Tên Kênh",
+    "channelUrl": "URL Kênh YouTube",
+    "channelUrlPlaceholder": "VD: https://www.youtube.com/channel/...",
     "deleteChannel": "Xóa Kênh",
     "deleteChannelConfirmation": "Bạn có chắc chắn muốn xóa kênh này không? Hành động này không thể hoàn tác.",
     "deleteChannelError": "Không thể xóa kênh đang chứa dự án. Vui lòng di chuyển hoặc xóa các dự án trước.",
     "buildWithAI": "Xây dựng với AI",
     "channelDnaDescription": "Xác định bản sắc cho từng kênh của bạn để giúp AI tạo ra nội dung theo phong cách hoàn hảo."
+  },
+  "dream100": {
+    "title": "Dream 100: {{channelName}}",
+    "addVideo": "Thêm Video",
+    "addingVideo": "Đang thêm...",
+    "youtubeUrlPlaceholder": "Dán URL YouTube vào đây...",
+    "filterByChannel": "Lọc theo Kênh",
+    "allChannels": "Tất cả các Kênh",
+    "table": {
+      "video": "Video",
+      "stats": "Thống kê",
+      "published": "Ngày đăng",
+      "status": "Trạng thái",
+      "actions": "Hành động"
+    },
+    "details": {
+      "description": "Mô tả",
+      "tags": "Thẻ (Tags)",
+      "noTags": "Không có thẻ nào."
+    },
+    "noVideos": "Chưa có video nào trong danh sách Dream 100 của bạn.",
+    "getStarted": "Dán một URL YouTube vào trên để bắt đầu xây dựng danh sách.",
+    "deleteConfirmation": "Bạn có chắc chắn muốn xóa video này khỏi danh sách Dream 100 không?",
+    "status": {
+      "pending": "Chờ phân tích",
+      "analyzed": "Đã phân tích",
+      "remade": "Đã làm lại"
+    },
+    "toasts": {
+        "videoAdded": "Đã thêm video vào Dream 100!",
+        "videoExists": "Video này đã có trong danh sách Dream 100 của bạn.",
+        "fetchError": "Không thể lấy chi tiết video. Kiểm tra lại URL và khóa API của bạn.",
+        "videoRemoved": "Đã xóa video khỏi danh sách."
+    }
   },
    "channelDnaWizard": {
     "title": "Xây dựng ADN Kênh của bạn",
