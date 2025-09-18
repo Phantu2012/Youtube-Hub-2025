@@ -206,8 +206,8 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
         const aiApiKey = selectedProvider === 'gemini' ? apiKeys.gemini : apiKeys.openai;
         const prompt = hydratePrompt(step.promptTemplate, context);
         
-        const MAX_RETRIES = 3;
-        const INITIAL_DELAY_MS = 1000;
+        const MAX_RETRIES = 4;
+        const INITIAL_DELAY_MS = 2000;
 
         for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
@@ -239,11 +239,23 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                 }
                 return output; // Success
             } catch (error: any) {
-                const isRetryable = (error.message && (error.message.includes('500') || error.message.includes('INTERNAL') || error.message.includes('Server error')));
+                const errorMessage = String(error.message || '').toUpperCase();
+                // More robust check for retryable server-side errors
+                const isRetryable = (
+                    errorMessage.includes('503') || // Service Unavailable / Overloaded
+                    errorMessage.includes('500') || // Internal Server Error
+                    errorMessage.includes('429') || // Too Many Requests
+                    errorMessage.includes('UNAVAILABLE') ||
+                    errorMessage.includes('INTERNAL')
+                );
 
                 if (isRetryable && attempt < MAX_RETRIES) {
-                    const delay = INITIAL_DELAY_MS * Math.pow(2, attempt - 1);
-                    console.warn(`Attempt ${attempt} failed with a retryable error. Retrying in ${delay}ms...`, error.message);
+                    // Exponential backoff with jitter
+                    const baseDelay = INITIAL_DELAY_MS * Math.pow(2, attempt - 1);
+                    const jitter = Math.random() * 1000; // Add up to 1 second of randomness
+                    const delay = baseDelay + jitter;
+
+                    console.warn(`Attempt ${attempt} failed with a retryable error. Retrying in ${Math.round(delay)}ms...`, error.message);
                     await new Promise(resolve => setTimeout(resolve, delay));
                 } else {
                     console.error(`Final attempt (${attempt}) failed or error is not retryable.`, error);
