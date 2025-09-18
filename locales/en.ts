@@ -10,6 +10,7 @@ export default {
     "projects": "Projects",
     "automation": "Automation",
     "calendar": "Calendar",
+    "admin": "Admin",
     "openSettings": "Open settings",
     "toggleTheme": "Toggle theme",
     "logout": "Logout"
@@ -105,6 +106,38 @@ export default {
     },
     "outro": "After verifying all three settings, please try signing in again.",
     "tryAgainButton": "Try Again"
+  },
+  "adminPanel": {
+    "title": "Admin Panel",
+    "description": "Manage user accounts, approve new registrations, and set subscription expiry dates.",
+    "loadingUsers": "Loading users...",
+    "user": "User",
+    "status": "Status",
+    "expiresAt": "Expires At",
+    "actions": "Actions",
+    "noExpiry": "No Expiry",
+    "save": "Save",
+    "saving": "Saving...",
+    "statuses": {
+      "active": "Active",
+      "pending": "Pending",
+      "expired": "Expired"
+    },
+    "toasts": {
+      "userUpdated": "User '{{name}}' updated successfully.",
+      "updateFailed": "Failed to update user '{{name}}'.",
+      "fetchFailed": "Failed to fetch users."
+    },
+    "firstAdminSetup": {
+        "title": "First-Time Admin Setup",
+        "intro": "To access the Admin Panel, you need to manually grant admin rights to your own account. This is a one-time setup.",
+        "step1": "Go to your project's Firestore console.",
+        "step2": "Navigate to the 'users' collection.",
+        "step3": "Find the document with your user ID.",
+        "step4": "Add a new field: Name = 'isAdmin', Type = 'boolean', Value = 'true'.",
+        "step5": "Set your 'status' to 'active' and grant yourself a long 'expiresAt' date.",
+        "step6": "Reload this application. You should now see the Admin panel."
+    }
   },
   "projects": {
     "title": "Channel Projects",

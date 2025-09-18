@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Sun, Moon, Youtube, Settings, LogOut, Globe, ChevronDown, Calendar } from 'lucide-react';
+import { Sun, Moon, Youtube, Settings, LogOut, Globe, ChevronDown, Calendar, Shield } from 'lucide-react';
 import { User } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -11,8 +11,8 @@ interface HeaderProps {
     toggleTheme: () => void;
     onOpenSettings: () => void;
     onLogout: () => void;
-    activeView: 'projects' | 'automation' | 'calendar';
-    setActiveView: (view: 'projects' | 'automation' | 'calendar') => void;
+    activeView: 'projects' | 'automation' | 'calendar' | 'admin';
+    setActiveView: (view: 'projects' | 'automation' | 'calendar' | 'admin') => void;
 }
 
 const NavButton: React.FC<{
@@ -40,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({ user, theme, toggleTheme, onOpen
     const langMenuRef = useRef<HTMLDivElement>(null);
 
     const handleClickOutside = (event: MouseEvent) => {
+        // FIX: Corrected a typo, changed `userMenu` to `userMenuRef` to correctly reference the menu's DOM element.
         if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
             setIsUserMenuOpen(false);
         }
@@ -86,6 +87,13 @@ export const Header: React.FC<HeaderProps> = ({ user, theme, toggleTheme, onOpen
                         isActive={activeView === 'calendar'}
                         onClick={() => setActiveView('calendar')}
                     />
+                    {user?.isAdmin && (
+                         <NavButton
+                            label={t('header.admin')}
+                            isActive={activeView === 'admin'}
+                            onClick={() => setActiveView('admin')}
+                        />
+                    )}
                 </nav>
 
                 {/* Right Section */}
@@ -116,7 +124,10 @@ export const Header: React.FC<HeaderProps> = ({ user, theme, toggleTheme, onOpen
                             {isUserMenuOpen && (
                                 <div className="absolute right-0 mt-2 w-60 bg-light-card dark:bg-dark-card border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-10">
                                     <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-                                        <p className="font-semibold text-sm truncate">{user.name}</p>
+                                        <div className="flex justify-between items-center">
+                                            <p className="font-semibold text-sm truncate">{user.name}</p>
+                                            {user.isAdmin && <span title="Administrator" className="text-blue-500"><Shield size={16}/></span>}
+                                        </div>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                                     </div>
                                     <div className="p-1">

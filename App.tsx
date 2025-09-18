@@ -6,6 +6,7 @@ import { Header } from './components/Header';
 import { ProjectList } from './components/ProjectList';
 import { AutomationEngine } from './components/AutomationEngine';
 import { CalendarView } from './components/CalendarView';
+import { AdminPanel } from './components/AdminPanel';
 import { ProjectModal } from './components/ProjectModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Dream100Modal } from './components/Dream100Modal';
@@ -42,6 +43,7 @@ const MOCK_USER: User = {
   avatar: 'https://i.pravatar.cc/150?u=dev',
   status: 'active',
   expiresAt: null,
+  isAdmin: true,
 };
 
 // Add default placeholder keys for development convenience.
@@ -67,7 +69,7 @@ const AppContent: React.FC = () => {
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'projects' | 'automation' | 'calendar'>('projects');
+  const [activeView, setActiveView] = useState<'projects' | 'automation' | 'calendar' | 'admin'>('projects');
   const [channels, setChannels] = useLocalStorage<Channel[]>('channels', []);
   const { t } = useTranslation();
   const [dbConnectionError, setDbConnectionError] = useState<boolean>(false);
@@ -120,7 +122,8 @@ const AppContent: React.FC = () => {
               email: firebaseUser.email || 'No email',
               avatar: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
               status: finalStatus,
-              expiresAt: docData.expiresAt ? docData.expiresAt.toDate().toISOString() : null
+              expiresAt: docData.expiresAt ? docData.expiresAt.toDate().toISOString() : null,
+              isAdmin: docData.isAdmin || false,
             };
             setUser(userData);
           } else {
@@ -132,6 +135,7 @@ const AppContent: React.FC = () => {
               status: 'pending',
               expiresAt: null,
               createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              isAdmin: false,
             };
             await userDocRef.set(newUserPayload);
             
@@ -144,6 +148,7 @@ const AppContent: React.FC = () => {
                 avatar: newUserPayload.avatar,
                 status: 'pending',
                 expiresAt: newUserPayload.expiresAt,
+                isAdmin: newUserPayload.isAdmin,
             };
             setUser(newUserData);
           }
@@ -620,6 +625,9 @@ const AppContent: React.FC = () => {
             projects={projects}
             onSelectProject={handleOpenModal}
           />
+        )}
+        {activeView === 'admin' && user?.isAdmin && (
+            <AdminPanel showToast={showToast} />
         )}
       </main>
       

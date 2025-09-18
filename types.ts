@@ -102,6 +102,7 @@ export interface User {
     avatar: string;
     status: 'pending' | 'active' | 'expired';
     expiresAt: string | null; // ISO date string
+    isAdmin?: boolean;
 }
 
 /**

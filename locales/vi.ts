@@ -10,6 +10,7 @@ export default {
     "projects": "Dự án",
     "automation": "Tự động hóa",
     "calendar": "Lịch",
+    "admin": "Quản trị",
     "openSettings": "Mở cài đặt",
     "toggleTheme": "Chuyển đổi giao diện",
     "logout": "Đăng xuất"
@@ -105,6 +106,38 @@ export default {
     },
     "outro": "Sau khi xác minh cả ba cài đặt, vui lòng thử đăng nhập lại.",
     "tryAgainButton": "Thử lại"
+  },
+  "adminPanel": {
+    "title": "Bảng điều khiển Admin",
+    "description": "Quản lý tài khoản người dùng, phê duyệt đăng ký mới và đặt ngày hết hạn.",
+    "loadingUsers": "Đang tải danh sách người dùng...",
+    "user": "Người dùng",
+    "status": "Trạng thái",
+    "expiresAt": "Ngày hết hạn",
+    "actions": "Hành động",
+    "noExpiry": "Không hết hạn",
+    "save": "Lưu",
+    "saving": "Đang lưu...",
+    "statuses": {
+      "active": "Hoạt động",
+      "pending": "Chờ duyệt",
+      "expired": "Hết hạn"
+    },
+    "toasts": {
+      "userUpdated": "Đã cập nhật người dùng '{{name}}' thành công.",
+      "updateFailed": "Cập nhật người dùng '{{name}}' thất bại.",
+      "fetchFailed": "Không thể tải danh sách người dùng."
+    },
+    "firstAdminSetup": {
+        "title": "Thiết lập Admin Lần đầu",
+        "intro": "Để truy cập Bảng điều khiển Admin, bạn cần cấp quyền admin cho chính tài khoản của mình. Đây là thao tác chỉ thực hiện một lần.",
+        "step1": "Đi đến bảng điều khiển Firestore của dự án.",
+        "step2": "Điều hướng đến collection 'users'.",
+        "step3": "Tìm tài liệu có ID người dùng của bạn.",
+        "step4": "Thêm một trường mới: Tên = 'isAdmin', Loại = 'boolean', Giá trị = 'true'.",
+        "step5": "Đặt 'status' của bạn thành 'active' và cấp cho mình một ngày 'expiresAt' thật xa.",
+        "step6": "Tải lại ứng dụng này. Bây giờ bạn sẽ thấy bảng điều khiển Admin."
+    }
   },
   "projects": {
     "title": "Dự án theo Kênh",
