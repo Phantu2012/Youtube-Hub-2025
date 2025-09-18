@@ -1,7 +1,9 @@
 
 export default {
   "common": {
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "copy": "Sao chép",
+    "copied": "Đã sao chép!"
   },
   "header": {
     "title": "Trung tâm Video YouTube",
@@ -64,7 +66,10 @@ export default {
     },
     "step2": {
       "title": "Bước 2: Kiểm tra Quy tắc Bảo mật",
-      "description": "Nếu cơ sở dữ liệu đã tồn tại, các quy tắc bảo mật của bạn có thể đang từ chối quyền truy cập. Đảm bảo người dùng đã đăng nhập có thể đọc và ghi dữ liệu của chính họ.",
+      "description": "Nếu cơ sở dữ liệu đã tồn tại, các quy tắc bảo mật của bạn có thể đang từ chối quyền truy cập. Hãy làm theo các bước sau để thiết lập quy tắc truy cập an toàn cho mỗi người dùng.",
+      "instruction1": "Nhấp vào nút bên dưới để mở tab 'Quy tắc' (Rules) trong Bảng điều khiển Firebase.",
+      "instruction2": "Thay thế toàn bộ nội dung trong trình soạn thảo bằng ví dụ an toàn dưới đây. Quy tắc này đảm bảo rằng người dùng đã đăng nhập chỉ có thể đọc và ghi các tài liệu của chính họ.",
+      "rulesExampleTitle": "Quy tắc Bảo mật An toàn được Đề xuất",
       "button": "Chỉnh sửa Quy tắc Bảo mật"
     },
     "step3": {

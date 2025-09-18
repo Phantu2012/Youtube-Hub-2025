@@ -1,7 +1,9 @@
 
 export default {
   "common": {
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "copy": "Copy",
+    "copied": "Copied!"
   },
   "header": {
     "title": "YouTube Video Hub",
@@ -64,7 +66,10 @@ export default {
     },
     "step2": {
       "title": "Step 2: Check Security Rules",
-      "description": "If a database already exists, your security rules might be denying access. Ensure that logged-in users can read and write their own data.",
+      "description": "If a database exists, your security rules might be denying access. Follow these steps to set up secure, per-user access rules.",
+      "instruction1": "Click the button below to open the 'Rules' tab in the Firebase Console.",
+      "instruction2": "Replace the entire content of the editor with the secure example below. This rule ensures that a logged-in user can only read and write their own documents.",
+      "rulesExampleTitle": "Recommended Secure Rules",
       "button": "Edit Security Rules"
     },
     "step3": {
