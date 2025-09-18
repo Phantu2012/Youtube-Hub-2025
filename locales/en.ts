@@ -1,6 +1,7 @@
 
 
 
+
 export default {
   "common": {
     "cancel": "Cancel"
@@ -20,13 +21,20 @@ export default {
     "tagline": "Your all-in-one dashboard to manage, track, and optimize your video production workflow.",
     "signInTitle": "Sign In",
     "signInPrompt": "Sign in to access your projects.",
-    "signInButton": "Sign in with Google",
+    "signInButton": "Sign In",
+    "signInWithGoogle": "Sign in with Google",
+    "createAccountButton": "Create Account",
+    "signInTab": "Sign In",
+    "registerTab": "Register",
+    "email": "Email Address",
+    "password": "Password",
+    "orContinueWith": "Or continue with",
     "securityNote": "Sign in with your Google Account to securely save and sync your projects across devices.",
     "setupGuide": {
       "title": "First-Time Setup Guide",
       "intro": "If sign-in fails, please complete these one-time setup steps in your Firebase and Google Cloud projects.",
-      "step1Title": "Step 1: Enable Google Sign-In",
-      "step1Desc": "In Firebase, go to Authentication -> Sign-in method and enable the 'Google' provider.",
+      "step1Title": "Step 1: Enable Sign-In Methods",
+      "step1Desc": "In Firebase, go to Authentication -> Sign-in method and enable the 'Google' and 'Email/Password' providers.",
       "step1Button": "Open Sign-In Methods",
       "step2Title": "Step 2: Authorize Your Domain",
       "step2Desc": "In Firebase Authentication settings, add your app's domain to the 'Authorized domains' list.",
@@ -431,6 +439,10 @@ export default {
     "unsupportedEnvironment": "Sign-in failed. Your browser environment may be blocking storage. Try opening the app in a new tab or check your privacy settings.",
     "googleSignInNotEnabled": "Error: Please enable Google Sign-In in your Firebase project settings.",
     "signInError": "An error occurred during sign-in.",
+    "invalidCredentials": "Invalid email or password. Please try again.",
+    "emailInUse": "This email address is already in use by another account.",
+    "weakPassword": "Password should be at least 6 characters.",
+    "registrationFailed": "Failed to create account. Please try again.",
     "logoutDisabledDev": "Logout is disabled in development mode.",
     "loggedOut": "You have been logged out.",
     "logoutFailed": "Failed to log out.",

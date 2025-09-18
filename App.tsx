@@ -80,6 +80,7 @@ const AppContent: React.FC = () => {
   const [channels, setChannels] = useLocalStorage<Channel[]>('channels', []);
   const { t } = useTranslation();
   const [dbConnectionError, setDbConnectionError] = useState<DbError | null>(null);
+  // FIX: Corrected syntax for useState by adding the closing angle bracket `>`.
   const [signInError, setSignInError] = useState<{ code: string; domain?: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [dream100Channel, setDream100Channel] = useState<Channel | null>(null);
@@ -493,7 +494,7 @@ const AppContent: React.FC = () => {
   };
 
   // handleLogin now uses signInWithRedirect
-  const handleLogin = async () => {
+  const handleLoginWithGoogle = async () => {
     try {
       setDbConnectionError(null);
       setSignInError(null);
@@ -505,6 +506,43 @@ const AppContent: React.FC = () => {
       showToast(t('toasts.signInError'), 'error');
     }
   };
+  
+  const handleLoginWithEmail = async (email: string, password: string): Promise<void> => {
+    try {
+      setDbConnectionError(null);
+      setSignInError(null);
+      await auth.signInWithEmailAndPassword(email, password);
+      // onAuthStateChanged will handle the rest
+    } catch (error: any) {
+      console.error("Email/Password Sign-In Error:", error);
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        showToast(t('toasts.invalidCredentials'), 'error');
+      } else {
+        showToast(t('toasts.signInError'), 'error');
+      }
+      throw error;
+    }
+  };
+
+  const handleRegisterWithEmail = async (email: string, password: string): Promise<void> => {
+    try {
+      setDbConnectionError(null);
+      setSignInError(null);
+      await auth.createUserWithEmailAndPassword(email, password);
+      // onAuthStateChanged will handle creating the user document in Firestore
+    } catch (error: any) {
+      console.error("Email/Password Registration Error:", error);
+      if (error.code === 'auth/email-already-in-use') {
+        showToast(t('toasts.emailInUse'), 'error');
+      } else if (error.code === 'auth/weak-password') {
+        showToast(t('toasts.weakPassword'), 'error');
+      } else {
+        showToast(t('toasts.registrationFailed'), 'error');
+      }
+      throw error;
+    }
+  };
+
 
   // handleLogout updated to use v8 Auth syntax
   const handleLogout = async () => {
@@ -539,7 +577,13 @@ const AppContent: React.FC = () => {
   }
 
   if (!user) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return (
+        <LoginScreen 
+            onLoginWithGoogle={handleLoginWithGoogle}
+            onLoginWithEmail={handleLoginWithEmail}
+            onRegisterWithEmail={handleRegisterWithEmail}
+        />
+    );
   }
 
   if (user.status === 'pending') {

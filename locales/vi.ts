@@ -1,6 +1,7 @@
 
 
 
+
 export default {
   "common": {
     "cancel": "Hủy"
@@ -20,13 +21,20 @@ export default {
     "tagline": "Bảng điều khiển tất cả trong một để quản lý, theo dõi và tối ưu hóa quy trình sản xuất video của bạn.",
     "signInTitle": "Đăng nhập",
     "signInPrompt": "Đăng nhập để truy cập các dự án của bạn.",
-    "signInButton": "Đăng nhập bằng Google",
+    "signInButton": "Đăng nhập",
+    "signInWithGoogle": "Đăng nhập bằng Google",
+    "createAccountButton": "Tạo tài khoản",
+    "signInTab": "Đăng nhập",
+    "registerTab": "Đăng ký",
+    "email": "Địa chỉ Email",
+    "password": "Mật khẩu",
+    "orContinueWith": "Hoặc tiếp tục với",
     "securityNote": "Đăng nhập bằng Tài khoản Google của bạn để lưu và đồng bộ hóa các dự án của bạn một cách an toàn trên các thiết bị.",
     "setupGuide": {
       "title": "Hướng dẫn Cài đặt Lần đầu",
       "intro": "Nếu đăng nhập thất bại, vui lòng hoàn thành các bước cài đặt một lần sau trong dự án Firebase và Google Cloud của bạn.",
-      "step1Title": "Bước 1: Bật Đăng nhập bằng Google",
-      "step1Desc": "Trong Firebase, đi tới Xác thực -> Phương thức đăng nhập và bật nhà cung cấp 'Google'.",
+      "step1Title": "Bước 1: Bật Phương thức Đăng nhập",
+      "step1Desc": "Trong Firebase, đi tới Xác thực -> Phương thức đăng nhập và bật nhà cung cấp 'Google' và 'Email/Mật khẩu'.",
       "step1Button": "Mở Phương thức Đăng nhập",
       "step2Title": "Bước 2: Ủy quyền Tên miền của bạn",
       "step2Desc": "Trong cài đặt Xác thực Firebase, hãy thêm tên miền ứng dụng của bạn vào danh sách 'Miền được ủy quyền'.",
@@ -426,6 +434,10 @@ export default {
     "unsupportedEnvironment": "Đăng nhập thất bại. Môi trường trình duyệt của bạn có thể đang chặn lưu trữ. Hãy thử mở ứng dụng trong một tab mới hoặc kiểm tra cài đặt bảo mật của bạn.",
     "googleSignInNotEnabled": "Lỗi: Vui lòng bật Đăng nhập bằng Google trong cài đặt dự án Firebase của bạn.",
     "signInError": "Đã xảy ra lỗi trong quá trình đăng nhập.",
+    "invalidCredentials": "Email hoặc mật khẩu không hợp lệ. Vui lòng thử lại.",
+    "emailInUse": "Địa chỉ email này đã được sử dụng bởi một tài khoản khác.",
+    "weakPassword": "Mật khẩu phải có ít nhất 6 ký tự.",
+    "registrationFailed": "Không thể tạo tài khoản. Vui lòng thử lại.",
     "logoutDisabledDev": "Chức năng đăng xuất bị tắt trong chế độ phát triển.",
     "loggedOut": "Bạn đã đăng xuất.",
     "logoutFailed": "Đăng xuất thất bại.",
