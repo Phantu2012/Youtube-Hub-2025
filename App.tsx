@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -200,7 +201,7 @@ const AppContent: React.FC = () => {
 
   // Listener for project data from Firestore using v8 syntax
   useEffect(() => {
-    if (user?.uid && user.status === 'active') {
+    if (user?.uid && user.status === 'active' && !IS_DEV_MODE) { // Don't fetch in dev mode
       setIsLoading(true);
       const projectsCollectionRef = db.collection('users').doc(user.uid).collection('projects');
       const q = projectsCollectionRef.orderBy('publishDateTime', 'desc');
@@ -228,7 +229,7 @@ const AppContent: React.FC = () => {
       });
 
       return () => unsubscribe();
-    } else {
+    } else if (!IS_DEV_MODE) {
         setProjects([]);
     }
   }, [user, showToast, t]);
@@ -344,6 +345,22 @@ const AppContent: React.FC = () => {
     }
 
     setIsSaving(true);
+    
+    if (IS_DEV_MODE) {
+        setTimeout(() => {
+            if ('id' in projectToSave && projectToSave.id) {
+                setProjects(prevProjects => prevProjects.map(p => p.id === projectToSave.id ? projectToSave : p));
+                showToast(t('toasts.projectUpdated'), 'success');
+            } else {
+                const newProject = { ...projectToSave, id: `dev-proj-${Date.now()}` };
+                setProjects(prevProjects => [newProject, ...prevProjects]);
+                showToast(t('toasts.projectCreated'), 'success');
+            }
+            setIsSaving(false);
+            handleCloseModal();
+        }, 1000);
+        return;
+    }
 
     const performSave = async () => {
         const dataToSave = {
@@ -405,17 +422,28 @@ const AppContent: React.FC = () => {
           youtubeLink: '',
       };
       
-      await handleSaveProject(newProject as Project);
+      handleSaveProject(newProject as Project);
       showToast(t('toasts.projectCopied'), 'success');
   };
 
-  // handleDeleteProject updated to use v8 Firestore syntax
   const handleDeleteProject = async (projectId: string) => {
     if (!user) {
         const err = new Error('User not logged in');
         showToast(t('toasts.loginRequiredToDelete'), 'error');
         throw err;
     }
+
+    if (IS_DEV_MODE) {
+        return new Promise<void>((resolve) => {
+            setTimeout(() => {
+                setProjects(prev => prev.filter(p => p.id !== projectId));
+                showToast(t('toasts.projectDeleted'), 'info');
+                handleCloseModal();
+                resolve();
+            }, 500);
+        });
+    }
+
     try {
         const projectDocRef = db.collection('users').doc(user.uid).collection('projects').doc(projectId);
         await projectDocRef.delete();
