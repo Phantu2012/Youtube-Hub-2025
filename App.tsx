@@ -198,7 +198,9 @@ const AppContent: React.FC = () => {
     if (user?.uid && user.status === 'active' && !IS_DEV_MODE) { // Don't fetch in dev mode
       setIsLoading(true);
       const projectsCollectionRef = db.collection('users').doc(user.uid).collection('projects');
-      const q = projectsCollectionRef.orderBy('publishDateTime', 'desc');
+      // FIX: Removed `.orderBy('publishDateTime', 'desc')` to prevent Firestore error on missing index.
+      // Sorting will now be handled on the client-side after data retrieval.
+      const q = projectsCollectionRef;
       
       const unsubscribe = q.onSnapshot((snapshot) => {
         const projectsData = snapshot.docs.map(doc => {
@@ -214,6 +216,8 @@ const AppContent: React.FC = () => {
             publishDateTime,
           } as Project;
         });
+        // Sort projects on the client side to maintain order without needing a Firestore index.
+        projectsData.sort((a, b) => new Date(b.publishDateTime).getTime() - new Date(a.publishDateTime).getTime());
         setProjects(projectsData);
         setIsLoading(false);
       }, (error) => {
