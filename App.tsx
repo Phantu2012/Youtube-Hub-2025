@@ -198,8 +198,6 @@ const AppContent: React.FC = () => {
     if (user?.uid && user.status === 'active' && !IS_DEV_MODE) { // Don't fetch in dev mode
       setIsLoading(true);
       const projectsCollectionRef = db.collection('users').doc(user.uid).collection('projects');
-      // FIX: Removed `.orderBy('publishDateTime', 'desc')` to prevent Firestore error on missing index.
-      // Sorting will now be handled on the client-side after data retrieval.
       const q = projectsCollectionRef;
       
       const unsubscribe = q.onSnapshot((snapshot) => {
@@ -220,9 +218,13 @@ const AppContent: React.FC = () => {
         projectsData.sort((a, b) => new Date(b.publishDateTime).getTime() - new Date(a.publishDateTime).getTime());
         setProjects(projectsData);
         setIsLoading(false);
-      }, (error) => {
+      }, (error: any) => {
         console.error("Error fetching projects: ", error);
-        showToast(t('toasts.fetchProjectsError'), 'error');
+        if (error.code === 'permission-denied') {
+            setDbConnectionError(true);
+        } else {
+            showToast(t('toasts.fetchProjectsError'), 'error');
+        }
         setIsLoading(false);
       });
 
@@ -246,9 +248,13 @@ const AppContent: React.FC = () => {
                 } as Channel;
             });
             setChannels(channelsData);
-        }, (error) => {
+        }, (error: any) => {
             console.error("Error fetching channels: ", error);
-            showToast(t('toasts.fetchChannelsError'), 'error');
+            if (error.code === 'permission-denied') {
+                setDbConnectionError(true);
+            } else {
+                showToast(t('toasts.fetchChannelsError'), 'error');
+            }
         });
         
         return () => unsubscribe();
@@ -718,7 +724,7 @@ const AppContent: React.FC = () => {
   }
 
   if (dbConnectionError) {
-      return <DbConnectionErrorScreen onReset={() => setDbConnectionError(false)} />;
+      return <DbConnectionErrorScreen onReset={() => window.location.reload()} />;
   }
 
   if (!user) {
