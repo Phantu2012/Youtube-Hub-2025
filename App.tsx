@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -155,16 +156,17 @@ const AppContent: React.FC = () => {
             setUser(newUserData);
           }
         } else {
-          // User is signed out
+          // User is signed out, no data to fetch, so loading is complete.
           setUser(null);
           setProjects([]);
+          setIsLoading(false);
         }
       } catch (error: any) {
         console.error("Firestore connection error:", error);
         setDbConnectionError(true);
         setUser(null);
         setProjects([]);
-      } finally {
+        // Error occurred, stop loading.
         setIsLoading(false);
       }
     });
@@ -195,8 +197,7 @@ const AppContent: React.FC = () => {
 
   // Listener for project data from Firestore using v8 syntax
   useEffect(() => {
-    if (user?.uid && user.status === 'active' && !IS_DEV_MODE) { // Don't fetch in dev mode
-      setIsLoading(true);
+    if (user?.uid && user.status === 'active' && !IS_DEV_MODE) {
       const projectsCollectionRef = db.collection('users').doc(user.uid).collection('projects');
       const q = projectsCollectionRef;
       
@@ -214,9 +215,9 @@ const AppContent: React.FC = () => {
             publishDateTime,
           } as Project;
         });
-        // Sort projects on the client side to maintain order without needing a Firestore index.
         projectsData.sort((a, b) => new Date(b.publishDateTime).getTime() - new Date(a.publishDateTime).getTime());
         setProjects(projectsData);
+        // This is the first successful data fetch, so we can consider loading complete.
         setIsLoading(false);
       }, (error: any) => {
         console.error("Error fetching projects: ", error);
@@ -248,10 +249,13 @@ const AppContent: React.FC = () => {
                 } as Channel;
             });
             setChannels(channelsData);
+            // The projects listener handles setting isLoading to false on success.
         }, (error: any) => {
             console.error("Error fetching channels: ", error);
             if (error.code === 'permission-denied') {
                 setDbConnectionError(true);
+                // Ensure loading stops if this listener errors out first
+                setIsLoading(false);
             } else {
                 showToast(t('toasts.fetchChannelsError'), 'error');
             }
@@ -261,7 +265,7 @@ const AppContent: React.FC = () => {
     } else if (!IS_DEV_MODE && !isLoading && !user) {
         setChannels([]);
     }
-  }, [user, showToast, t, setChannels, isLoading]);
+  }, [user, showToast, t, setChannels]);
   
   // This effect fetches channel stats when channels are loaded or updated
   useEffect(() => {
