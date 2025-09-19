@@ -1,8 +1,15 @@
-// FIX: Corrected Firebase imports to use the compat library for v8 syntax compatibility.
-import firebase from "firebase/compat/app";
-import "firebase/compat/auth";
-import "firebase/compat/firestore";
 import { firebaseConfig } from './firebaseConfig';
+
+// Add type declaration for the global firebase object created by the script tags
+declare global {
+  interface Window {
+    firebase: any; 
+  }
+}
+
+// Access the firebase object from the global window scope
+const firebase = window.firebase;
+
 
 // Initialize Firebase using v8 syntax, preventing re-initialization.
 if (!firebase.apps.length) {
@@ -14,4 +21,4 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-export { auth, db, googleProvider, firebaseConfig };
+export { auth, db, googleProvider, firebase, firebaseConfig };

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -20,21 +21,23 @@ import { Loader } from 'lucide-react';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { useTranslation } from './hooks/useTranslation';
 import { fetchChannelStats } from './services/youtubeService';
-
-// FIX: Corrected Firebase imports to use the compat library for v8 syntax compatibility.
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import 'firebase/compat/firestore';
-import { auth, db, googleProvider } from './firebase';
+import { auth, db, googleProvider, firebase } from './firebase';
 
 // Define FirebaseUser type for v8.
-type FirebaseUser = firebase.User;
+// FIX: The type `firebase.User` cannot be resolved correctly because the global `firebase` object from the script tag is not fully typed.
+// Defining a minimal type for the user object provides the necessary type information for the properties being used.
+type FirebaseUser = {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+};
 
 
 // --- DEVELOPMENT MODE FLAG ---
 // Set to true to bypass login and use a mock user for development.
 // Set to false for production to enable real Google Sign-In.
-const IS_DEV_MODE = false;
+const IS_DEV_MODE = true;
 
 const MOCK_USER: User = {
   uid: 'dev-user-01',
