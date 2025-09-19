@@ -37,7 +37,7 @@ type FirebaseUser = {
 // --- DEVELOPMENT MODE FLAG ---
 // Set to true to bypass login and use a mock user for development.
 // Set to false for production to enable real Google Sign-In.
-const IS_DEV_MODE = true;
+const IS_DEV_MODE = false;
 
 const MOCK_USER: User = {
   uid: 'dev-user-01',
