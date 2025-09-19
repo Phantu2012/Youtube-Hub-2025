@@ -1,5 +1,5 @@
 
-import { ProjectStatus, AutomationStep, Dream100VideoStatus } from './types';
+import { ProjectStatus, AutomationStep, Dream100VideoStatus, IdeaStatus } from './types';
 
 // The 't' function will be provided by the useTranslation hook in the component
 export const getStatusOptions = (t: (key: string) => string) => [
@@ -28,6 +28,18 @@ export const DREAM100_STATUS_COLORS: { [key in Dream100VideoStatus]: string } = 
     [Dream100VideoStatus.Pending]: 'bg-gray-500',
     [Dream100VideoStatus.Analyzed]: 'bg-blue-500',
     [Dream100VideoStatus.Remade]: 'bg-green-500',
+};
+
+export const getIdeaStatusOptions = (t: (key: string) => string) => [
+    { value: IdeaStatus.NotStarted, label: t('ideaBankModal.status.notStarted') },
+    { value: IdeaStatus.Done, label: t('ideaBankModal.status.done') },
+    { value: IdeaStatus.Redo, label: t('ideaBankModal.status.redo') },
+];
+
+export const IDEA_STATUS_COLORS: { [key in IdeaStatus]: string } = {
+    [IdeaStatus.NotStarted]: 'bg-gray-500',
+    [IdeaStatus.Done]: 'bg-green-500',
+    [IdeaStatus.Redo]: 'bg-yellow-500',
 };
 
 

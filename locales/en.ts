@@ -1,5 +1,3 @@
-
-
 export default {
   "common": {
     "cancel": "Cancel",
@@ -408,16 +406,22 @@ export default {
     },
     "runButton": "Run Automation Chain",
     "runningButton": "Running Chain...",
+    "stopButton": "Stop Chain",
+    "stoppingButton": "Stopping...",
     "resumeButton": "Resume Chain",
     "resetChainProgress": "Reset Chain Progress",
     "resetInputs": "Reset Inputs",
     "resetChainConfirmation": "Are you sure you want to reset the progress? All generated outputs will be cleared, but your inputs will remain.",
     "resetInputsConfirmation": "Are you sure you want to reset all inputs and progress? The automation engine will be cleared to its initial state.",
     "createProjectButton": "Create Project from Results",
+    "ideaBank": "Idea Bank",
     "stepLabel": "Step {{id}}:",
     "expand": "Expand",
     "collapse": "Collapse",
     "promptTemplate": "Prompt Template",
+    "restoreDefaultPrompt": "Restore Default",
+    "restoreConfirmButton": "Confirm Restore",
+    "restoreDefaultConfirmation": "Are you sure you want to restore the original prompt for this step? All current changes will be lost.",
     "promptHint": "You can edit this prompt. Use placeholders like `{{TARGET_VIDEO_TITLE}}` or `{{VIRAL_VIDEO_TRANSCRIPT}}` to chain steps.",
     "output": "Output",
     "copyOutput": "Copy output",
@@ -470,6 +474,29 @@ export default {
       "description": "Matches visual prompts to dialogue timestamps from a provided SRT file to create a synchronized shot list."
     }
   },
+   "ideaBankModal": {
+    "title": "Idea Bank",
+    "addNewIdea": "Add New Idea(s)",
+    "addNewIdeaPlaceholder": "Enter one idea per line...",
+    "add": "Add",
+    "table": {
+        "title": "Title",
+        "status": "Status",
+        "actions": "Actions"
+    },
+    "status": {
+        "notStarted": "Not Started",
+        "done": "Done",
+        "redo": "Redo"
+    },
+    "actions": {
+        "useAsMain": "Use as Main Topic",
+        "useAsNext": "Use as Next Topic",
+        "delete": "Delete"
+    },
+    "noIdeas": "No ideas yet. Add one above to get started!",
+    "deleteConfirm": "Are you sure you want to delete this idea?"
+  },
   "toasts": {
     "fetchProjectsError": "Could not fetch projects.",
     "settingsSaved": "Settings saved successfully!",
@@ -512,6 +539,8 @@ export default {
     "stepError500": "A temporary internal error occurred in: {{stepName}}. Please try again in a moment.",
     "stepRerunSuccess": "Step '{{stepName}}' re-run successfully!",
     "chainCompleted": "Automation chain completed!",
+    "automationStopped": "Automation stopped by user.",
+    "stoppingAutomation": "Stopping automation...",
     "srtRequired": "Please provide SRT content for the final step to continue.",
     "chainAlreadyCompleted": "The automation chain has already completed successfully.",
     "rerunDataLoaded": "Loaded data from '{{projectName}}' for a new automation run.",
@@ -522,6 +551,10 @@ export default {
     "step5AutoFilled": "Step 5 inputs have been auto-filled from Step 4's best choice!",
     "projectExported": "Project data copied to clipboard!",
     "exportFailed": "Could not copy data to clipboard.",
+    "promptRestored": "The prompt for Step {{id}} has been restored to its default.",
+     "ideaAdded": "Idea(s) added successfully!",
+    "ideaUpdated": "Idea status updated.",
+    "ideaDeleted": "Idea deleted.",
     "generated": {
       "videoTitle": "Video title generated!",
       "description": "Description generated!",

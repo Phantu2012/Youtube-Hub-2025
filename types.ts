@@ -14,6 +14,18 @@ export enum Dream100VideoStatus {
     Remade = 'Remade',
 }
 
+export enum IdeaStatus {
+    NotStarted = 'Not Started',
+    Done = 'Done',
+    Redo = 'Redo',
+}
+
+export interface Idea {
+    id: string;
+    title: string;
+    status: IdeaStatus;
+}
+
 export interface Dream100Video {
     id: string; // YouTube video ID
     title: string;

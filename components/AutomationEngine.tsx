@@ -1,14 +1,16 @@
 
 
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI } from "@google/genai";
-import { Channel, ChannelDna, Project, ProjectStatus, ToastMessage, AutomationStep, AutomationStepStatus, YouTubeVideoDetails, ApiKeys, AIProvider, AIModel } from '../types';
-import { Bot, Loader, Sparkles, FilePlus2, PlayCircle, Youtube, Search, RotateCcw, Trash2, ChevronDown } from 'lucide-react';
+import { Channel, ChannelDna, Project, ProjectStatus, ToastMessage, AutomationStep, AutomationStepStatus, YouTubeVideoDetails, ApiKeys, AIProvider, AIModel, Idea } from '../types';
+import { Bot, Loader, Sparkles, FilePlus2, PlayCircle, Youtube, Search, RotateCcw, Trash2, ChevronDown, StopCircle, Lightbulb } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { DEFAULT_AUTOMATION_STEPS } from '../constants';
 import { AutomationStepCard } from './AutomationStepCard';
 import { useTranslation } from '../hooks/useTranslation';
 import { fetchVideoDetails } from '../services/youtubeService';
+import { IdeaBankModal } from './IdeaBankModal';
 
 interface AutomationEngineProps {
     channels: Channel[];
@@ -17,6 +19,8 @@ interface AutomationEngineProps {
     apiKeys: ApiKeys;
     selectedProvider: AIProvider;
     selectedModel: AIModel;
+    ideaBank: Record<string, Idea[]>;
+    setIdeaBank: React.Dispatch<React.SetStateAction<Record<string, Idea[]>>>;
 }
 
 interface AutomationInput {
@@ -44,7 +48,7 @@ interface Step5Inputs {
 type StepSettings = Record<number, Record<string, string | number>>;
 
 
-export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, onOpenProjectModal, showToast, apiKeys, selectedProvider, selectedModel }) => {
+export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, onOpenProjectModal, showToast, apiKeys, selectedProvider, selectedModel, ideaBank, setIdeaBank }) => {
     const { t } = useTranslation();
     const [selectedChannelId, setSelectedChannelId] = useLocalStorage<string>('automation-selected-channel', '');
 
@@ -62,12 +66,15 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
     });
     const [isFetchingDetails, setIsFetchingDetails] = useState(false);
     const [isRunning, setIsRunning] = useState(false);
+    const [isStopping, setIsStopping] = useState(false);
+    const stopExecutionRef = useRef(false);
     const [steps, setSteps] = useLocalStorage<AutomationStep[]>('automation-steps', DEFAULT_AUTOMATION_STEPS);
     const [stepStatus, setStepStatus] = useLocalStorage<Record<number, AutomationStepStatus>>('automation-status', {});
     const [stepOutputs, setStepOutputs] = useLocalStorage<Record<number, string>>('automation-outputs', {});
     const [currentStep, setCurrentStep] = useState<number | null>(null);
     const [pausedAtStep, setPausedAtStep] = useLocalStorage<number | null>('automation-paused-step', null);
     const [stepSettings, setStepSettings] = useLocalStorage<StepSettings>('automation-settings', {});
+    const [isIdeaBankOpen, setIsIdeaBankOpen] = useState(false);
 
     useEffect(() => {
         const rerunDataString = localStorage.getItem('rerun-data');
@@ -143,6 +150,18 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
 
     const handlePromptChange = (id: number, newPrompt: string) => {
         setSteps(prevSteps => prevSteps.map(step => step.id === id ? { ...step, promptTemplate: newPrompt } : step));
+    };
+
+    const handleRestoreDefaultPrompt = (stepId: number) => {
+        const defaultStep = DEFAULT_AUTOMATION_STEPS.find(s => s.id === stepId);
+        if (defaultStep) {
+            setSteps(prevSteps => prevSteps.map(step => 
+                step.id === stepId 
+                ? { ...step, promptTemplate: defaultStep.promptTemplate } 
+                : step
+            ));
+            showToast(t('toasts.promptRestored', { id: stepId }), 'success');
+        }
     };
 
     const handleSettingChange = (stepId: number, key: string, value: string | number) => {
@@ -293,6 +312,8 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
             return;
         }
 
+        stopExecutionRef.current = false;
+        setIsStopping(false);
         setIsRunning(true);
         setCurrentStep(null);
         
@@ -318,8 +339,16 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
         
         const stepsToRun = steps.slice(startingStepIndex);
         const currentOutputs = { ...stepOutputs };
+        let stoppedByUser = false;
 
         for (const step of stepsToRun) {
+            if (stopExecutionRef.current) {
+                stoppedByUser = true;
+                setPausedAtStep(step.id);
+                showToast(t('toasts.automationStopped'), 'info');
+                break;
+            }
+
             if (step.id === 9 && !srtContent.trim()) {
                 showToast(t('toasts.srtRequired'), 'info');
                 setPausedAtStep(9);
@@ -372,8 +401,17 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
         
         setIsRunning(false);
         setCurrentStep(null);
-        setPausedAtStep(null);
-        showToast(t('toasts.chainCompleted'), 'success');
+        setIsStopping(false);
+        if (!stoppedByUser) {
+            setPausedAtStep(null);
+            showToast(t('toasts.chainCompleted'), 'success');
+        }
+    };
+
+    const handleStopChain = () => {
+        stopExecutionRef.current = true;
+        setIsStopping(true);
+        showToast(t('toasts.stoppingAutomation'), 'info');
     };
 
     const handleRerun = async (stepIdToRerun: number, mode: 'single' | 'from_here') => {
@@ -515,6 +553,25 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
         showToast(t('toasts.resetInputsSuccess'), 'info');
     };
 
+    const handleUpdateIdeasForChannel = (updatedIdeas: Idea[]) => {
+        if (selectedChannelId) {
+            setIdeaBank(prev => ({
+                ...prev,
+                [selectedChannelId]: updatedIdeas,
+            }));
+        }
+    };
+    
+    const handleSelectIdeaAsMain = (title: string) => {
+        handleInputChange('targetVideo', 'title', title);
+        setIsIdeaBankOpen(false);
+    };
+
+    const handleSelectIdeaAsNext = (title: string) => {
+        handleInputChange('targetVideo', 'nextTitle', title);
+        setIsIdeaBankOpen(false);
+    };
+
     const canCreateProject = stepStatus[8] === AutomationStepStatus.Completed;
     const details = automationInput.viralVideo.details;
     const sortedChannels = [...channels].sort((a, b) => a.name.localeCompare(b.name));
@@ -631,14 +688,25 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                              <h3 className="font-bold text-lg flex items-center gap-2"><Sparkles size={20} className="text-yellow-500" /> {t('automation.targetVideo.title')}</h3>
                             <div>
                                 <label className="font-semibold text-sm">{t('automation.targetVideo.newTitle')}</label>
-                                <input
-                                    type="text"
-                                    value={automationInput.targetVideo.title}
-                                    onChange={(e) => handleInputChange('targetVideo', 'title', e.target.value)}
-                                    placeholder={t('automation.targetVideo.newTitlePlaceholder')}
-                                    className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md text-sm"
-                                    disabled={isRunning}
-                                />
+                                <div className="flex gap-2 mt-1">
+                                    <input
+                                        type="text"
+                                        value={automationInput.targetVideo.title}
+                                        onChange={(e) => handleInputChange('targetVideo', 'title', e.target.value)}
+                                        placeholder={t('automation.targetVideo.newTitlePlaceholder')}
+                                        className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md text-sm"
+                                        disabled={isRunning}
+                                    />
+                                     <button 
+                                        type="button"
+                                        onClick={() => setIsIdeaBankOpen(true)}
+                                        disabled={!selectedChannelId}
+                                        title={t('automation.ideaBank')}
+                                        className="p-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 disabled:bg-gray-400"
+                                     >
+                                        <Lightbulb size={20} />
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label className="font-semibold text-sm">{t('automation.targetVideo.nextTitle')}</label>
@@ -675,11 +743,21 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                     </div>
                     
                     <button
-                        onClick={() => runChain()}
-                        disabled={isRunning || !selectedChannelId}
-                        className="w-full flex items-center justify-center gap-3 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105 disabled:bg-opacity-70 disabled:cursor-wait"
+                        onClick={isRunning ? handleStopChain : () => runChain()}
+                        disabled={!isRunning && !selectedChannelId}
+                        className={`w-full flex items-center justify-center gap-3 font-bold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 disabled:bg-opacity-70 disabled:cursor-wait ${
+                            isRunning ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-primary hover:bg-primary-dark text-white'
+                        }`}
                     >
-                        {isRunning ? <><Loader size={20} className="animate-spin" /> {t('automation.runningButton')}</> : <><PlayCircle size={20} /> {t('automation.runButton')}</>}
+                        {isRunning ? (
+                            isStopping ? (
+                                <><Loader size={20} className="animate-spin" /> {t('automation.stoppingButton')}</>
+                            ) : (
+                                <><StopCircle size={20} /> {t('automation.stopButton')}</>
+                            )
+                        ) : (
+                            <><PlayCircle size={20} /> {t('automation.runButton')}</>
+                        )}
                     </button>
                     <div className="flex justify-center gap-4 pt-2">
                         <button
@@ -707,6 +785,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                                 status={stepStatus[step.id] || AutomationStepStatus.Pending}
                                 output={stepOutputs[step.id] || ''}
                                 onPromptChange={handlePromptChange}
+                                onRestoreDefault={handleRestoreDefaultPrompt}
                                 settings={stepSettings[step.id] || {}}
                                 onSettingChange={(key, value) => handleSettingChange(step.id, key, value)}
                                 isRunning={isRunning}
@@ -754,6 +833,17 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                     </div>
                 )}
             </div>
+            {isIdeaBankOpen && (
+                <IdeaBankModal
+                    isOpen={isIdeaBankOpen}
+                    onClose={() => setIsIdeaBankOpen(false)}
+                    ideas={ideaBank[selectedChannelId] || []}
+                    onUpdateIdeas={handleUpdateIdeasForChannel}
+                    onSelectAsMain={handleSelectIdeaAsMain}
+                    onSelectAsNext={handleSelectIdeaAsNext}
+                    showToast={showToast}
+                />
+            )}
         </div>
     );
 };

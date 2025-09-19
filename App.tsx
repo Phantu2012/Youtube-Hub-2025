@@ -1,7 +1,8 @@
 
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats } from './types';
+import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Header } from './components/Header';
 import { ProjectList } from './components/ProjectList';
@@ -37,7 +38,7 @@ type FirebaseUser = {
 // --- DEVELOPMENT MODE FLAG ---
 // Set to true to bypass login and use a mock user for development.
 // Set to false for production to enable real Google Sign-In.
-const IS_DEV_MODE = false;
+const IS_DEV_MODE = true;
 
 const MOCK_USER: User = {
   uid: 'dev-user-01',
@@ -80,6 +81,7 @@ const AppContent: React.FC = () => {
   const [signInError, setSignInError] = useState<{ code: string; domain?: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [dream100Channel, setDream100Channel] = useState<Channel | null>(null);
+  const [ideaBank, setIdeaBank] = useLocalStorage<Record<string, Idea[]>>('idea-bank', {});
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -621,6 +623,8 @@ const AppContent: React.FC = () => {
               apiKeys={apiKeys}
               selectedProvider={selectedProvider}
               selectedModel={selectedModel}
+              ideaBank={ideaBank}
+              setIdeaBank={setIdeaBank}
             />
         )}
         {activeView === 'calendar' && (

@@ -16,6 +16,7 @@ interface AutomationStepCardProps {
     status: AutomationStepStatus;
     output: string;
     onPromptChange: (id: number, newPrompt: string) => void;
+    onRestoreDefault: (stepId: number) => void;
     settings: Record<string, string | number>;
     onSettingChange: (key: string, value: string | number) => void;
     isRunning: boolean;
@@ -39,13 +40,14 @@ const StatusIcon: React.FC<{ status: AutomationStepStatus }> = ({ status }) => {
     }
 };
 
-export const AutomationStepCard: React.FC<AutomationStepCardProps> = ({ step, status, output, onPromptChange, settings, onSettingChange, isRunning, showToast, onRerun, step5Inputs, onStep5InputChange }) => {
+export const AutomationStepCard: React.FC<AutomationStepCardProps> = ({ step, status, output, onPromptChange, onRestoreDefault, settings, onSettingChange, isRunning, showToast, onRerun, step5Inputs, onStep5InputChange }) => {
     const { t } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const [isRerunMenuOpen, setIsRerunMenuOpen] = useState(false);
     const rerunMenuRef = useRef<HTMLDivElement>(null);
-
+    const [confirmRestore, setConfirmRestore] = useState(false);
+    const confirmTimerRef = useRef<number | null>(null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -56,6 +58,15 @@ export const AutomationStepCard: React.FC<AutomationStepCardProps> = ({ step, st
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    useEffect(() => {
+        // Clear timeout on unmount
+        return () => {
+            if (confirmTimerRef.current) {
+                clearTimeout(confirmTimerRef.current);
+            }
         };
     }, []);
 
@@ -71,6 +82,22 @@ export const AutomationStepCard: React.FC<AutomationStepCardProps> = ({ step, st
     const handleRerunClick = (mode: 'single' | 'from_here') => {
         onRerun(step.id, mode);
         setIsRerunMenuOpen(false);
+    };
+
+    const handleRestoreDefaultClick = () => {
+        if (confirmTimerRef.current) {
+            clearTimeout(confirmTimerRef.current);
+        }
+
+        if (confirmRestore) {
+            onRestoreDefault(step.id);
+            setConfirmRestore(false);
+        } else {
+            setConfirmRestore(true);
+            confirmTimerRef.current = window.setTimeout(() => {
+                setConfirmRestore(false);
+            }, 4000);
+        }
     };
 
     return (
@@ -205,9 +232,24 @@ export const AutomationStepCard: React.FC<AutomationStepCardProps> = ({ step, st
                     )}
                     
                     <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <label className="font-semibold text-sm mb-1 block flex items-center gap-2">
-                            <Sparkles size={14} /> {t('automation.promptTemplate')}
-                        </label>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="font-semibold text-sm block flex items-center gap-2">
+                                <Sparkles size={14} /> {t('automation.promptTemplate')}
+                            </label>
+                            <button
+                                type="button"
+                                onClick={handleRestoreDefaultClick}
+                                disabled={isRunning}
+                                className={`text-xs flex items-center gap-1 transition-colors duration-200 disabled:opacity-50 rounded-md px-2 py-1 ${
+                                    confirmRestore
+                                    ? 'bg-red-500/10 text-red-500 font-bold'
+                                    : 'text-gray-500 hover:text-blue-500 hover:bg-blue-500/10'
+                                }`}
+                            >
+                                <RotateCcw size={12} />
+                                {confirmRestore ? t('automation.restoreConfirmButton') : t('automation.restoreDefaultPrompt')}
+                            </button>
+                        </div>
                         <textarea
                             value={step.promptTemplate}
                             onChange={(e) => onPromptChange(step.id, e.target.value)}

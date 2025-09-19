@@ -1,5 +1,3 @@
-
-
 export default {
   "common": {
     "cancel": "Hủy",
@@ -403,16 +401,22 @@ export default {
     },
     "runButton": "Chạy chuỗi tự động hóa",
     "runningButton": "Đang chạy...",
+    "stopButton": "Dừng chuỗi",
+    "stoppingButton": "Đang dừng...",
     "resumeButton": "Tiếp tục chạy",
     "resetChainProgress": "Reset Tiến trình",
     "resetInputs": "Xóa Dữ liệu Đầu vào",
     "resetChainConfirmation": "Bạn có chắc muốn reset tiến trình không? Tất cả kết quả đã tạo sẽ bị xóa, nhưng dữ liệu đầu vào của bạn sẽ được giữ lại.",
     "resetInputsConfirmation": "Bạn có chắc muốn xóa tất cả dữ liệu đầu vào và tiến trình không? Công cụ tự động hóa sẽ được xóa về trạng thái ban đầu.",
     "createProjectButton": "Tạo dự án từ kết quả",
+    "ideaBank": "Ngân hàng Ý tưởng",
     "stepLabel": "Bước {{id}}:",
     "expand": "Mở rộng",
     "collapse": "Thu gọn",
     "promptTemplate": "Mẫu câu lệnh (Prompt)",
+    "restoreDefaultPrompt": "Khôi phục Gốc",
+    "restoreConfirmButton": "Xác nhận Khôi phục",
+    "restoreDefaultConfirmation": "Bạn có chắc chắn muốn khôi phục câu lệnh gốc cho bước này không? Mọi thay đổi hiện tại sẽ bị mất.",
     "promptHint": "Bạn có thể chỉnh sửa câu lệnh này. Sử dụng các biến như `{{TARGET_VIDEO_TITLE}}` hoặc `{{VIRAL_VIDEO_TRANSCRIPT}}` để nối các bước.",
     "output": "Kết quả",
     "copyOutput": "Sao chép kết quả",
@@ -465,6 +469,29 @@ export default {
       "description": "Đối chiếu các prompt hình ảnh với dấu thời gian hội thoại từ một tệp SRT được cung cấp để tạo danh sách cảnh quay được đồng bộ hóa."
     }
   },
+   "ideaBankModal": {
+    "title": "Ngân hàng Ý tưởng",
+    "addNewIdea": "Thêm Ý tưởng mới",
+    "addNewIdeaPlaceholder": "Nhập mỗi ý tưởng trên một dòng...",
+    "add": "Thêm",
+    "table": {
+        "title": "Tiêu đề",
+        "status": "Trạng thái",
+        "actions": "Hành động"
+    },
+    "status": {
+        "notStarted": "Chưa làm",
+        "done": "Đã làm",
+        "redo": "Làm lại"
+    },
+    "actions": {
+        "useAsMain": "Chọn làm chủ đề chính",
+        "useAsNext": "Chọn làm chủ đề tiếp theo",
+        "delete": "Xóa"
+    },
+    "noIdeas": "Chưa có ý tưởng nào. Hãy thêm ý tưởng ở trên để bắt đầu!",
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa ý tưởng này không?"
+  },
   "toasts": {
     "fetchProjectsError": "Không thể tải các dự án.",
     "settingsSaved": "Đã lưu cài đặt thành công!",
@@ -507,6 +534,8 @@ export default {
     "stepError500": "Đã xảy ra lỗi nội bộ tạm thời ở bước: {{stepName}}. Vui lòng thử lại sau giây lát.",
     "stepRerunSuccess": "Chạy lại bước '{{stepName}}' thành công!",
     "chainCompleted": "Chuỗi tự động hóa đã hoàn tất!",
+    "automationStopped": "Chuỗi tự động đã được người dùng dừng lại.",
+    "stoppingAutomation": "Đang dừng chuỗi tự động...",
     "srtRequired": "Vui lòng cung cấp nội dung SRT cho bước cuối cùng để tiếp tục.",
     "chainAlreadyCompleted": "Chuỗi tự động hóa đã hoàn thành.",
     "rerunDataLoaded": "Đã tải dữ liệu từ dự án '{{projectName}}' cho một lần chạy tự động hóa mới.",
@@ -517,6 +546,10 @@ export default {
     "step5AutoFilled": "Dữ liệu cho Bước 5 đã được điền tự động từ lựa chọn tốt nhất của Bước 4!",
     "projectExported": "Đã sao chép dữ liệu dự án!",
     "exportFailed": "Không thể sao chép dữ liệu.",
+    "promptRestored": "Câu lệnh cho Bước {{id}} đã được khôi phục về mặc định.",
+    "ideaAdded": "Đã thêm (các) ý tưởng thành công!",
+    "ideaUpdated": "Đã cập nhật trạng thái ý tưởng.",
+    "ideaDeleted": "Đã xóa ý tưởng.",
     "generated": {
       "videoTitle": "Đã tạo tiêu đề video!",
       "description": "Đã tạo mô tả!",
