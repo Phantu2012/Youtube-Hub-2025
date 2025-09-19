@@ -479,10 +479,13 @@ const AppContent: React.FC = () => {
     if (!user || !channelId) return;
     try {
         const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(channelId);
-        await channelDocRef.update({ automationSteps: updatedSteps });
+        // FIX: Changed `update` to `set` with merge to prevent "No document to update" errors.
+        // This "upsert" operation ensures that if the channel document somehow doesn't exist,
+        // it will be created, making the save operation more robust.
+        await channelDocRef.set({ automationSteps: updatedSteps }, { merge: true });
         // Don't show a toast on every auto-save to avoid spamming the user.
         // A visual indicator in the UI (like a subtle 'saved' text) would be better if needed.
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error saving automation steps:", error);
         showToast(t('toasts.automationStepsSaveFailed'), 'error');
     }
