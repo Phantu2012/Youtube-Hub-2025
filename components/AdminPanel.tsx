@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
-import { db } from '../firebase';
-import firebase from 'firebase/compat/app';
+import { db, firebase } from '../firebase';
 import { useTranslation } from '../hooks/useTranslation';
 import { Loader, Save, Shield, AlertTriangle, ExternalLink, RotateCcw } from 'lucide-react';
 import { CodeBlock } from './CodeBlock'; 
@@ -107,9 +106,15 @@ service cloud.firestore {
       allow list, get, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Rules for the 'projects' subcollection within each user
+    // Rules for the 'projects' subcollection
     match /users/{userId}/projects/{projectId} {
       // Allow a user to perform all actions on their own projects.
+      allow read, write, create, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Rules for the 'channels' subcollection
+    match /users/{userId}/channels/{channelId} {
+      // Allow a user to perform all actions on their own channels.
       allow read, write, create, delete: if request.auth != null && request.auth.uid == userId;
     }
   }
@@ -237,6 +242,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ showToast }) => {
                   <h3 className="text-xl font-bold">{t('adminPanel.firstAdminSetup.title')}</h3>
                 </div>
                 <p className="mt-2 mb-4 text-sm">{t('adminPanel.firstAdminSetup.intro')}</p>
+
                 <ol className="list-decimal list-inside space-y-2 text-sm">
                     <li>{t('adminPanel.firstAdminSetup.step1')}</li>
                     <li>{t('adminPanel.firstAdminSetup.step2')}</li>

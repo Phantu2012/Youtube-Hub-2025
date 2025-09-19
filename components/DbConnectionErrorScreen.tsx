@@ -53,6 +53,12 @@ service cloud.firestore {
       // Allow a user to perform all actions on their own projects.
       allow read, write, create, delete: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Rules for the 'channels' subcollection within each user
+    match /users/{userId}/channels/{channelId} {
+      // Allow a user to perform all actions on their own channels (create, read, update, delete).
+      allow read, write, create, delete: if request.auth != null && request.auth.uid == userId;
+    }
   }
 }`;
 

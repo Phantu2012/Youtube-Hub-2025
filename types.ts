@@ -54,6 +54,8 @@ export interface Channel {
     channelUrl?: string;
     stats?: ChannelStats;
     dream100Videos?: Dream100Video[];
+    ideas?: Idea[];
+    automationSteps?: AutomationStep[];
 }
 
 export interface Project {

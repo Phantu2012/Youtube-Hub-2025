@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { Channel, ChannelDna, Project, ProjectStatus, ToastMessage, AutomationStep, AutomationStepStatus, YouTubeVideoDetails, ApiKeys, AIProvider, AIModel, Idea } from '../types';
@@ -19,8 +20,8 @@ interface AutomationEngineProps {
     apiKeys: ApiKeys;
     selectedProvider: AIProvider;
     selectedModel: AIModel;
-    ideaBank: Record<string, Idea[]>;
-    setIdeaBank: React.Dispatch<React.SetStateAction<Record<string, Idea[]>>>;
+    onUpdateIdeas: (channelId: string, updatedIdeas: Idea[]) => void;
+    onUpdateAutomationSteps: (channelId: string, updatedSteps: AutomationStep[]) => void;
 }
 
 interface AutomationInput {
@@ -48,9 +49,10 @@ interface Step5Inputs {
 type StepSettings = Record<number, Record<string, string | number>>;
 
 
-export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, onOpenProjectModal, showToast, apiKeys, selectedProvider, selectedModel, ideaBank, setIdeaBank }) => {
+export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, onOpenProjectModal, showToast, apiKeys, selectedProvider, selectedModel, onUpdateIdeas, onUpdateAutomationSteps }) => {
     const { t } = useTranslation();
     const [selectedChannelId, setSelectedChannelId] = useLocalStorage<string>('automation-selected-channel', '');
+    const selectedChannel = channels.find(c => c.id === selectedChannelId);
 
     const [automationInput, setAutomationInput] = useLocalStorage<AutomationInput>('automation-input', {
         viralVideo: { link: '', transcript: '', details: null },
@@ -68,13 +70,28 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
     const [isRunning, setIsRunning] = useState(false);
     const [isStopping, setIsStopping] = useState(false);
     const stopExecutionRef = useRef(false);
-    const [steps, setSteps] = useLocalStorage<AutomationStep[]>('automation-steps', DEFAULT_AUTOMATION_STEPS);
+    const [steps, setSteps] = useState<AutomationStep[]>(DEFAULT_AUTOMATION_STEPS);
     const [stepStatus, setStepStatus] = useLocalStorage<Record<number, AutomationStepStatus>>('automation-status', {});
     const [stepOutputs, setStepOutputs] = useLocalStorage<Record<number, string>>('automation-outputs', {});
     const [currentStep, setCurrentStep] = useState<number | null>(null);
     const [pausedAtStep, setPausedAtStep] = useLocalStorage<number | null>('automation-paused-step', null);
     const [stepSettings, setStepSettings] = useLocalStorage<StepSettings>('automation-settings', {});
     const [isIdeaBankOpen, setIsIdeaBankOpen] = useState(false);
+
+    useEffect(() => {
+        // Load custom steps for the selected channel, or default if none exist
+        if (selectedChannel?.automationSteps) {
+            // Merge with default steps to ensure all steps are present, even if new ones were added to the app
+            const mergedSteps = DEFAULT_AUTOMATION_STEPS.map(defaultStep => {
+                const customStep = selectedChannel.automationSteps.find(cs => cs.id === defaultStep.id);
+                return customStep ? { ...defaultStep, ...customStep } : defaultStep;
+            });
+            setSteps(mergedSteps);
+        } else {
+            setSteps(DEFAULT_AUTOMATION_STEPS);
+        }
+    }, [selectedChannelId, channels, selectedChannel]);
+
 
     useEffect(() => {
         const rerunDataString = localStorage.getItem('rerun-data');
@@ -149,17 +166,25 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
     };
 
     const handlePromptChange = (id: number, newPrompt: string) => {
-        setSteps(prevSteps => prevSteps.map(step => step.id === id ? { ...step, promptTemplate: newPrompt } : step));
+        const updatedSteps = steps.map(step => step.id === id ? { ...step, promptTemplate: newPrompt } : step);
+        setSteps(updatedSteps);
+        if (selectedChannelId) {
+            onUpdateAutomationSteps(selectedChannelId, updatedSteps);
+        }
     };
 
     const handleRestoreDefaultPrompt = (stepId: number) => {
         const defaultStep = DEFAULT_AUTOMATION_STEPS.find(s => s.id === stepId);
         if (defaultStep) {
-            setSteps(prevSteps => prevSteps.map(step => 
+            const updatedSteps = steps.map(step => 
                 step.id === stepId 
                 ? { ...step, promptTemplate: defaultStep.promptTemplate } 
                 : step
-            ));
+            );
+            setSteps(updatedSteps);
+             if (selectedChannelId) {
+                onUpdateAutomationSteps(selectedChannelId, updatedSteps);
+            }
             showToast(t('toasts.promptRestored', { id: stepId }), 'success');
         }
     };
@@ -175,8 +200,6 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
     };
     
     const buildContext = (currentOutputs: Record<number, string>): Record<string, string> => {
-        const selectedChannel = channels.find(c => c.id === selectedChannelId);
-        
         const context: Record<string, string> = {
             CHANNEL_DNA: selectedChannel?.dna || '',
             VIRAL_VIDEO_LINK: automationInput.viralVideo.link,
@@ -555,10 +578,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
 
     const handleUpdateIdeasForChannel = (updatedIdeas: Idea[]) => {
         if (selectedChannelId) {
-            setIdeaBank(prev => ({
-                ...prev,
-                [selectedChannelId]: updatedIdeas,
-            }));
+            onUpdateIdeas(selectedChannelId, updatedIdeas);
         }
     };
     
@@ -833,11 +853,11 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                     </div>
                 )}
             </div>
-            {isIdeaBankOpen && (
+            {isIdeaBankOpen && selectedChannel && (
                 <IdeaBankModal
                     isOpen={isIdeaBankOpen}
                     onClose={() => setIsIdeaBankOpen(false)}
-                    ideas={ideaBank[selectedChannelId] || []}
+                    ideas={selectedChannel.ideas || []}
                     onUpdateIdeas={handleUpdateIdeasForChannel}
                     onSelectAsMain={handleSelectIdeaAsMain}
                     onSelectAsNext={handleSelectIdeaAsNext}

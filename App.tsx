@@ -1,8 +1,5 @@
-
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea } from './types';
+import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Header } from './components/Header';
 import { ProjectList } from './components/ProjectList';
@@ -23,6 +20,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { useTranslation } from './hooks/useTranslation';
 import { fetchChannelStats } from './services/youtubeService';
 import { auth, db, googleProvider, firebase } from './firebase';
+import { DEFAULT_AUTOMATION_STEPS } from './constants';
 
 // Define FirebaseUser type for v8.
 // FIX: The type `firebase.User` cannot be resolved correctly because the global `firebase` object from the script tag is not fully typed.
@@ -38,7 +36,7 @@ type FirebaseUser = {
 // --- DEVELOPMENT MODE FLAG ---
 // Set to true to bypass login and use a mock user for development.
 // Set to false for production to enable real Google Sign-In.
-const IS_DEV_MODE = true;
+const IS_DEV_MODE = false;
 
 const MOCK_USER: User = {
   uid: 'dev-user-01',
@@ -59,7 +57,7 @@ const DEV_DEFAULT_API_KEYS: ApiKeys = {
 
 
 const AppContent: React.FC = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useLocalStorage<Project[]>('dev-projects', []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -74,14 +72,13 @@ const AppContent: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeView, setActiveView] = useState<'projects' | 'automation' | 'calendar' | 'admin'>('projects');
-  const [channels, setChannels] = useLocalStorage<Channel[]>('channels', []);
+  const [channels, setChannels] = useLocalStorage<Channel[]>('dev-channels', []);
   const { t } = useTranslation();
   const [dbConnectionError, setDbConnectionError] = useState<boolean>(false);
   // FIX: Corrected syntax for useState by adding the closing angle bracket `>`.
   const [signInError, setSignInError] = useState<{ code: string; domain?: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [dream100Channel, setDream100Channel] = useState<Channel | null>(null);
-  const [ideaBank, setIdeaBank] = useLocalStorage<Record<string, Idea[]>>('idea-bank', {});
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -172,7 +169,7 @@ const AppContent: React.FC = () => {
       }
     });
     return () => unsubscribe();
-  }, [showToast, t]);
+  }, [showToast, t, setProjects]);
 
   // Handle redirect result from Google Sign-In
   useEffect(() => {
@@ -226,47 +223,78 @@ const AppContent: React.FC = () => {
       });
 
       return () => unsubscribe();
-    } else if (!IS_DEV_MODE) {
+    } else if (!IS_DEV_MODE && !isLoading && !user) {
         setProjects([]);
     }
-  }, [user, showToast, t]);
-
+  }, [user, showToast, t, setProjects, isLoading]);
+  
+  // Listener for channels data from Firestore
+  useEffect(() => {
+    if (user?.uid && user.status === 'active' && !IS_DEV_MODE) {
+        const channelsCollectionRef = db.collection('users').doc(user.uid).collection('channels');
+        
+        const unsubscribe = channelsCollectionRef.onSnapshot((snapshot) => {
+            const channelsData = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data,
+                } as Channel;
+            });
+            setChannels(channelsData);
+        }, (error) => {
+            console.error("Error fetching channels: ", error);
+            showToast(t('toasts.fetchChannelsError'), 'error');
+        });
+        
+        return () => unsubscribe();
+    } else if (!IS_DEV_MODE && !isLoading && !user) {
+        setChannels([]);
+    }
+  }, [user, showToast, t, setChannels, isLoading]);
+  
   // This effect fetches channel stats when channels are loaded or updated
   useEffect(() => {
     const fetchStatsForChannels = async () => {
-      if (!apiKeys.youtube) return;
+      if (!apiKeys.youtube || !user || IS_DEV_MODE) return;
 
       const channelsToUpdate = channels.filter(ch => ch.channelUrl && !ch.stats);
       if (channelsToUpdate.length === 0) return;
 
       const statsPromises = channelsToUpdate.map(channel =>
         fetchChannelStats(channel.channelUrl!, apiKeys.youtube)
+          .then(stats => ({ channelId: channel.id, stats }))
           .catch(err => {
             console.error(`Failed to fetch stats for ${channel.name}:`, err.message);
-            // Do not show a toast for every channel to avoid spamming user
-            return null; // return null on error to not break Promise.all
+            return { channelId: channel.id, stats: null };
           })
       );
-
+      
       const results = await Promise.all(statsPromises);
       
+      const batch = db.batch();
       let statsUpdated = false;
-      const updatedChannels = channels.map(channel => {
-        const index = channelsToUpdate.findIndex(ctu => ctu.id === channel.id);
-        if (index !== -1 && results[index]) {
-          statsUpdated = true;
-          return { ...channel, stats: results[index] as ChannelStats };
-        }
-        return channel;
+      
+      results.forEach(result => {
+          if (result.stats) {
+              const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(result.channelId);
+              batch.update(channelDocRef, { stats: result.stats });
+              statsUpdated = true;
+          }
       });
-
+      
       if (statsUpdated) {
-        setChannels(updatedChannels);
+          try {
+              await batch.commit();
+              // The onSnapshot listener will automatically update the local state.
+          } catch (error) {
+              console.error("Error batch updating channel stats:", error);
+          }
       }
     };
 
     fetchStatsForChannels();
-  }, [channels, apiKeys.youtube, setChannels]);
+  }, [channels, apiKeys.youtube, user, showToast, t]);
   
   const projectsByChannel = useMemo(() => {
     return projects.reduce((acc, project) => {
@@ -305,14 +333,89 @@ const AppContent: React.FC = () => {
     setSelectedModel(settings.selectedModel);
     showToast(t('toasts.settingsSaved'), 'success');
   };
+  
+  const handleAddChannel = async (newChannelData: Omit<Channel, 'id'>): Promise<void> => {
+    if (IS_DEV_MODE) {
+        const newChannel: Channel = {
+            id: `dev-chan-${Date.now()}`,
+            name: newChannelData.name,
+            dna: newChannelData.dna,
+            channelUrl: newChannelData.channelUrl || '',
+            ideas: [],
+            dream100Videos: [],
+            automationSteps: DEFAULT_AUTOMATION_STEPS,
+        };
+        setChannels(prev => [...prev, newChannel]);
+        showToast(t('toasts.channelAdded'), 'success');
+        return;
+    }
 
-  const handleChannelsChange = (updatedChannels: Channel[]) => {
-    setChannels(updatedChannels);
+    if (!user) {
+        showToast(t('toasts.loginRequiredToSave'), 'error');
+        throw new Error("User not logged in");
+    }
+    const channelPayload: Omit<Channel, 'id'> = {
+        name: newChannelData.name,
+        dna: newChannelData.dna,
+        channelUrl: newChannelData.channelUrl || '',
+        ideas: [],
+        dream100Videos: [],
+        automationSteps: DEFAULT_AUTOMATION_STEPS,
+    };
+    try {
+        await db.collection('users').doc(user.uid).collection('channels').add(channelPayload);
+        showToast(t('toasts.channelAdded'), 'success');
+    } catch (error) {
+        console.error("Error adding channel:", error);
+        showToast(t('toasts.channelSaveFailed'), 'error');
+        // This promise must be rejected to be caught by the caller's try-catch block
+        // to handle UI states like loading spinners correctly.
+        throw error;
+    }
   };
 
-  const handleDeleteChannelInApp = (channelId: string) => {
-      setChannels(prev => prev.filter(ch => ch.id !== channelId));
-      showToast(t('toasts.channelDeleted'), 'info');
+  const handleSaveChannelChanges = async (channel: Channel) => {
+     if (IS_DEV_MODE) {
+        setChannels(prev => prev.map(c => c.id === channel.id ? channel : c));
+        return;
+    }
+    if (!user) return;
+    try {
+        const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(channel.id);
+        await channelDocRef.update({
+            name: channel.name,
+            dna: channel.dna,
+            channelUrl: channel.channelUrl,
+        });
+    } catch (error) {
+        console.error("Error saving channel changes:", error);
+        showToast(t('toasts.channelSaveFailed'), 'error');
+    }
+  };
+
+  const handleDeleteChannel = async (channelId: string) => {
+    if (IS_DEV_MODE) {
+        if ((projectsByChannel[channelId] || []).length > 0) {
+            showToast(t('toasts.deleteChannelError'), 'error');
+            return;
+        }
+        setChannels(prev => prev.filter(c => c.id !== channelId));
+        showToast(t('toasts.channelDeleted'), 'info');
+        return;
+    }
+    if (!user) return;
+    if ((projectsByChannel[channelId] || []).length > 0) {
+        showToast(t('toasts.deleteChannelError'), 'error');
+        return;
+    }
+    try {
+        const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(channelId);
+        await channelDocRef.delete();
+        showToast(t('toasts.channelDeleted'), 'info');
+    } catch (error) {
+        console.error("Error deleting channel:", error);
+        showToast(t('toasts.channelDeleteFailed'), 'error');
+    }
   };
 
   const handleManageDream100 = (channelId: string) => {
@@ -322,11 +425,53 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const handleUpdateDream100 = (channelId: string, updatedVideos: Dream100Video[]) => {
-    const updatedChannels = channels.map(ch =>
-        ch.id === channelId ? { ...ch, dream100Videos: updatedVideos } : ch
-    );
-    setChannels(updatedChannels);
+  const handleUpdateDream100 = async (channelId: string, updatedVideos: Dream100Video[]) => {
+    if (IS_DEV_MODE) {
+        setChannels(prev => prev.map(c => (c.id === channelId ? { ...c, dream100Videos: updatedVideos } : c)));
+        return;
+    }
+    if (!user) return;
+    try {
+        const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(channelId);
+        await channelDocRef.update({ dream100Videos: updatedVideos });
+    } catch (error) {
+        console.error("Error updating Dream 100:", error);
+        showToast(t('toasts.dream100UpdateFailed'), 'error');
+    }
+  };
+  
+  const handleUpdateIdeas = async (channelId: string, updatedIdeas: Idea[]) => {
+    if (IS_DEV_MODE) {
+        setChannels(prev => prev.map(c => (c.id === channelId ? { ...c, ideas: updatedIdeas } : c)));
+        return;
+    }
+    if (!user) return;
+    try {
+        const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(channelId);
+        await channelDocRef.update({ ideas: updatedIdeas });
+    } catch (error) {
+        console.error("Error updating Idea Bank:", error);
+        showToast(t('toasts.ideaBankUpdateFailed'), 'error');
+    }
+  };
+  
+  const handleSaveAutomationSteps = async (channelId: string, updatedSteps: AutomationStep[]) => {
+    if (IS_DEV_MODE) {
+        if (channelId) {
+            setChannels(prev => prev.map(c => (c.id === channelId ? { ...c, automationSteps: updatedSteps } : c)));
+        }
+        return;
+    }
+    if (!user || !channelId) return;
+    try {
+        const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(channelId);
+        await channelDocRef.update({ automationSteps: updatedSteps });
+        // Don't show a toast on every auto-save to avoid spamming the user.
+        // A visual indicator in the UI (like a subtle 'saved' text) would be better if needed.
+    } catch (error) {
+        console.error("Error saving automation steps:", error);
+        showToast(t('toasts.automationStepsSaveFailed'), 'error');
+    }
   };
 
 
@@ -623,8 +768,8 @@ const AppContent: React.FC = () => {
               apiKeys={apiKeys}
               selectedProvider={selectedProvider}
               selectedModel={selectedModel}
-              ideaBank={ideaBank}
-              setIdeaBank={setIdeaBank}
+              onUpdateIdeas={handleUpdateIdeas}
+              onUpdateAutomationSteps={handleSaveAutomationSteps}
             />
         )}
         {activeView === 'calendar' && (
@@ -647,9 +792,9 @@ const AppContent: React.FC = () => {
           selectedModel={selectedModel}
           currentChannels={channels}
           onSave={handleSaveSettings}
-          projects={projects}
-          onChannelsChange={handleChannelsChange}
-          onDeleteChannel={handleDeleteChannelInApp}
+          onAddChannel={handleAddChannel}
+          onUpdateChannel={handleSaveChannelChanges}
+          onDeleteChannel={handleDeleteChannel}
         />
       )}
 

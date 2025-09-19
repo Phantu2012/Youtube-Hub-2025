@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, Save, Key, Eye, EyeOff, Info, Bot, Youtube, Sparkles, PlusCircle, Trash2, Link } from 'lucide-react';
-import { ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Project } from '../types';
+import { X, Save, Key, Eye, EyeOff, Info, Bot, Youtube, Sparkles, PlusCircle, Trash2, Link, Loader } from 'lucide-react';
+import { ChannelDna, ApiKeys, AIProvider, AIModel, Channel } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 import { ChannelDnaWizard } from './ChannelDnaWizard';
 
@@ -12,8 +12,8 @@ interface SettingsModalProps {
     selectedModel: AIModel;
     currentChannels: ChannelDna;
     onSave: (settings: { apiKeys: ApiKeys, selectedProvider: AIProvider, selectedModel: AIModel }) => void;
-    projects: Project[];
-    onChannelsChange: (channels: Channel[]) => void;
+    onAddChannel: (channel: Omit<Channel, 'id'>) => Promise<void>;
+    onUpdateChannel: (channel: Channel) => void;
     onDeleteChannel: (channelId: string) => void;
 }
 
@@ -60,32 +60,42 @@ const ApiKeyInput: React.FC<{
     );
 };
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, apiKeys, selectedProvider, selectedModel, currentChannels, onSave, onChannelsChange, onDeleteChannel }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, apiKeys, selectedProvider, selectedModel, currentChannels, onSave, onAddChannel, onUpdateChannel, onDeleteChannel }) => {
     const { t } = useTranslation();
     const [localApiKeys, setLocalApiKeys] = useState(apiKeys);
     const [localProvider, setLocalProvider] = useState<AIProvider>(selectedProvider);
     const [localModel, setLocalModel] = useState<AIModel>(selectedModel);
     const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
     const [isWizardOpen, setIsWizardOpen] = useState(false);
+    const [isAddingChannel, setIsAddingChannel] = useState(false);
 
     const handleApiKeyChange = (provider: keyof ApiKeys, value: string) => {
         setLocalApiKeys(prev => ({ ...prev, [provider]: value }));
     };
     
     const handleChannelChange = (id: string, field: 'name' | 'dna' | 'channelUrl', value: string) => {
-        const updatedChannels = currentChannels.map(ch => ch.id === id ? { ...ch, [field]: value } : ch);
-        onChannelsChange(updatedChannels);
+        const channelToUpdate = currentChannels.find(ch => ch.id === id);
+        if (channelToUpdate) {
+            onUpdateChannel({ ...channelToUpdate, [field]: value });
+        }
     };
 
-    const handleAddNewChannel = () => {
-        const newChannel: Channel = {
-            id: `channel_${Date.now()}`,
-            name: t('settings.newChannelName'),
-            dna: '',
-            channelUrl: '',
-            dream100Videos: [],
-        };
-        onChannelsChange([...currentChannels, newChannel]);
+    const handleAddNewChannel = async () => {
+        setIsAddingChannel(true);
+        try {
+            const newChannel: Omit<Channel, 'id'> = {
+                name: t('settings.newChannelName'),
+                dna: '',
+                channelUrl: '',
+            };
+            await onAddChannel(newChannel);
+        } catch (error) {
+            // The parent component (App.tsx) handles showing the error toast.
+            // This catch block prevents the "Script error." by handling the rejection.
+            console.error("Failed to add channel:", error);
+        } finally {
+            setIsAddingChannel(false);
+        }
     };
     
     const handleLaunchWizard = (channel: Channel) => {
@@ -215,7 +225,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, a
                                                     placeholder={t('settings.channelNamePlaceholder')}
                                                 />
                                                 <div className="flex items-center gap-2">
-                                                    {/* FIX: Moved title prop from icon to button for correct tooltip behavior. */}
                                                     <button type="button" onClick={() => handleLaunchWizard(channel)} className="p-2 text-gray-500 hover:text-purple-500" title={t('settings.buildWithAI')}><Sparkles size={16} /></button>
                                                     <button type="button" onClick={() => onDeleteChannel(channel.id)} className="p-2 text-gray-500 hover:text-red-500" title={t('settings.deleteChannel')}><Trash2 size={16} /></button>
                                                 </div>
@@ -244,10 +253,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, a
                                     <button
                                         type="button"
                                         onClick={handleAddNewChannel}
-                                        className="w-full flex items-center justify-center gap-2 text-sm text-primary font-semibold py-2 px-4 rounded-lg border-2 border-dashed border-primary/50 hover:bg-primary/10"
+                                        disabled={isAddingChannel}
+                                        className="w-full flex items-center justify-center gap-2 text-sm text-primary font-semibold py-2 px-4 rounded-lg border-2 border-dashed border-primary/50 hover:bg-primary/10 disabled:opacity-50 disabled:cursor-wait"
                                     >
-                                        <PlusCircle size={16} />
-                                        {t('settings.addChannel')}
+                                        {isAddingChannel ? <Loader size={16} className="animate-spin" /> : <PlusCircle size={16} />}
+                                        {isAddingChannel ? t('settings.addingChannel') : t('settings.addChannel')}
                                     </button>
                                 </div>
                             </div>
