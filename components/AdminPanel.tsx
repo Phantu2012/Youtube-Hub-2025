@@ -148,10 +148,14 @@ service cloud.firestore {
 
     // Quy tắc cho collection con 'projects'.
     match /users/{ownerId}/projects/{projectId} {
-      // Cho phép truy cập nếu kênh cha tồn tại VÀ người dùng là thành viên của kênh đó.
-      allow read, write, create, delete: if 
-        'channelId' in resource.data &&
+      // Cho phép đọc/xóa tài liệu hiện có nếu người dùng là thành viên của kênh của dự án.
+      allow read, delete: if
         isMemberOfValidChannel(get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)));
+      
+      // Cho phép tạo/cập nhật nếu người dùng là thành viên của kênh được chỉ định trong dữ liệu *mới*.
+      // Điều này khắc phục lỗi "thiếu quyền" khi tạo dự án mới trong một kênh được chia sẻ.
+      allow create, update: if
+        isMemberOfValidChannel(get(/databases/$(database)/documents/users/$(ownerId)/channels/$(request.resource.data.channelId)));
     }
   }
 }`;
