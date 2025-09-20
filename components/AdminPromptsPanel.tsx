@@ -87,47 +87,61 @@ const PermissionErrorGuideForPrompts: React.FC<{ onRetry: () => void }> = ({ onR
     const newRules = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // === HÀM TRỢ GIÚP ===
+    // Hàm này kiểm tra xem người dùng có phải là thành viên của một kênh hợp lệ hay không.
+    function isMemberOfValidChannel(channelResource) {
+      // Kênh phải có ownerId, và tài liệu của ownerId đó phải tồn tại.
+      let hasValidOwner = 'ownerId' in channelResource.data &&
+                          exists(/databases/$(database)/documents/users/$(channelResource.data.ownerId));
+      
+      // Người dùng phải có trong danh sách memberIds hợp lệ.
+      let isListedMember = 'memberIds' in channelResource.data &&
+                           channelResource.data.memberIds is list &&
+                           request.auth.uid in channelResource.data.memberIds;
+                           
+      return hasValidOwner && isListedMember;
+    }
 
-    // Users can write to their own doc, and any authenticated user can read public profile data.
-    // Admins have extra rights.
+    // === QUY TẮC CHÍNH ===
+
+    // Người dùng có thể đọc/ghi dữ liệu của chính họ. Admin có quyền cao hơn.
     match /users/{userId} {
       allow write: if request.auth.uid == userId;
       allow get: if request.auth != null;
       allow list, update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Admins can read/write global settings. Authenticated users can read them.
+    // Quy tắc cho cài đặt hệ thống.
     match /system_settings/{settingId} {
-        allow read: if request.auth != null;
-        allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      allow read: if request.auth != null;
+      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Rules for a user's 'channels' subcollection (direct access)
+    // Quy tắc cho collection con 'channels' (truy cập trực tiếp).
     match /users/{ownerId}/channels/{channelId} {
-      // The owner can do anything with their channel.
       allow create, delete, write: if request.auth.uid == ownerId;
-
-      // The owner can list their own channels.
       allow list: if request.auth.uid == ownerId;
-      
-      // Any member can get a specific channel's details if the data is valid.
-      allow get: if 'memberIds' in resource.data && resource.data.memberIds is list && request.auth.uid in resource.data.memberIds;
+      allow get: if isMemberOfValidChannel(resource);
     }
     
-    // This rule is REQUIRED for the app to find channels shared with the user.
+    // QUY TẮC QUAN TRỌNG NHẤT - SỬA LỖI TẠI ĐÂY
+    // Quy tắc này cho phép ứng dụng tìm thấy các kênh được chia sẻ.
     match /{path=**}/channels/{channelId} {
-      // Allow a user to list/get a channel if their UID is in the 'memberIds' array and the data is valid.
-      allow get, list: if 'memberIds' in resource.data && resource.data.memberIds is list && request.auth.uid in resource.data.memberIds;
+      // Nó cho phép truy vấn nếu người dùng có trong danh sách thành viên, mà không cần
+      // kiểm tra sự tồn tại của chủ sở hữu ngay lập tức, tránh lỗi "tất cả hoặc không có gì".
+      // Quyền truy cập vào dữ liệu nhạy cảm (dự án) sẽ được kiểm tra chặt chẽ hơn ở quy tắc dưới đây.
+      allow get, list: if 'memberIds' in resource.data &&
+                         resource.data.memberIds is list &&
+                         request.auth.uid in resource.data.memberIds;
     }
 
-    // Rules for a user's 'projects' subcollection
+    // Quy tắc cho collection con 'projects'.
     match /users/{ownerId}/projects/{projectId} {
-      // Any member of the project's parent channel can manage the project if the data is valid.
+      // Cho phép truy cập nếu kênh cha tồn tại VÀ người dùng là thành viên của kênh đó.
       allow read, write, create, delete: if 
-        exists(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)) &&
-        'memberIds' in get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)).data &&
-        get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)).data.memberIds is list &&
-        request.auth.uid in get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)).data.memberIds;
+        'channelId' in resource.data &&
+        isMemberOfValidChannel(get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)));
     }
   }
 }`;
