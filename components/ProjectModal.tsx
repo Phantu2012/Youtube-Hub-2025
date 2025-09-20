@@ -1,10 +1,11 @@
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel } from '../types';
 import { getStatusOptions } from '../constants';
 import { fetchVideoStats } from '../services/youtubeService';
 import { StatsChart } from './StatsChart';
-import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet, Copy } from 'lucide-react';
+import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet, Copy as CopyIcon, Copy } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -177,7 +178,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
         onRerun(formData as Project);
     };
 
-    const handleCopy = () => {
+    const handleCopyProjectAction = () => {
         onCopy(formData as Project);
         onClose();
     };
@@ -444,6 +445,32 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
         {t('projectModal.generate')}
       </button>
     );
+    
+    const CopyButton = ({ textToCopy }: { textToCopy: string | string[] | undefined }) => {
+        if (!textToCopy || (Array.isArray(textToCopy) && textToCopy.length === 0)) {
+            return null;
+        }
+
+        const handleCopyClick = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            const text = Array.isArray(textToCopy) ? textToCopy.join(', ') : textToCopy;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(t('toasts.copied'), 'success');
+            });
+        };
+
+        return (
+            <button
+                type="button"
+                onClick={handleCopyClick}
+                className="p-1 text-gray-400 hover:text-primary dark:text-gray-500 dark:hover:text-primary-dark transition-colors"
+                title={t('common.copy')}
+            >
+                <Copy size={14} />
+            </button>
+        );
+    };
+
 
     const renderContent = () => {
         switch (activeTab) {
@@ -451,31 +478,46 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
                 return (
                     <div className="space-y-4">
                         <div>
-                            <label className="font-semibold">{t('projectModal.projectName')}</label>
-                            <input type="text" name="projectName" value={formData.projectName} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" required />
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold">{t('projectModal.projectName')}</label>
+                                <CopyButton textToCopy={formData.projectName} />
+                            </div>
+                            <input type="text" name="projectName" value={formData.projectName} onChange={handleInputChange} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" required />
                         </div>
                         <div>
-                            <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center mb-1">
                                 <label className="font-semibold">{t('projectModal.videoTitle')}</label>
-                                <GenerateButton field="videoTitle" />
+                                <div className="flex items-center gap-2">
+                                    <CopyButton textToCopy={formData.videoTitle} />
+                                    <GenerateButton field="videoTitle" />
+                                </div>
                             </div>
-                            <input type="text" name="videoTitle" value={formData.videoTitle} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                            <input type="text" name="videoTitle" value={formData.videoTitle} onChange={handleInputChange} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
                         </div>
                         <div>
-                            <label className="font-semibold flex items-center gap-2"><FileText size={16} /> {t('projectModal.script')}</label>
-                            <textarea name="script" value={formData.script} onChange={handleInputChange} rows={12} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.scriptPlaceholder')}/>
-                        </div>
-                         <div>
-                            <div className="flex justify-between items-center">
-                                <label className="font-semibold">{t('projectModal.description')}</label>
-                                <GenerateButton field="description" />
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold flex items-center gap-2"><FileText size={16} /> {t('projectModal.script')}</label>
+                                <CopyButton textToCopy={formData.script} />
                             </div>
-                            <textarea name="description" value={formData.description} onChange={handleInputChange} rows={6} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                            <textarea name="script" value={formData.script} onChange={handleInputChange} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.scriptPlaceholder')}/>
                         </div>
                          <div>
-                            <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold">{t('projectModal.description')}</label>
+                                <div className="flex items-center gap-2">
+                                    <CopyButton textToCopy={formData.description} />
+                                    <GenerateButton field="description" />
+                                </div>
+                            </div>
+                            <textarea name="description" value={formData.description} onChange={handleInputChange} rows={6} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                        </div>
+                         <div>
+                            <div className="flex justify-between items-center mb-1">
                                 <label className="font-semibold flex items-center gap-2"><Tag size={16}/> {t('projectModal.tags')}</label>
-                                <GenerateButton field="tags" />
+                                <div className="flex items-center gap-2">
+                                    <CopyButton textToCopy={(formData as Project).tags} />
+                                    <GenerateButton field="tags" />
+                                </div>
                             </div>
                             <div className="flex flex-wrap gap-2 p-2 mt-1 border border-gray-300 dark:border-gray-600 rounded-md min-h-[40px]">
                                 {(formData as Project).tags.map(tag => (
@@ -500,7 +542,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
                 return (
                     <div className="space-y-4">
                         <div>
-                            <label className="font-semibold flex items-center gap-2"><Calendar size={16}/> {t('projectModal.publishDate')}</label>
+                            <label className="font-semibold flex items-center gap-2">{t('projectModal.publishDate')}</label>
                             <input type="datetime-local" name="publishDateTime" value={formData.publishDateTime} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" required />
                         </div>
                         <div>
@@ -510,20 +552,32 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
                             </select>
                         </div>
                          <div>
-                            <label className="font-semibold flex items-center gap-2"><Youtube size={16}/> {t('projectModal.youtubeLink')}</label>
-                            <input type="url" name="youtubeLink" value={formData.youtubeLink} onChange={handleInputChange} onBlur={(e) => loadStats(e.target.value)} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder="https://www.youtube.com/watch?v=..." />
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold flex items-center gap-2"><Youtube size={16}/> {t('projectModal.youtubeLink')}</label>
+                                <CopyButton textToCopy={formData.youtubeLink} />
+                            </div>
+                            <input type="url" name="youtubeLink" value={formData.youtubeLink} onChange={handleInputChange} onBlur={(e) => loadStats(e.target.value)} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder="https://www.youtube.com/watch?v=..." />
                         </div>
                         <div>
-                            <label className="font-semibold">{t('projectModal.pinnedComment')}</label>
-                            <textarea name="pinnedComment" value={formData.pinnedComment} onChange={handleInputChange} rows={5} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold">{t('projectModal.pinnedComment')}</label>
+                                <CopyButton textToCopy={formData.pinnedComment} />
+                            </div>
+                            <textarea name="pinnedComment" value={formData.pinnedComment} onChange={handleInputChange} rows={5} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
                         </div>
                         <div>
-                            <label className="font-semibold">{t('projectModal.communityPost')}</label>
-                            <textarea name="communityPost" value={formData.communityPost} onChange={handleInputChange} rows={5} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold">{t('projectModal.communityPost')}</label>
+                                <CopyButton textToCopy={formData.communityPost} />
+                            </div>
+                            <textarea name="communityPost" value={formData.communityPost} onChange={handleInputChange} rows={5} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
                         </div>
                         <div>
-                            <label className="font-semibold">{t('projectModal.facebookPost')}</label>
-                            <textarea name="facebookPost" value={formData.facebookPost} onChange={handleInputChange} rows={5} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                             <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold">{t('projectModal.facebookPost')}</label>
+                                <CopyButton textToCopy={formData.facebookPost} />
+                            </div>
+                            <textarea name="facebookPost" value={formData.facebookPost} onChange={handleInputChange} rows={5} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
                         </div>
                     </div>
                 );
@@ -562,6 +616,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
                         <div className="flex justify-between items-center pt-2">
                             <label className="font-semibold flex items-center gap-2"><Wand2 size={16}/> {t('projectModal.thumbnailPrompt')}</label>
                             <div className="flex items-center gap-4">
+                                <CopyButton textToCopy={formData.thumbnailPrompt} />
                                 <GenerateButton field="thumbnailPrompt" />
                                 <button
                                     type="button"
@@ -581,28 +636,46 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
                  return (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <div>
-                            <label className="font-semibold flex items-center gap-2"><Mic size={16} /> {t('projectModal.voiceoverScript')}</label>
-                            <textarea name="voiceoverScript" value={formData.voiceoverScript} onChange={handleInputChange} rows={8} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.voiceoverScriptPlaceholder')}/>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold flex items-center gap-2"><Mic size={16} /> {t('projectModal.voiceoverScript')}</label>
+                                <CopyButton textToCopy={formData.voiceoverScript} />
+                            </div>
+                            <textarea name="voiceoverScript" value={formData.voiceoverScript} onChange={handleInputChange} rows={8} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.voiceoverScriptPlaceholder')}/>
                         </div>
                         <div>
-                            <label className="font-semibold flex items-center gap-2"><ImageIcon size={16} /> {t('projectModal.visualPrompts')}</label>
-                            <textarea name="visualPrompts" value={formData.visualPrompts} onChange={handleInputChange} rows={8} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.visualPromptsPlaceholder')}/>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold flex items-center gap-2"><ImageIcon size={16} /> {t('projectModal.visualPrompts')}</label>
+                                <CopyButton textToCopy={formData.visualPrompts} />
+                            </div>
+                            <textarea name="visualPrompts" value={formData.visualPrompts} onChange={handleInputChange} rows={8} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.visualPromptsPlaceholder')}/>
                         </div>
                          <div>
-                            <label className="font-semibold flex items-center gap-2"><List size={16} /> {t('projectModal.promptTable')}</label>
-                            <textarea name="promptTable" value={formData.promptTable} onChange={handleInputChange} rows={8} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.promptTablePlaceholder')}/>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold flex items-center gap-2"><List size={16} /> {t('projectModal.promptTable')}</label>
+                                <CopyButton textToCopy={formData.promptTable} />
+                            </div>
+                            <textarea name="promptTable" value={formData.promptTable} onChange={handleInputChange} rows={8} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.promptTablePlaceholder')}/>
                         </div>
                          <div>
-                            <label className="font-semibold flex items-center gap-2"><Clock size={16} /> {t('projectModal.timecodeMap')}</label>
-                            <textarea name="timecodeMap" value={formData.timecodeMap} onChange={handleInputChange} rows={8} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.timecodeMapPlaceholder')}/>
+                             <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold flex items-center gap-2"><Clock size={16} /> {t('projectModal.timecodeMap')}</label>
+                                <CopyButton textToCopy={formData.timecodeMap} />
+                            </div>
+                            <textarea name="timecodeMap" value={formData.timecodeMap} onChange={handleInputChange} rows={8} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.timecodeMapPlaceholder')}/>
                         </div>
                          <div className="lg:col-span-2">
-                            <label className="font-semibold flex items-center gap-2"><Code size={16} /> {t('projectModal.seoMetadata')}</label>
-                            <textarea name="seoMetadata" value={formData.seoMetadata} onChange={handleInputChange} rows={8} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.seoMetadataPlaceholder')}/>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold flex items-center gap-2"><Code size={16} /> {t('projectModal.seoMetadata')}</label>
+                                <CopyButton textToCopy={formData.seoMetadata} />
+                            </div>
+                            <textarea name="seoMetadata" value={formData.seoMetadata} onChange={handleInputChange} rows={8} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.seoMetadataPlaceholder')}/>
                         </div>
                         <div className="lg:col-span-2">
-                            <label className="font-semibold flex items-center gap-2"><InfoIcon size={16} /> {t('projectModal.metadata')}</label>
-                            <textarea name="metadata" value={formData.metadata} onChange={handleInputChange} rows={4} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.metadataPlaceholder')}/>
+                             <div className="flex justify-between items-center mb-1">
+                                <label className="font-semibold flex items-center gap-2"><InfoIcon size={16} /> {t('projectModal.metadata')}</label>
+                                <CopyButton textToCopy={formData.metadata} />
+                            </div>
+                            <textarea name="metadata" value={formData.metadata} onChange={handleInputChange} rows={4} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.metadataPlaceholder')}/>
                         </div>
                     </div>
                 );
@@ -700,11 +773,11 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={handleCopy}
+                                    onClick={handleCopyProjectAction}
                                     disabled={isSaving}
                                     className="flex items-center gap-2 text-purple-600 hover:text-purple-800 dark:hover:text-purple-400 font-semibold py-2 px-4 rounded-lg hover:bg-purple-500/10"
                                 >
-                                    <Copy size={16} /> {t('projectModal.copy')}
+                                    <CopyIcon size={16} /> {t('projectModal.copy')}
                                 </button>
                                 <button
                                     type="button"
