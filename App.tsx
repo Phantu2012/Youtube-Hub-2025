@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -249,45 +250,26 @@ const AppContent: React.FC = () => {
 
     const ownedChannelsListener = db.collection('users').doc(user.uid).collection('channels')
       .onSnapshot(snapshot => {
-        const migrationBatch = db.batch();
-        let needsMigration = false;
-        console.log(`[Migration Check] Running for user ${user.uid}. Found ${snapshot.docs.length} owned channels.`);
+        console.log(`[Data Hydration] Checking ${snapshot.docs.length} owned channels for legacy format.`);
 
         const channelsData = snapshot.docs.map(doc => {
             const data = doc.data();
             if (!data) return null;
-
-            const isMigrated = data.ownerId && data.members && data.memberIds && Array.isArray(data.memberIds);
-
-            if (!isMigrated) {
-                console.log(`[Migration Check] Channel '${doc.id}' (${data.name}) needs migration.`);
-                const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(doc.id);
-                const members = data.members || { [user.uid]: 'owner' };
-                const memberIds = Object.keys(members);
-                
-                migrationBatch.update(channelDocRef, {
-                    ownerId: data.ownerId || user.uid,
-                    members: members,
-                    memberIds: memberIds
-                });
-                needsMigration = true;
-                console.log(`[Migration Check] Staged migration for '${doc.id}': set ownerId, members, and memberIds.`);
+            
+            // --- DATA HYDRATION FOR OLD CHANNELS ---
+            // If a channel is missing ownerId or memberIds, it's an older document.
+            // We'll hydrate it in-memory to ensure the rest of the app functions correctly
+            // without performing a risky database write migration.
+            if (!data.ownerId) {
+                data.ownerId = user.uid; // It's an owned channel, so the owner is the current user.
+            }
+            if (!data.memberIds) {
+                // Create memberIds from the old 'members' object or default to just the owner.
+                data.memberIds = data.members ? Object.keys(data.members) : [user.uid];
             }
             
             return { id: doc.id, ...data } as Channel;
         }).filter((c): c is Channel => c !== null);
-        
-        if (needsMigration) {
-            console.log("[Migration Check] Committing migration batch...");
-            migrationBatch.commit().then(() => {
-                console.log("[Migration Check] Batch commit successful!");
-                showToast("Channel data has been successfully upgraded.", 'success');
-            }).catch(error => {
-                console.error("[Migration Check] Failed to commit migration batch:", error);
-            });
-        } else {
-            console.log("[Migration Check] All owned channels are up-to-date.");
-        }
 
         setOwnedChannels(channelsData);
       }, error => {

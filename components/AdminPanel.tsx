@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { db, firebase } from '../firebase';
@@ -98,14 +99,11 @@ const PermissionErrorGuide: React.FC<{ onRetry: () => void }> = ({ onRetry }) =>
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // === HÀM TRỢ GIÚP ===
-    // Hàm này kiểm tra xem người dùng có phải là thành viên của một kênh hợp lệ hay không.
+    // === HELPER FUNCTIONS ===
     function isMemberOfValidChannel(channelResource) {
-      // Kênh phải có ownerId, và tài liệu của ownerId đó phải tồn tại.
       let hasValidOwner = 'ownerId' in channelResource.data &&
                           exists(/databases/$(database)/documents/users/$(channelResource.data.ownerId));
       
-      // Người dùng phải có trong danh sách memberIds hợp lệ.
       let isListedMember = 'memberIds' in channelResource.data &&
                            channelResource.data.memberIds is list &&
                            request.auth.uid in channelResource.data.memberIds;
@@ -113,49 +111,56 @@ service cloud.firestore {
       return hasValidOwner && isListedMember;
     }
 
-    // === QUY TẮC CHÍNH ===
+    // === MAIN RULES ===
 
-    // Người dùng có thể đọc/ghi dữ liệu của chính họ. Admin có quyền cao hơn.
+    // Users can write to their own doc. Admins have higher privileges.
     match /users/{userId} {
       allow write: if request.auth.uid == userId;
       allow get: if request.auth != null;
       allow list, update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Quy tắc cho cài đặt hệ thống.
+    // System settings rules.
     match /system_settings/{settingId} {
       allow read: if request.auth != null;
       allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Quy tắc cho collection con 'channels' (truy cập trực tiếp).
+    // Rules for 'channels' subcollection (direct access).
     match /users/{ownerId}/channels/{channelId} {
       allow create, delete, write: if request.auth.uid == ownerId;
       allow list: if request.auth.uid == ownerId;
       allow get: if isMemberOfValidChannel(resource);
     }
     
-    // QUY TẮC QUAN TRỌNG NHẤT - SỬA LỖI TẠI ĐÂY
-    // Quy tắc này cho phép ứng dụng tìm thấy các kênh được chia sẻ.
+    // This collection group rule allows the app to find shared channels.
     match /{path=**}/channels/{channelId} {
-      // Nó cho phép truy vấn nếu người dùng có trong danh sách thành viên, mà không cần
-      // kiểm tra sự tồn tại của chủ sở hữu ngay lập tức, tránh lỗi "tất cả hoặc không có gì".
-      // Quyền truy cập vào dữ liệu nhạy cảm (dự án) sẽ được kiểm tra chặt chẽ hơn ở quy tắc dưới đây.
       allow get, list: if 'memberIds' in resource.data &&
                          resource.data.memberIds is list &&
                          request.auth.uid in resource.data.memberIds;
     }
 
-    // Quy tắc cho collection con 'projects'.
+    // Rules for 'projects' subcollection.
     match /users/{ownerId}/projects/{projectId} {
-      // Cho phép đọc/xóa tài liệu hiện có nếu người dùng là thành viên của kênh của dự án.
-      allow read, delete: if
-        isMemberOfValidChannel(get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)));
       
-      // Cho phép tạo/cập nhật nếu người dùng là thành viên của kênh được chỉ định trong dữ liệu *mới*.
-      // Điều này khắc phục lỗi "thiếu quyền" khi tạo dự án mới trong một kênh được chia sẻ.
-      allow create, update: if
-        isMemberOfValidChannel(get(/databases/$(database)/documents/users/$(ownerId)/channels/$(request.resource.data.channelId)));
+      function getProjectChannel() {
+        // For create/update, use channelId from the incoming data.
+        // For read/delete, use channelId from the existing data.
+        let channelId = request.resource != null ? request.resource.data.channelId : resource.data.channelId;
+        return get(/databases/$(database)/documents/users/$(ownerId)/channels/$(channelId));
+      }
+      
+      function isProjectChannelMember() {
+        let channel = getProjectChannel();
+        // Check if the channel document exists and the user is a member.
+        return channel != null &&
+               'memberIds' in channel.data &&
+               channel.data.memberIds is list &&
+               request.auth.uid in channel.data.memberIds;
+      }
+
+      // Allow read and write (create, update, delete) if the user is a member of the project's channel.
+      allow read, write: if isProjectChannelMember();
     }
   }
 }`;
