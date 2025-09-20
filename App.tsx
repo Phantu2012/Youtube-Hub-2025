@@ -53,7 +53,7 @@ const DEV_DEFAULT_API_KEYS: ApiKeys = {
 
 
 const AppContent: React.FC = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsFromListeners, setProjectsFromListeners] = useState<Record<string, Project[]>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -79,6 +79,12 @@ const AppContent: React.FC = () => {
   const [dream100Channel, setDream100Channel] = useState<Channel | null>(null);
   const [globalAutomationSteps, setGlobalAutomationSteps] = useState<AutomationStep[]>(DEFAULT_AUTOMATION_STEPS);
   const [channelMembers, setChannelMembers] = useState<Record<string, User>>({});
+  
+  const projects = useMemo(() => {
+    const allProjects = Object.values(projectsFromListeners).flat();
+    allProjects.sort((a, b) => new Date(b.publishDateTime).getTime() - new Date(a.publishDateTime).getTime());
+    return allProjects;
+  }, [projectsFromListeners]);
 
   const channels = useMemo(() => {
     const combined = new Map<string, Channel>();
@@ -161,7 +167,7 @@ const AppContent: React.FC = () => {
           }
         } else {
           setUser(null);
-          setProjects([]);
+          setProjectsFromListeners({});
           setOwnedChannels([]);
           setSharedChannels([]);
           setIsLoading(false);
@@ -170,7 +176,7 @@ const AppContent: React.FC = () => {
         console.error("Firestore connection error:", error);
         setDbConnectionError(true);
         setUser(null);
-        setProjects([]);
+        setProjectsFromListeners({});
         setOwnedChannels([]);
         setSharedChannels([]);
         setIsLoading(false);
@@ -344,47 +350,65 @@ const AppContent: React.FC = () => {
   // Listener for project data from all accessible channels
   useEffect(() => {
     if (!user || user.status !== 'active' || IS_DEV_MODE || channels.length === 0) {
-      if (!user) setProjects([]);
+      if (!user) setProjectsFromListeners({});
       return;
     }
-    
+
     const allListeners: (() => void)[] = [];
-    const projectMap = new Map<string, Project>();
+    const visibleChannelIds = new Set(channels.map(c => c.id));
 
     channels.forEach(channel => {
-        const ownerId = channel.ownerId; // Crucially, do not fall back to user.uid
+        const ownerId = channel.ownerId;
         
         if (!ownerId) {
             console.warn(`Channel "${channel.name}" is missing an ownerId and will be skipped.`);
-            return; // Skip channels that haven't been migrated
+            return;
         }
         
         const projectsCollectionRef = db.collection('users').doc(ownerId).collection('projects')
                                       .where('channelId', '==', channel.id);
         
         const listener = projectsCollectionRef.onSnapshot((snapshot) => {
-            snapshot.docs.forEach(doc => {
+            const channelProjects = snapshot.docs.map(doc => {
                 const data = doc.data();
                 const publishDateTime = data.publishDateTime instanceof firebase.firestore.Timestamp 
                     ? data.publishDateTime.toDate().toISOString().slice(0, 16) 
                     : data.publishDateTime;
                 
-                projectMap.set(doc.id, {
+                return {
                     id: doc.id,
                     ...data,
                     publishDateTime,
-                } as Project);
+                } as Project;
             });
-            
-            const allProjects = Array.from(projectMap.values());
-            allProjects.sort((a, b) => new Date(b.publishDateTime).getTime() - new Date(a.publishDateTime).getTime());
-            setProjects(allProjects);
+
+            setProjectsFromListeners(prev => ({
+                ...prev,
+                [channel.id]: channelProjects,
+            }));
 
         }, (error: any) => {
             console.error(`Error fetching projects for channel ${channel.id}:`, error);
+            // On error, remove this channel's projects from state to prevent stale data
+            setProjectsFromListeners(prev => {
+                const newState = {...prev};
+                delete newState[channel.id];
+                return newState;
+            });
         });
 
         allListeners.push(listener);
+    });
+    
+    // Cleanup projects from channels that are no longer visible
+    setProjectsFromListeners(prev => {
+        const newState: Record<string, Project[]> = {};
+        Object.keys(prev).forEach(channelId => {
+            if (visibleChannelIds.has(channelId)) {
+                newState[channelId] = prev[channelId];
+            }
+        });
+        return newState;
     });
 
     return () => {
