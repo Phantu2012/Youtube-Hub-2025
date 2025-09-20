@@ -39,25 +39,36 @@ export const DbConnectionErrorScreen: React.FC<DbConnectionErrorScreenProps> = (
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Rules for the 'users' collection
+    // Users can manage their own document. Admins can manage any user document.
     match /users/{userId} {
-      // Allow a user to read and write their own document.
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-
-      // Allow an ADMIN to list all users, get any user, and update any user.
+      allow read, write: if request.auth.uid == userId;
       allow list, get, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Rules for the 'projects' subcollection within each user
-    match /users/{userId}/projects/{projectId} {
-      // Allow a user to perform all actions on their own projects.
-      allow read, write, create, delete: if request.auth != null && request.auth.uid == userId;
+    // Admins can read/write global settings. Authenticated users can read them.
+    match /system_settings/{settingId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Rules for the 'channels' subcollection within each user
-    match /users/{userId}/channels/{channelId} {
-      // Allow a user to perform all actions on their own channels (create, read, update, delete).
-      allow read, write, create, delete: if request.auth != null && request.auth.uid == userId;
+    // Rules for a user's 'channels' subcollection
+    match /users/{ownerId}/channels/{channelId} {
+      // The owner can do anything with their channel.
+      allow create, delete, write: if request.auth.uid == ownerId;
+
+      // Any member of the channel (owner or editor) can read the channel's details.
+      allow read: if request.auth.uid in resource.data.members;
+    }
+
+    // Rules for a user's 'projects' subcollection
+    match /users/{ownerId}/projects/{projectId} {
+      // Let channelId be the ID of the channel this project belongs to.
+      let channelId = resource.data.channelId;
+      // Let channelDoc be the actual channel document.
+      let channelDoc = get(/databases/$(database)/documents/users/$(ownerId)/channels/$(channelId));
+      
+      // Any member of the project's parent channel (owner or editor) can create, read, update, or delete the project.
+      allow read, write, create, delete: if request.auth.uid in channelDoc.data.members;
     }
   }
 }`;

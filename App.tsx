@@ -273,7 +273,11 @@ const AppContent: React.FC = () => {
     const projectMap = new Map<string, Project>();
 
     channels.forEach(channel => {
-        const projectsCollectionRef = db.collection('users').doc(channel.ownerId).collection('projects')
+        // BACKWARDS COMPATIBILITY FIX: Older channels might not have an ownerId field.
+        // Default to the current user's UID to prevent crashes.
+        const ownerId = channel.ownerId || user.uid;
+        
+        const projectsCollectionRef = db.collection('users').doc(ownerId).collection('projects')
                                       .where('channelId', '==', channel.id);
         
         const listener = projectsCollectionRef.onSnapshot((snapshot) => {
@@ -315,10 +319,10 @@ const AppContent: React.FC = () => {
 
       const statsPromises = channelsToUpdate.map(channel =>
         fetchChannelStats(channel.channelUrl!, apiKeys.youtube)
-          .then(stats => ({ channelId: channel.id, ownerId: channel.ownerId, stats }))
+          .then(stats => ({ channelId: channel.id, ownerId: channel.ownerId || user.uid, stats }))
           .catch(err => {
             console.error(`Failed to fetch stats for ${channel.name}:`, err.message);
-            return { channelId: channel.id, ownerId: channel.ownerId, stats: null };
+            return { channelId: channel.id, ownerId: channel.ownerId || user.uid, stats: null };
           })
       );
       
@@ -417,8 +421,9 @@ const AppContent: React.FC = () => {
 
   const handleSaveChannelChanges = async (channel: Channel) => {
     if (!user) return;
+    const ownerId = channel.ownerId || user.uid;
     try {
-        const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channel.id);
+        const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channel.id);
         await channelDocRef.update({
             name: channel.name,
             dna: channel.dna,
@@ -432,8 +437,9 @@ const AppContent: React.FC = () => {
   
   const handleUpdateChannelMembers = async (channel: Channel, newMembers: Channel['members']) => {
     if (!user) return;
+    const ownerId = channel.ownerId || user.uid;
     try {
-        const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channel.id);
+        const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channel.id);
         await channelDocRef.update({ members: newMembers });
     } catch (error) {
         console.error("Error updating channel members:", error);
@@ -450,8 +456,9 @@ const AppContent: React.FC = () => {
         showToast(t('toasts.deleteChannelError'), 'error');
         return;
     }
+    const ownerId = channel.ownerId || user.uid;
     try {
-        const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channelId);
+        const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channelId);
         await channelDocRef.delete();
         showToast(t('toasts.channelDeleted'), 'info');
     } catch (error) {
@@ -471,8 +478,9 @@ const AppContent: React.FC = () => {
     if (!user) return;
     const channel = channels.find(c => c.id === channelId);
     if (!channel) return;
+    const ownerId = channel.ownerId || user.uid;
     try {
-        const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channelId);
+        const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channelId);
         await channelDocRef.update({ dream100Videos: updatedVideos });
     } catch (error) {
         console.error("Error updating Dream 100:", error);
@@ -484,8 +492,9 @@ const AppContent: React.FC = () => {
     if (!user) return;
     const channel = channels.find(c => c.id === channelId);
     if (!channel) return;
+    const ownerId = channel.ownerId || user.uid;
     try {
-        const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channelId);
+        const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channelId);
         await channelDocRef.update({ ideas: updatedIdeas });
     } catch (error) {
         console.error("Error updating Idea Bank:", error);
@@ -497,8 +506,9 @@ const AppContent: React.FC = () => {
     if (!user || !channelId) return;
     const channel = channels.find(c => c.id === channelId);
     if (!channel) return;
+    const ownerId = channel.ownerId || user.uid;
     try {
-        const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channelId);
+        const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channelId);
         await channelDocRef.set({ automationSteps: updatedSteps }, { merge: true });
     } catch (error: any) {
         console.error("Error saving automation steps:", error);
@@ -526,6 +536,8 @@ const AppContent: React.FC = () => {
             throw new Error("Channel not found for this project.");
         }
         
+        const ownerId = channel.ownerId || user.uid;
+
         const dataToSave = {
             channelId: projectToSave.channelId,
             projectName: projectToSave.projectName,
@@ -551,11 +563,11 @@ const AppContent: React.FC = () => {
         };
 
         if (projectToSave.id) {
-            const projectDocRef = db.collection('users').doc(channel.ownerId).collection('projects').doc(projectToSave.id);
+            const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectToSave.id);
             await projectDocRef.update(dataToSave);
             showToast(t('toasts.projectUpdated'), 'success');
         } else {
-            await db.collection('users').doc(channel.ownerId).collection('projects').add(dataToSave);
+            await db.collection('users').doc(ownerId).collection('projects').add(dataToSave);
             showToast(t('toasts.projectCreated'), 'success');
         }
     };
@@ -603,9 +615,10 @@ const AppContent: React.FC = () => {
         showToast(t('toasts.projectDeleteFailed'), 'error');
         throw new Error("Channel not found for project");
     }
+    const ownerId = channel.ownerId || user.uid;
 
     try {
-        const projectDocRef = db.collection('users').doc(channel.ownerId).collection('projects').doc(projectId);
+        const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectId);
         await projectDocRef.delete();
         showToast(t('toasts.projectDeleted'), 'info');
         handleCloseModal();
@@ -636,8 +649,9 @@ const AppContent: React.FC = () => {
     }
 
     setIsSaving(true);
+    const ownerId = originalChannel.ownerId || user.uid;
     try {
-        const projectDocRef = db.collection('users').doc(originalChannel.ownerId).collection('projects').doc(projectToMove.id);
+        const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectToMove.id);
         await projectDocRef.update({ channelId: newChannelId });
         showToast(t('toasts.projectMoved', { channelName: destinationChannel.name }), 'success');
         handleCloseModal();
