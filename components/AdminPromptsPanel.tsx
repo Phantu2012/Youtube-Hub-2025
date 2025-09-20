@@ -88,21 +88,42 @@ const PermissionErrorGuideForPrompts: React.FC<{ onRetry: () => void }> = ({ onR
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Rules for the 'users' collection
+    // Users can write to their own doc, and any authenticated user can read public profile data.
+    // Admins have extra rights.
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow list, get, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      allow write: if request.auth.uid == userId;
+      allow get: if request.auth != null;
+      allow list, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
-    
-    // Rule for system-wide settings (e.g., Global Prompts)
+
+    // Admins can read/write global settings. Authenticated users can read them.
     match /system_settings/{settingId} {
         allow read: if request.auth != null;
         allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Rules for subcollections
-    match /users/{userId}/{collectionId}/{docId} {
-      allow read, write, create, delete: if request.auth != null && request.auth.uid == userId;
+    // Rules for a user's 'channels' subcollection (direct access)
+    match /users/{ownerId}/channels/{channelId} {
+      // The owner can do anything with their channel.
+      allow create, delete, write: if request.auth.uid == ownerId;
+
+      // Any member of the channel (owner or editor) can read the channel's details.
+      allow read: if request.auth.uid in resource.data.members;
+    }
+    
+    // This rule is REQUIRED for the app to find channels shared with the user.
+    // It allows a collectionGroup query across all 'channels' subcollections.
+    match /{path=**}/channels/{channelId} {
+      // Allow a user to list/get a channel if their UID is in the 'members' map.
+      allow get, list: if request.auth.uid in resource.data.members;
+    }
+
+    // Rules for a user's 'projects' subcollection
+    match /users/{ownerId}/projects/{projectId} {
+      // Any member of the project's parent channel can manage the project.
+      // This rule gets the channelId from the project being accessed (resource.data.channelId),
+      // then fetches the corresponding channel document and checks if the user is a member.
+      allow read, write, create, delete: if request.auth.uid in get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)).data.members;
     }
   }
 }`;

@@ -73,13 +73,10 @@ service cloud.firestore {
 
     // Rules for a user's 'projects' subcollection
     match /users/{ownerId}/projects/{projectId} {
-      // Let channelId be the ID of the channel this project belongs to.
-      let channelId = resource.data.channelId;
-      // Let channelDoc be the actual channel document.
-      let channelDoc = get(/databases/$(database)/documents/users/$(ownerId)/channels/$(channelId));
-      
       // Any member of the project's parent channel can manage the project.
-      allow read, write, create, delete: if request.auth.uid in channelDoc.data.members;
+      // This rule gets the channelId from the project being accessed (resource.data.channelId),
+      // then fetches the corresponding channel document and checks if the user is a member.
+      allow read, write, create, delete: if request.auth.uid in get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)).data.members;
     }
   }
 }`;
