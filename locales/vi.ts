@@ -158,6 +158,10 @@ export default {
         "step4": "Thêm một trường mới: Tên = 'isAdmin', Loại = 'boolean', Giá trị = 'true'.",
         "step5": "Đặt 'status' của bạn thành 'active' và cấp cho mình một ngày 'expiresAt' thật xa.",
         "step6": "Tải lại ứng dụng này. Bây giờ bạn sẽ thấy bảng điều khiển Admin."
+    },
+    "setupGuide": {
+        "step4Title": "Tạo Index Firestore cho Chia sẻ",
+        "step4Desc": "Để tìm các kênh được chia sẻ, cần có một chỉ mục cơ sở dữ liệu. Firebase cung cấp một liên kết trong nhật ký lỗi của bảng điều khiển nhà phát triển của trình duyệt để tạo tự động. Hãy tìm thông báo lỗi bắt đầu bằng 'The query requires an index...' và nhấp vào liên kết được cung cấp ở đó."
     }
   },
   "adminPrompts": {
@@ -608,7 +612,7 @@ export default {
      "ideaAdded": "Đã thêm (các) ý tưởng thành công!",
     "ideaUpdated": "Đã cập nhật trạng thái ý tưởng.",
     "ideaDeleted": "Đã xóa ý tưởng.",
-    "sharedChannelPermissionErrorAdmin": "Không thể tải các kênh được chia sẻ. Quy tắc bảo mật Firestore của bạn có thể chưa được cập nhật cho tính năng chia sẻ. Vui lòng vào Bảng điều khiển Admin -> Hướng dẫn Cài đặt và áp dụng các quy tắc mới nhất cho dự án Firebase của bạn.",
+    "sharedChannelPermissionErrorAdmin": "Không thể tải các kênh được chia sẻ. Quy tắc bảo mật Firestore và/hoặc chỉ mục cơ sở dữ liệu của bạn có thể chưa được cập nhật cho tính năng chia sẻ. Vui lòng vào Bảng điều khiển Admin -> Hướng dẫn Cài đặt và áp dụng cấu hình mới nhất.",
     "sharedChannelPermissionErrorUser": "Không thể tải các kênh được chia sẻ. Cấu hình bảo mật của ứng dụng có thể đã lỗi thời. Vui lòng liên hệ với quản trị viên của bạn để được hỗ trợ.",
     "generated": {
       "videoTitle": "Đã tạo tiêu đề video!",

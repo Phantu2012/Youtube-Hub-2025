@@ -1,14 +1,10 @@
 
 
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { db, firebase } from '../firebase';
 import { useTranslation } from '../hooks/useTranslation';
-import { Loader, Save, Shield, AlertTriangle, ExternalLink, RotateCcw, Users, Edit3, Info } from 'lucide-react';
+import { Loader, Save, Shield, AlertTriangle, ExternalLink, RotateCcw, Users, Edit3, Info, Database } from 'lucide-react';
 import { CodeBlock } from './CodeBlock'; 
 import { firebaseConfig } from '../firebase';
 import { AdminPromptsPanel } from './AdminPromptsPanel';
@@ -121,8 +117,10 @@ service cloud.firestore {
       // The owner can do anything with their channel.
       allow create, delete, write: if request.auth.uid == ownerId;
 
-      // Any member of the channel (owner or editor) can read the channel's details.
-      allow read: if request.auth.uid in resource.data.members;
+      // The owner can list their own channels.
+      allow list: if request.auth.uid == ownerId;
+      // Any member can get a specific channel's details.
+      allow get: if request.auth.uid in resource.data.members;
     }
     
     // This rule is REQUIRED for the app to find channels shared with the user.
@@ -313,48 +311,48 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ showToast }) => {
     };
 
     const renderSetupGuidePanel = () => (
-      <div className="p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-800 dark:text-yellow-200">
-        <div className="flex items-center gap-3">
-          <AlertTriangle className="text-yellow-600 dark:text-yellow-400" size={24} />
+      <div className="p-6 bg-light-card dark:bg-dark-card rounded-lg shadow-md space-y-6">
+        <div className="p-4 bg-yellow-500/10 border-l-4 border-yellow-500 text-yellow-800 dark:text-yellow-200">
           <h3 className="text-xl font-bold">{t('login.setupGuide.title')}</h3>
+          <p className="mt-1">{t('login.setupGuide.intro')}</p>
         </div>
-        <p className="mt-2 mb-6 text-sm">{t('login.setupGuide.intro')}</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-          <div className="bg-light-card dark:bg-dark-card/30 p-4 rounded-md">
-            <h4 className="font-bold">{t('login.setupGuide.step1Title')}</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+          <div className="bg-light-bg dark:bg-dark-bg/50 p-4 rounded-md">
+            <h4 className="font-bold">1. {t('login.setupGuide.step1Title')}</h4>
             <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-3">{t('login.setupGuide.step1Desc')}</p>
             <a
               href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/providers`}
-              target="_blank"
-              rel="noopener noreferrer"
+              target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow"
             >
               {t('login.setupGuide.step1Button')} <ExternalLink size={14} />
             </a>
           </div>
-          <div className="bg-light-card dark:bg-dark-card/30 p-4 rounded-md">
-            <h4 className="font-bold">{t('login.setupGuide.step2Title')}</h4>
+          <div className="bg-light-bg dark:bg-dark-bg/50 p-4 rounded-md">
+            <h4 className="font-bold">2. {t('login.setupGuide.step2Title')}</h4>
             <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-3">{t('login.setupGuide.step2Desc')}</p>
              <a
               href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/settings`}
-              target="_blank"
-              rel="noopener noreferrer"
+              target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow"
             >
               {t('login.setupGuide.step2Button')} <ExternalLink size={14} />
             </a>
           </div>
-          <div className="bg-light-card dark:bg-dark-card/30 p-4 rounded-md">
-            <h4 className="font-bold">{t('login.setupGuide.step3Title')}</h4>
+          <div className="bg-light-bg dark:bg-dark-bg/50 p-4 rounded-md">
+            <h4 className="font-bold">3. {t('login.setupGuide.step3Title')}</h4>
             <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-3">{t('login.setupGuide.step3Desc')}</p>
              <a
               href={`https://console.cloud.google.com/apis/credentials?project=${firebaseConfig.projectId}`}
-              target="_blank"
-              rel="noopener noreferrer"
+              target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow"
             >
               {t('login.setupGuide.step3Button')} <ExternalLink size={14} />
             </a>
+          </div>
+          <div className="bg-light-bg dark:bg-dark-bg/50 p-4 rounded-md">
+            <h4 className="font-bold flex items-center gap-2"><Database size={16} /> 4. {t('adminPanel.setupGuide.step4Title')}</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-3">{t('adminPanel.setupGuide.step4Desc')}</p>
           </div>
         </div>
       </div>

@@ -60,8 +60,10 @@ service cloud.firestore {
       // The owner can do anything with their channel.
       allow create, delete, write: if request.auth.uid == ownerId;
 
-      // Any member of the channel (owner or editor) can read the channel's details.
-      allow read: if request.auth.uid in resource.data.members;
+      // The owner can list their own channels.
+      allow list: if request.auth.uid == ownerId;
+      // Any member can get a specific channel's details.
+      allow get: if request.auth.uid in resource.data.members;
     }
     
     // This rule is REQUIRED for the app to find channels shared with the user.

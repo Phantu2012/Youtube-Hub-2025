@@ -158,6 +158,10 @@ export default {
         "step4": "Add a new field: Name = 'isAdmin', Type = 'boolean', Value = 'true'.",
         "step5": "Set your 'status' to 'active' and grant yourself a long 'expiresAt' date.",
         "step6": "Reload this application. You should now see the Admin panel."
+    },
+    "setupGuide": {
+        "step4Title": "Create Firestore Index for Sharing",
+        "step4Desc": "To find shared channels, a database index is required. Firebase provides a link in the browser's developer console error log to create this automatically. Look for an error message starting with 'The query requires an index...' and click the link provided there."
     }
   },
    "adminPrompts": {
@@ -613,7 +617,7 @@ export default {
      "ideaAdded": "Idea(s) added successfully!",
     "ideaUpdated": "Idea status updated.",
     "ideaDeleted": "Idea deleted.",
-    "sharedChannelPermissionErrorAdmin": "Could not fetch shared channels. Your Firestore security rules are likely missing an update for sharing features. Please go to the Admin Panel -> Setup Guide and apply the latest rules to your Firebase project.",
+    "sharedChannelPermissionErrorAdmin": "Could not fetch shared channels. Your Firestore security rules and/or database indexes are likely missing an update for sharing features. Please go to the Admin Panel -> Setup Guide and apply the latest configuration.",
     "sharedChannelPermissionErrorUser": "Could not fetch shared channels. The app's security configuration may be outdated. Please contact your administrator for assistance.",
     "generated": {
       "videoTitle": "Video title generated!",
