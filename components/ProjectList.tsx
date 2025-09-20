@@ -2,6 +2,8 @@
 
 
 
+
+
 import React from 'react';
 import { Project, Channel, User } from '../types';
 import { ProjectCard } from './ProjectCard';
@@ -76,7 +78,6 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
                 {sortedChannels.map(channel => {
                     const channelProjects = projectsByChannel[channel.id] || [];
                     const isOwner = channel.ownerId === user.uid;
-                    const ownerName = isOwner ? t('projects.owner') : channel.members[channel.ownerId] || '...';
 
                     return (
                         <div key={channel.id}>

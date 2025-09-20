@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { db, firebase } from '../firebase';
@@ -110,13 +112,20 @@ service cloud.firestore {
         allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Rules for a user's 'channels' subcollection
+    // Rules for a user's 'channels' subcollection (direct access)
     match /users/{ownerId}/channels/{channelId} {
       // The owner can do anything with their channel.
       allow create, delete, write: if request.auth.uid == ownerId;
 
       // Any member of the channel (owner or editor) can read the channel's details.
       allow read: if request.auth.uid in resource.data.members;
+    }
+    
+    // This rule is REQUIRED for the app to find channels shared with the user.
+    // It allows a collectionGroup query across all 'channels' subcollections.
+    match /{path=**}/channels/{channelId} {
+      // Allow a user to list/get a channel if their UID is in the 'members' map.
+      allow get, list: if request.auth.uid in resource.data.members;
     }
 
     // Rules for a user's 'projects' subcollection
@@ -126,7 +135,7 @@ service cloud.firestore {
       // Let channelDoc be the actual channel document.
       let channelDoc = get(/databases/$(database)/documents/users/$(ownerId)/channels/$(channelId));
       
-      // Any member of the project's parent channel (owner or editor) can create, read, update, or delete the project.
+      // Any member of the project's parent channel can manage the project.
       allow read, write, create, delete: if request.auth.uid in channelDoc.data.members;
     }
   }
