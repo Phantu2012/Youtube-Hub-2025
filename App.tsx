@@ -285,7 +285,25 @@ const AppContent: React.FC = () => {
             const channelsData = snapshot.docs.map(doc => {
                 const data = doc.data();
                 if (!data || data.ownerId === user.uid) return null;
-                return { id: doc.id, ...doc.data() } as Channel
+
+                // Definitive client-side data hydration fix.
+                // Infers the ownerId from the document path if it's missing from the data.
+                // This is crucial for legacy shared channels where the field might not exist.
+                // The path structure is /users/{ownerId}/channels/{channelId}
+                const ownerId = data.ownerId || doc.ref.parent.parent?.id;
+
+                if (!ownerId) {
+                    // This case should be rare, but it's a safe guard.
+                    console.warn(`Could not determine ownerId for shared channel ${doc.id}. Skipping.`);
+                    return null;
+                }
+                
+                return { 
+                    id: doc.id, 
+                    ...data,
+                    ownerId, // Ensures ownerId is always present for the project listener
+                } as Channel;
+
             }).filter((c): c is Channel => c !== null);
             
             setSharedChannels(channelsData);
