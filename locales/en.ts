@@ -629,7 +629,7 @@ export default {
       "tags": "Tags generated!",
       "thumbnailPrompt": "Thumbnail prompt generated!"
     },
-    "deleteConfirm": "Confirm Delete",
-    "clearConfirm": "Confirm Clear"
+    "deleteConfirm": "Xác nhận Xóa",
+    "clearConfirm": "Xác nhận Làm trống"
   }
 }

@@ -41,7 +41,6 @@ export const Header: React.FC<HeaderProps> = ({ user, theme, toggleTheme, onOpen
     const langMenuRef = useRef<HTMLDivElement>(null);
 
     const handleClickOutside = (event: MouseEvent) => {
-        // FIX: Corrected a typo, changed `userMenu` to `userMenuRef` to correctly reference the menu's DOM element.
         if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
             setIsUserMenuOpen(false);
         }
