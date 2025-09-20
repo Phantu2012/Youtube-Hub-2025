@@ -188,7 +188,11 @@ export default {
     "totalViews": "Total Views",
     "videos": "Videos",
     "sharedBy": "Shared by {{name}}",
-    "owner": "(Owner)"
+    "owner": "(Owner)",
+    "missingIndexError": {
+      "title": "Action Required: Create Database Index",
+      "createButton": "Click here to create the index in Firebase"
+    }
   },
   "dashboard": {
     "totalProjects": "Total Projects",
@@ -619,6 +623,8 @@ export default {
     "ideaDeleted": "Idea deleted.",
     "sharedChannelPermissionErrorAdmin": "Could not fetch shared channels. Your Firestore security rules and/or database indexes are likely missing an update for sharing features. Please go to the Admin Panel -> Setup Guide and apply the latest configuration.",
     "sharedChannelPermissionErrorUser": "Could not fetch shared channels. The app's security configuration may be outdated. Please contact your administrator for assistance.",
+    "missingIndexErrorAdmin": "A required database index for sharing is missing. The app will not be able to find shared channels until this is created.",
+    "missingIndexErrorUser": "Could not load shared channels due to a configuration issue. Please contact your administrator.",
     "generated": {
       "videoTitle": "Video title generated!",
       "description": "Description generated!",

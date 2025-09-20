@@ -79,6 +79,7 @@ const AppContent: React.FC = () => {
   const [dream100Channel, setDream100Channel] = useState<Channel | null>(null);
   const [globalAutomationSteps, setGlobalAutomationSteps] = useState<AutomationStep[]>(DEFAULT_AUTOMATION_STEPS);
   const [channelMembers, setChannelMembers] = useState<Record<string, User>>({});
+  const [missingIndexError, setMissingIndexError] = useState<{ message: string, url: string | null } | null>(null);
   
   const projects = useMemo(() => {
     const allProjects = Object.values(projectsFromListeners).flat();
@@ -290,10 +291,21 @@ const AppContent: React.FC = () => {
             }).filter((c): c is Channel => c !== null);
             
             setSharedChannels(channelsData);
+            setMissingIndexError(null);
             setIsLoading(false);
         }, error => {
             console.error("Error fetching shared channels:", error);
-            if (error.code === 'permission-denied') {
+            if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                if(user?.isAdmin) {
+                    const urlMatch = error.message.match(/(https:\/\/[^\s]+)/);
+                    setMissingIndexError({
+                        message: t('toasts.missingIndexErrorAdmin'),
+                        url: urlMatch ? urlMatch[0] : null,
+                    });
+                } else {
+                    showToast(t('toasts.missingIndexErrorUser'), 'error');
+                }
+            } else if (error.code === 'permission-denied') {
                 const messageKey = user?.isAdmin ? 'toasts.sharedChannelPermissionErrorAdmin' : 'toasts.sharedChannelPermissionErrorUser';
                 showToast(t(messageKey), 'error');
             }
@@ -928,6 +940,7 @@ const AppContent: React.FC = () => {
               onAddChannel={handleOpenSettingsModal}
               onAddVideo={handleAddNewVideo}
               onManageDream100={handleManageDream100}
+              missingIndexError={missingIndexError}
           />
         )}
         {activeView === 'automation' && (

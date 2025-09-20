@@ -1,14 +1,10 @@
 
 
-
-
-
-
 import React from 'react';
 import { Project, Channel, User } from '../types';
 import { ProjectCard } from './ProjectCard';
 import { DashboardSummary } from './DashboardSummary';
-import { Loader, PlusCircle, Video, BookOpen, Users, Eye, Share2 } from 'lucide-react';
+import { Loader, PlusCircle, Video, BookOpen, Users, Eye, Share2, AlertTriangle, ExternalLink } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
 interface ProjectListProps {
@@ -22,9 +18,10 @@ interface ProjectListProps {
     onAddChannel: () => void;
     onAddVideo: (channelId: string) => void;
     onManageDream100: (channelId: string) => void;
+    missingIndexError: { message: string, url: string | null } | null;
 }
 
-export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, projectsByChannel, user, channelMembers, onSelectProject, isLoading, onAddChannel, onAddVideo, onManageDream100 }) => {
+export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, projectsByChannel, user, channelMembers, onSelectProject, isLoading, onAddChannel, onAddVideo, onManageDream100, missingIndexError }) => {
     const { t, language } = useTranslation();
 
     const formatStat = (num: number): string => {
@@ -42,7 +39,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
         );
     }
 
-    if (channels.length === 0) {
+    if (channels.length === 0 && !missingIndexError) {
         return (
             <div className="text-center py-16 px-6 bg-light-card dark:bg-dark-card rounded-lg shadow-inner">
                 <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-300">{t('projects.noChannels')}</h2>
@@ -62,6 +59,31 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
 
     return (
         <div>
+            {missingIndexError && (
+                <div className="bg-red-100 dark:bg-red-900/50 border-l-4 border-red-500 text-red-800 dark:text-red-200 p-4 rounded-md mb-6 shadow-lg">
+                    <div className="flex">
+                        <div className="flex-shrink-0">
+                            <AlertTriangle className="h-5 w-5 text-red-400" aria-hidden="true" />
+                        </div>
+                        <div className="ml-3">
+                            <h3 className="text-sm font-bold">{t('projects.missingIndexError.title')}</h3>
+                            <div className="mt-2 text-sm">
+                                <p>{missingIndexError.message}</p>
+                                {missingIndexError.url && (
+                                    <a
+                                        href={missingIndexError.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="font-bold underline hover:text-red-600 dark:hover:text-red-300 mt-2 inline-flex items-center gap-1"
+                                    >
+                                        {t('projects.missingIndexError.createButton')} <ExternalLink size={14} />
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{t('projects.title')}</h1>
               <button
