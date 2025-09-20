@@ -177,7 +177,9 @@ export default {
     "noProjectsInChannel": "No video projects in this channel yet.",
     "subscribers": "Subscribers",
     "totalViews": "Total Views",
-    "videos": "Videos"
+    "videos": "Videos",
+    "sharedBy": "Shared by {{name}}",
+    "owner": "(Owner)"
   },
   "dashboard": {
     "totalProjects": "Total Projects",
@@ -247,6 +249,10 @@ export default {
     "copy": "Copy",
     "rerunAutomation": "Rerun Automation",
     "exportToSheet": "Export for Sheet",
+    "move": "Move Channel",
+    "moveToChannel": "Move to channel:",
+    "confirmMove": "Confirm Move",
+    "moveConfirmation": "Are you sure you want to move this project to '{{channelName}}'?",
     "save": "Save Project",
     "saving": "Saving..."
   },
@@ -277,12 +283,25 @@ export default {
     "deleteChannelConfirmation": "Are you sure you want to delete this channel? This action cannot be undone.",
     "deleteChannelError": "Cannot delete a channel that contains projects. Please move or delete the projects first.",
     "buildWithAI": "Build with AI",
+    "shareChannel": "Share Channel",
     "channelDnaDescription": "Define the identity for each of your channels to help the AI generate perfectly-styled content.",
     "save": "Save Settings",
     "dna": {
       "label": "Channel Profile",
       "placeholder": "e.g., My role is an Expert Chef. My tone is humorous and inspiring. I create content for beginner home cooks. I talk about vegan recipes and JavaScript tutorials. I address my audience with 'Hey everyone!'..."
     }
+  },
+  "shareModal": {
+    "title": "Share \"{{channelName}}\"",
+    "invite": "Invite",
+    "inviting": "Inviting...",
+    "invitePlaceholder": "Enter user email address",
+    "members": "Members with Access",
+    "owner": "Owner",
+    "editor": "Editor",
+    "remove": "Remove",
+    "removeConfirm": "Are you sure?",
+    "you": "You"
   },
   "dream100": {
     "title": "Dream 100: {{channelName}}",
@@ -524,6 +543,11 @@ export default {
     "deleteChannelError": "Cannot delete a channel that contains projects. Please move or delete the projects first.",
     "dream100UpdateFailed": "Failed to update Dream 100 list.",
     "ideaBankUpdateFailed": "Failed to update Idea Bank.",
+    "userNotFound": "User with that email not found.",
+    "userAlreadyMember": "User is already a member of this channel.",
+    "userAdded": "User added to channel.",
+    "userRemoved": "User removed from channel.",
+    "updateMembersFailed": "Failed to update channel members.",
     "settingsSaved": "Settings saved successfully!",
     "loginRequiredToSave": "You must be logged in to save projects.",
     "loginRequiredToDelete": "You must be logged in to delete projects.",
@@ -534,6 +558,9 @@ export default {
     "projectSaveFailed": "Failed to save project.",
     "projectDeleted": "Project deleted.",
     "projectDeleteFailed": "Failed to delete project.",
+    "projectMoved": "Project successfully moved to '{{channelName}}'.",
+    "projectMoveFailed": "Failed to move project.",
+    "noChannelsToMove": "There are no other channels to move this project to.",
     "formCleared": "Form fields have been cleared.",
     "unauthorizedDomain": "Domain not authorized. Add \"{{domain}}\" to your Firebase project's authorized domains list.",
     "unsupportedEnvironment": "Sign-in failed. Your browser environment may be blocking storage. Try opening the app in a new tab or check your privacy settings.",

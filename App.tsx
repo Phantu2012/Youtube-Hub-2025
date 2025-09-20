@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -7,10 +8,10 @@ import { ProjectList } from './components/ProjectList';
 import { AutomationEngine } from './components/AutomationEngine';
 import { CalendarView } from './components/CalendarView';
 import { AdminPanel } from './components/AdminPanel';
-import { AdminPromptsPanel } from './components/AdminPromptsPanel';
 import { ProjectModal } from './components/ProjectModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Dream100Modal } from './components/Dream100Modal';
+import { ShareChannelModal } from './components/ShareChannelModal';
 import { Toast } from './components/Toast';
 import { LoginScreen } from './components/LoginScreen';
 import { PendingApprovalScreen } from './components/PendingApprovalScreen';
@@ -24,9 +25,6 @@ import { fetchChannelStats } from './services/youtubeService';
 import { auth, db, googleProvider, firebase } from './firebase';
 import { DEFAULT_AUTOMATION_STEPS } from './constants';
 
-// Define FirebaseUser type for v8.
-// FIX: The type `firebase.User` cannot be resolved correctly because the global `firebase` object from the script tag is not fully typed.
-// Defining a minimal type for the user object provides the necessary type information for the properties being used.
 type FirebaseUser = {
   uid: string;
   displayName: string | null;
@@ -35,9 +33,6 @@ type FirebaseUser = {
 };
 
 
-// --- DEVELOPMENT MODE FLAG ---
-// Set to true to bypass login and use a mock user for development.
-// Set to false for production to enable real Google Sign-In.
 const IS_DEV_MODE = false;
 
 const MOCK_USER: User = {
@@ -50,7 +45,6 @@ const MOCK_USER: User = {
   isAdmin: true,
 };
 
-// Add default placeholder keys for development convenience.
 const DEV_DEFAULT_API_KEYS: ApiKeys = {
   gemini: 'YOUR_GEMINI_API_KEY_HERE',
   openai: 'YOUR_OPENAI_API_KEY_HERE',
@@ -59,9 +53,11 @@ const DEV_DEFAULT_API_KEYS: ApiKeys = {
 
 
 const AppContent: React.FC = () => {
-  const [projects, setProjects] = useLocalStorage<Project[]>('dev-projects', []);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [sharingChannel, setSharingChannel] = useState<Channel | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark');
   const [apiKeys, setApiKeys] = useLocalStorage<ApiKeys>(
@@ -74,10 +70,9 @@ const AppContent: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeView, setActiveView] = useState<'projects' | 'automation' | 'calendar' | 'admin'>('projects');
-  const [channels, setChannels] = useLocalStorage<Channel[]>('dev-channels', []);
+  const [channels, setChannels] = useState<Channel[]>([]);
   const { t } = useTranslation();
   const [dbConnectionError, setDbConnectionError] = useState<boolean>(false);
-  // FIX: Corrected syntax for useState by adding the closing angle bracket `>`.
   const [signInError, setSignInError] = useState<{ code: string; domain?: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [dream100Channel, setDream100Channel] = useState<Channel | null>(null);
@@ -94,15 +89,14 @@ const AppContent: React.FC = () => {
   
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info') => {
     setToast({ message, type, id: Date.now() });
-    setTimeout(() => setToast(null), 5000); // Increased duration for important messages
+    setTimeout(() => setToast(null), 5000);
   }, []);
 
-  // Listener for authentication state using v8 syntax
   useEffect(() => {
     if (IS_DEV_MODE) {
       setUser(MOCK_USER);
       setIsLoading(false);
-      return; // Skip Firebase auth listener in dev mode
+      return;
     }
 
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser: FirebaseUser | null) => {
@@ -112,14 +106,12 @@ const AppContent: React.FC = () => {
           const userDoc = await userDocRef.get();
           
           if (userDoc.exists) {
-            // Existing user
             const docData = userDoc.data() as any;
             let finalStatus: User['status'] = docData.status;
 
-            // Check for subscription expiration if active
             if (docData.status === 'active' && docData.expiresAt && docData.expiresAt.toDate() < new Date()) {
               finalStatus = 'expired';
-              await userDocRef.update({ status: 'expired' }); // Persist expired status
+              await userDocRef.update({ status: 'expired' });
             }
 
             const userData: User = {
@@ -133,7 +125,6 @@ const AppContent: React.FC = () => {
             };
             setUser(userData);
           } else {
-            // New user registration, set as pending
             const newUserPayload = {
               name: firebaseUser.displayName || 'User',
               email: firebaseUser.email || 'No email',
@@ -145,8 +136,6 @@ const AppContent: React.FC = () => {
             };
             await userDocRef.set(newUserPayload);
             
-            // FIX: Explicitly create the User object to avoid type errors from spreading newUserPayload.
-            // This ensures 'createdAt' is not included and 'status' has the correct literal type.
             const newUserData: User = {
                 uid: firebaseUser.uid,
                 name: newUserPayload.name,
@@ -159,9 +148,9 @@ const AppContent: React.FC = () => {
             setUser(newUserData);
           }
         } else {
-          // User is signed out, no data to fetch, so loading is complete.
           setUser(null);
           setProjects([]);
+          setChannels([]);
           setIsLoading(false);
         }
       } catch (error: any) {
@@ -169,22 +158,19 @@ const AppContent: React.FC = () => {
         setDbConnectionError(true);
         setUser(null);
         setProjects([]);
-        // Error occurred, stop loading.
+        setChannels([]);
         setIsLoading(false);
       }
     });
     return () => unsubscribe();
-  }, [showToast, t, setProjects]);
+  }, [showToast, t]);
 
-  // Handle redirect result from Google Sign-In
   useEffect(() => {
     if (IS_DEV_MODE) return;
     
-    // Check for redirect result on app load.
     const checkRedirectResult = async () => {
         try {
             await auth.getRedirectResult();
-            // Successful sign-in is handled by the onAuthStateChanged listener.
         } catch (error: any) {
             console.error("Google sign-in redirect error:", error);
             if (error.code === 'auth/operation-not-allowed' || error.code === 'auth/unauthorized-domain') {
@@ -198,7 +184,6 @@ const AppContent: React.FC = () => {
     checkRedirectResult();
   }, [showToast, t]);
   
-  // Listener for global automation prompts
   useEffect(() => {
     if (IS_DEV_MODE) {
         setGlobalAutomationSteps(DEFAULT_AUTOMATION_STEPS);
@@ -212,7 +197,6 @@ const AppContent: React.FC = () => {
             const data = doc.data();
             if (data && data.steps && Array.isArray(data.steps)) {
                 const dbSteps = data.steps as AutomationStep[];
-                // Merge with defaults to ensure new steps from code are included for admins to see
                 const mergedSteps = DEFAULT_AUTOMATION_STEPS.map(defaultStep => {
                     const dbStep = dbSteps.find(s => s.id === defaultStep.id);
                     return dbStep ? { ...defaultStep, ...dbStep } : defaultStep;
@@ -222,92 +206,106 @@ const AppContent: React.FC = () => {
                 setGlobalAutomationSteps(DEFAULT_AUTOMATION_STEPS);
             }
         } else {
-            // Document doesn't exist, use hardcoded defaults.
-            // The Admin Prompts panel will create it on first save.
             setGlobalAutomationSteps(DEFAULT_AUTOMATION_STEPS);
         }
     }, (error: any) => {
         console.error("Error fetching global automation prompts:", error);
-        // Fallback to hardcoded defaults on error
         setGlobalAutomationSteps(DEFAULT_AUTOMATION_STEPS);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // Listener for project data from Firestore using v8 syntax
+  // Listener for channels data (owned and shared)
   useEffect(() => {
-    if (user?.uid && user.status === 'active' && !IS_DEV_MODE) {
-      const projectsCollectionRef = db.collection('users').doc(user.uid).collection('projects');
-      const q = projectsCollectionRef;
-      
-      const unsubscribe = q.onSnapshot((snapshot) => {
-        const projectsData = snapshot.docs.map(doc => {
-          const data = doc.data();
-          // Use firebase.firestore.Timestamp for type checking
-          const publishDateTime = data.publishDateTime instanceof firebase.firestore.Timestamp 
-            ? data.publishDateTime.toDate().toISOString().slice(0, 16) 
-            : data.publishDateTime;
-          
-          return {
-            id: doc.id,
-            ...data,
-            publishDateTime,
-          } as Project;
+    if (!user || user.status !== 'active' || IS_DEV_MODE) {
+      if (!IS_DEV_MODE && !isLoading && !user) {
+        setChannels([]);
+      }
+      return;
+    }
+    
+    const ownedChannelsListener = db.collection('users').doc(user.uid).collection('channels')
+      .onSnapshot(snapshot => {
+        const ownedChannelsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Channel));
+        setChannels(prev => {
+            const combined = new Map(prev.map(c => [c.id, c]));
+            ownedChannelsData.forEach(c => combined.set(c.id, c));
+            return Array.from(combined.values());
         });
-        projectsData.sort((a, b) => new Date(b.publishDateTime).getTime() - new Date(a.publishDateTime).getTime());
-        setProjects(projectsData);
-        // This is the first successful data fetch, so we can consider loading complete.
         setIsLoading(false);
-      }, (error: any) => {
-        console.error("Error fetching projects: ", error);
-        if (error.code === 'permission-denied') {
-            setDbConnectionError(true);
-        } else {
-            showToast(t('toasts.fetchProjectsError'), 'error');
-        }
+      }, error => {
+        console.error("Error fetching owned channels:", error);
+        setDbConnectionError(true);
         setIsLoading(false);
       });
 
-      return () => unsubscribe();
-    } else if (!IS_DEV_MODE && !isLoading && !user) {
-        setProjects([]);
-    }
-  }, [user, showToast, t, setProjects, isLoading]);
-  
-  // Listener for channels data from Firestore
+    const sharedChannelsListener = db.collectionGroup('channels').where(`members.${user.uid}`, '==', 'editor')
+        .onSnapshot(snapshot => {
+            const sharedChannelsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Channel));
+            setChannels(prev => {
+                const combined = new Map(prev.map(c => [c.id, c]));
+                sharedChannelsData.forEach(c => combined.set(c.id, c));
+                return Array.from(combined.values());
+            });
+            setIsLoading(false);
+        }, error => {
+            console.error("Error fetching shared channels:", error);
+            // Don't set dbConnectionError here as it might be a rules issue for a new user
+            setIsLoading(false);
+        });
+
+    return () => {
+        ownedChannelsListener();
+        sharedChannelsListener();
+    };
+
+  }, [user, isLoading]);
+
+  // Listener for project data from all accessible channels
   useEffect(() => {
-    if (user?.uid && user.status === 'active' && !IS_DEV_MODE) {
-        const channelsCollectionRef = db.collection('users').doc(user.uid).collection('channels');
+    if (!user || user.status !== 'active' || IS_DEV_MODE || channels.length === 0) {
+      if (!user) setProjects([]);
+      return;
+    }
+    
+    const allListeners: (() => void)[] = [];
+    const projectMap = new Map<string, Project>();
+
+    channels.forEach(channel => {
+        const projectsCollectionRef = db.collection('users').doc(channel.ownerId).collection('projects')
+                                      .where('channelId', '==', channel.id);
         
-        const unsubscribe = channelsCollectionRef.onSnapshot((snapshot) => {
-            const channelsData = snapshot.docs.map(doc => {
+        const listener = projectsCollectionRef.onSnapshot((snapshot) => {
+            snapshot.docs.forEach(doc => {
                 const data = doc.data();
-                return {
+                const publishDateTime = data.publishDateTime instanceof firebase.firestore.Timestamp 
+                    ? data.publishDateTime.toDate().toISOString().slice(0, 16) 
+                    : data.publishDateTime;
+                
+                projectMap.set(doc.id, {
                     id: doc.id,
                     ...data,
-                } as Channel;
+                    publishDateTime,
+                } as Project);
             });
-            setChannels(channelsData);
-            // The projects listener handles setting isLoading to false on success.
+            
+            const allProjects = Array.from(projectMap.values());
+            allProjects.sort((a, b) => new Date(b.publishDateTime).getTime() - new Date(a.publishDateTime).getTime());
+            setProjects(allProjects);
+
         }, (error: any) => {
-            console.error("Error fetching channels: ", error);
-            if (error.code === 'permission-denied') {
-                setDbConnectionError(true);
-                // Ensure loading stops if this listener errors out first
-                setIsLoading(false);
-            } else {
-                showToast(t('toasts.fetchChannelsError'), 'error');
-            }
+            console.error(`Error fetching projects for channel ${channel.id}:`, error);
         });
-        
-        return () => unsubscribe();
-    } else if (!IS_DEV_MODE && !isLoading && !user) {
-        setChannels([]);
-    }
-  }, [user, showToast, t, setChannels]);
+
+        allListeners.push(listener);
+    });
+
+    return () => {
+        allListeners.forEach(unsubscribe => unsubscribe());
+    };
+  }, [user, channels]);
   
-  // This effect fetches channel stats when channels are loaded or updated
   useEffect(() => {
     const fetchStatsForChannels = async () => {
       if (!apiKeys.youtube || !user || IS_DEV_MODE) return;
@@ -317,10 +315,10 @@ const AppContent: React.FC = () => {
 
       const statsPromises = channelsToUpdate.map(channel =>
         fetchChannelStats(channel.channelUrl!, apiKeys.youtube)
-          .then(stats => ({ channelId: channel.id, stats }))
+          .then(stats => ({ channelId: channel.id, ownerId: channel.ownerId, stats }))
           .catch(err => {
             console.error(`Failed to fetch stats for ${channel.name}:`, err.message);
-            return { channelId: channel.id, stats: null };
+            return { channelId: channel.id, ownerId: channel.ownerId, stats: null };
           })
       );
       
@@ -331,7 +329,7 @@ const AppContent: React.FC = () => {
       
       results.forEach(result => {
           if (result.stats) {
-              const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(result.channelId);
+              const channelDocRef = db.collection('users').doc(result.ownerId).collection('channels').doc(result.channelId);
               batch.update(channelDocRef, { stats: result.stats });
               statsUpdated = true;
           }
@@ -340,7 +338,6 @@ const AppContent: React.FC = () => {
       if (statsUpdated) {
           try {
               await batch.commit();
-              // The onSnapshot listener will automatically update the local state.
           } catch (error) {
               console.error("Error batch updating channel stats:", error);
           }
@@ -348,7 +345,7 @@ const AppContent: React.FC = () => {
     };
 
     fetchStatsForChannels();
-  }, [channels, apiKeys.youtube, user, showToast, t]);
+  }, [channels, apiKeys.youtube, user]);
   
   const projectsByChannel = useMemo(() => {
     return projects.reduce((acc, project) => {
@@ -374,11 +371,18 @@ const AppContent: React.FC = () => {
   const handleOpenSettingsModal = () => {
     setIsSettingsModalOpen(true);
   };
+  
+  const handleOpenShareModal = (channel: Channel) => {
+    setSharingChannel(channel);
+    setIsShareModalOpen(true);
+  };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setIsSettingsModalOpen(false);
+    setIsShareModalOpen(false);
     setSelectedProject(null);
+    setSharingChannel(null);
   };
   
   const handleSaveSettings = (settings: { apiKeys: ApiKeys, selectedProvider: AIProvider, selectedModel: AIModel }) => {
@@ -388,30 +392,15 @@ const AppContent: React.FC = () => {
     showToast(t('toasts.settingsSaved'), 'success');
   };
   
-  const handleAddChannel = async (newChannelData: Omit<Channel, 'id'>): Promise<void> => {
-    if (IS_DEV_MODE) {
-        const newChannel: Channel = {
-            id: `dev-chan-${Date.now()}`,
-            name: newChannelData.name,
-            dna: newChannelData.dna,
-            channelUrl: newChannelData.channelUrl || '',
-            ideas: [],
-            dream100Videos: [],
-            automationSteps: DEFAULT_AUTOMATION_STEPS,
-        };
-        setChannels(prev => [...prev, newChannel]);
-        showToast(t('toasts.channelAdded'), 'success');
-        return;
-    }
-
+  const handleAddChannel = async (newChannelData: Omit<Channel, 'id' | 'ownerId' | 'members'>): Promise<void> => {
     if (!user) {
         showToast(t('toasts.loginRequiredToSave'), 'error');
         throw new Error("User not logged in");
     }
-    const channelPayload: Omit<Channel, 'id'> = {
-        name: newChannelData.name,
-        dna: newChannelData.dna,
-        channelUrl: newChannelData.channelUrl || '',
+    const channelPayload = {
+        ...newChannelData,
+        ownerId: user.uid,
+        members: { [user.uid]: 'owner' as const },
         ideas: [],
         dream100Videos: [],
         automationSteps: DEFAULT_AUTOMATION_STEPS,
@@ -422,20 +411,14 @@ const AppContent: React.FC = () => {
     } catch (error) {
         console.error("Error adding channel:", error);
         showToast(t('toasts.channelSaveFailed'), 'error');
-        // This promise must be rejected to be caught by the caller's try-catch block
-        // to handle UI states like loading spinners correctly.
         throw error;
     }
   };
 
   const handleSaveChannelChanges = async (channel: Channel) => {
-     if (IS_DEV_MODE) {
-        setChannels(prev => prev.map(c => c.id === channel.id ? channel : c));
-        return;
-    }
     if (!user) return;
     try {
-        const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(channel.id);
+        const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channel.id);
         await channelDocRef.update({
             name: channel.name,
             dna: channel.dna,
@@ -446,24 +429,29 @@ const AppContent: React.FC = () => {
         showToast(t('toasts.channelSaveFailed'), 'error');
     }
   };
+  
+  const handleUpdateChannelMembers = async (channel: Channel, newMembers: Channel['members']) => {
+    if (!user) return;
+    try {
+        const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channel.id);
+        await channelDocRef.update({ members: newMembers });
+    } catch (error) {
+        console.error("Error updating channel members:", error);
+        showToast(t('toasts.updateMembersFailed'), 'error');
+    }
+  };
 
   const handleDeleteChannel = async (channelId: string) => {
-    if (IS_DEV_MODE) {
-        if ((projectsByChannel[channelId] || []).length > 0) {
-            showToast(t('toasts.deleteChannelError'), 'error');
-            return;
-        }
-        setChannels(prev => prev.filter(c => c.id !== channelId));
-        showToast(t('toasts.channelDeleted'), 'info');
-        return;
-    }
     if (!user) return;
+    const channel = channels.find(c => c.id === channelId);
+    if (!channel) return;
+    
     if ((projectsByChannel[channelId] || []).length > 0) {
         showToast(t('toasts.deleteChannelError'), 'error');
         return;
     }
     try {
-        const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(channelId);
+        const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channelId);
         await channelDocRef.delete();
         showToast(t('toasts.channelDeleted'), 'info');
     } catch (error) {
@@ -480,13 +468,11 @@ const AppContent: React.FC = () => {
   };
 
   const handleUpdateDream100 = async (channelId: string, updatedVideos: Dream100Video[]) => {
-    if (IS_DEV_MODE) {
-        setChannels(prev => prev.map(c => (c.id === channelId ? { ...c, dream100Videos: updatedVideos } : c)));
-        return;
-    }
     if (!user) return;
+    const channel = channels.find(c => c.id === channelId);
+    if (!channel) return;
     try {
-        const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(channelId);
+        const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channelId);
         await channelDocRef.update({ dream100Videos: updatedVideos });
     } catch (error) {
         console.error("Error updating Dream 100:", error);
@@ -495,13 +481,11 @@ const AppContent: React.FC = () => {
   };
   
   const handleUpdateIdeas = async (channelId: string, updatedIdeas: Idea[]) => {
-    if (IS_DEV_MODE) {
-        setChannels(prev => prev.map(c => (c.id === channelId ? { ...c, ideas: updatedIdeas } : c)));
-        return;
-    }
     if (!user) return;
+    const channel = channels.find(c => c.id === channelId);
+    if (!channel) return;
     try {
-        const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(channelId);
+        const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channelId);
         await channelDocRef.update({ ideas: updatedIdeas });
     } catch (error) {
         console.error("Error updating Idea Bank:", error);
@@ -510,21 +494,12 @@ const AppContent: React.FC = () => {
   };
   
   const handleSaveAutomationSteps = async (channelId: string, updatedSteps: AutomationStep[]) => {
-    if (IS_DEV_MODE) {
-        if (channelId) {
-            setChannels(prev => prev.map(c => (c.id === channelId ? { ...c, automationSteps: updatedSteps } : c)));
-        }
-        return;
-    }
     if (!user || !channelId) return;
+    const channel = channels.find(c => c.id === channelId);
+    if (!channel) return;
     try {
-        const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(channelId);
-        // FIX: Changed `update` to `set` with merge to prevent "No document to update" errors.
-        // This "upsert" operation ensures that if the channel document somehow doesn't exist,
-        // it will be created, making the save operation more robust.
+        const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channelId);
         await channelDocRef.set({ automationSteps: updatedSteps }, { merge: true });
-        // Don't show a toast on every auto-save to avoid spamming the user.
-        // A visual indicator in the UI (like a subtle 'saved' text) would be better if needed.
     } catch (error: any) {
         console.error("Error saving automation steps:", error);
         showToast(t('toasts.automationStepsSaveFailed'), 'error');
@@ -545,23 +520,12 @@ const AppContent: React.FC = () => {
 
     setIsSaving(true);
     
-    if (IS_DEV_MODE) {
-        setTimeout(() => {
-            if ('id' in projectToSave && projectToSave.id) {
-                setProjects(prevProjects => prevProjects.map(p => p.id === projectToSave.id ? projectToSave : p));
-                showToast(t('toasts.projectUpdated'), 'success');
-            } else {
-                const newProject = { ...projectToSave, id: `dev-proj-${Date.now()}` };
-                setProjects(prevProjects => [newProject, ...prevProjects]);
-                showToast(t('toasts.projectCreated'), 'success');
-            }
-            setIsSaving(false);
-            handleCloseModal();
-        }, 1000);
-        return;
-    }
-
     const performSave = async () => {
+        const channel = channels.find(c => c.id === projectToSave.channelId);
+        if (!channel) {
+            throw new Error("Channel not found for this project.");
+        }
+        
         const dataToSave = {
             channelId: projectToSave.channelId,
             projectName: projectToSave.projectName,
@@ -587,11 +551,11 @@ const AppContent: React.FC = () => {
         };
 
         if (projectToSave.id) {
-            const projectDocRef = db.collection('users').doc(user.uid).collection('projects').doc(projectToSave.id);
+            const projectDocRef = db.collection('users').doc(channel.ownerId).collection('projects').doc(projectToSave.id);
             await projectDocRef.update(dataToSave);
             showToast(t('toasts.projectUpdated'), 'success');
         } else {
-            await db.collection('users').doc(user.uid).collection('projects').add(dataToSave);
+            await db.collection('users').doc(channel.ownerId).collection('projects').add(dataToSave);
             showToast(t('toasts.projectCreated'), 'success');
         }
     };
@@ -627,24 +591,21 @@ const AppContent: React.FC = () => {
 
   const handleDeleteProject = async (projectId: string) => {
     if (!user) {
-        const err = new Error('User not logged in');
         showToast(t('toasts.loginRequiredToDelete'), 'error');
-        throw err;
+        throw new Error('User not logged in');
     }
+    
+    const projectToDelete = projects.find(p => p.id === projectId);
+    if (!projectToDelete) return;
 
-    if (IS_DEV_MODE) {
-        return new Promise<void>((resolve) => {
-            setTimeout(() => {
-                setProjects(prev => prev.filter(p => p.id !== projectId));
-                showToast(t('toasts.projectDeleted'), 'info');
-                handleCloseModal();
-                resolve();
-            }, 500);
-        });
+    const channel = channels.find(c => c.id === projectToDelete.channelId);
+    if (!channel) {
+        showToast(t('toasts.projectDeleteFailed'), 'error');
+        throw new Error("Channel not found for project");
     }
 
     try {
-        const projectDocRef = db.collection('users').doc(user.uid).collection('projects').doc(projectId);
+        const projectDocRef = db.collection('users').doc(channel.ownerId).collection('projects').doc(projectId);
         await projectDocRef.delete();
         showToast(t('toasts.projectDeleted'), 'info');
         handleCloseModal();
@@ -652,6 +613,39 @@ const AppContent: React.FC = () => {
         console.error("Error deleting project:", error);
         showToast(t('toasts.projectDeleteFailed'), 'error');
         throw error;
+    }
+  };
+  
+  const handleMoveProject = async (projectToMove: Project, newChannelId: string) => {
+    if (!user || !projectToMove.id) {
+        showToast(t('toasts.projectMoveFailed'), 'error');
+        return;
+    }
+
+    const originalChannel = channels.find(c => c.id === projectToMove.channelId);
+    const destinationChannel = channels.find(c => c.id === newChannelId);
+
+    if (!originalChannel || !destinationChannel) {
+        showToast(t('toasts.projectMoveFailed'), 'error');
+        return;
+    }
+    
+    const confirmMove = window.confirm(t('projectModal.moveConfirmation', { channelName: destinationChannel.name }));
+    if (!confirmMove) {
+        return;
+    }
+
+    setIsSaving(true);
+    try {
+        const projectDocRef = db.collection('users').doc(originalChannel.ownerId).collection('projects').doc(projectToMove.id);
+        await projectDocRef.update({ channelId: newChannelId });
+        showToast(t('toasts.projectMoved', { channelName: destinationChannel.name }), 'success');
+        handleCloseModal();
+    } catch (error) {
+        console.error("Error moving project:", error);
+        showToast(t('toasts.projectMoveFailed'), 'error');
+    } finally {
+        setIsSaving(false);
     }
   };
   
@@ -684,20 +678,18 @@ const AppContent: React.FC = () => {
   const handleRerunAutomation = (project: Project) => {
     const rerunData = {
         targetTitle: project.projectName || project.videoTitle,
-        viralTranscript: project.script // Using the generated script as a new starting point
+        viralTranscript: project.script
     };
     localStorage.setItem('rerun-data', JSON.stringify(rerunData));
     setActiveView('automation');
     handleCloseModal();
   };
 
-  // handleLogin now uses signInWithRedirect
   const handleLoginWithGoogle = async () => {
     try {
       setDbConnectionError(false);
       setSignInError(null);
       await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
-      // Use redirect flow to avoid cross-origin issues with popups
       await auth.signInWithRedirect(googleProvider);
     } catch (error: any) {
       console.error("Google sign-in initiation error:", error);
@@ -710,7 +702,6 @@ const AppContent: React.FC = () => {
       setDbConnectionError(false);
       setSignInError(null);
       await auth.signInWithEmailAndPassword(email, password);
-      // onAuthStateChanged will handle the rest
     } catch (error: any) {
       console.error("Email/Password Sign-In Error:", error);
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -727,7 +718,6 @@ const AppContent: React.FC = () => {
       setDbConnectionError(false);
       setSignInError(null);
       await auth.createUserWithEmailAndPassword(email, password);
-      // onAuthStateChanged will handle creating the user document in Firestore
     } catch (error: any) {
       console.error("Email/Password Registration Error:", error);
       if (error.code === 'auth/email-already-in-use') {
@@ -741,8 +731,6 @@ const AppContent: React.FC = () => {
     }
   };
 
-
-  // handleLogout updated to use v8 Auth syntax
   const handleLogout = async () => {
     if (IS_DEV_MODE) {
       showToast(t('toasts.logoutDisabledDev'), 'info');
@@ -792,7 +780,6 @@ const AppContent: React.FC = () => {
       return <ExpiredScreen onLogout={handleLogout} />;
   }
   
-  // Only render the main app if user status is 'active'
   return (
     <div className="flex flex-col h-screen bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text font-sans">
       <Header
@@ -805,11 +792,12 @@ const AppContent: React.FC = () => {
         setActiveView={setActiveView}
       />
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
-        {activeView === 'projects' && (
+        {activeView === 'projects' && user && (
           <ProjectList 
               projects={projects}
               channels={channels}
               projectsByChannel={projectsByChannel} 
+              user={user}
               onSelectProject={handleOpenModal} 
               isLoading={isLoading && projects.length === 0}
               onAddChannel={handleOpenSettingsModal}
@@ -841,10 +829,11 @@ const AppContent: React.FC = () => {
         )}
       </main>
       
-      {isSettingsModalOpen && (
+      {isSettingsModalOpen && user && (
         <SettingsModal 
           isOpen={isSettingsModalOpen}
           onClose={handleCloseModal}
+          user={user}
           apiKeys={apiKeys}
           selectedProvider={selectedProvider}
           selectedModel={selectedModel}
@@ -853,12 +842,14 @@ const AppContent: React.FC = () => {
           onAddChannel={handleAddChannel}
           onUpdateChannel={handleSaveChannelChanges}
           onDeleteChannel={handleDeleteChannel}
+          onShareChannel={handleOpenShareModal}
         />
       )}
 
       {isModalOpen && (
         <ProjectModal
           project={selectedProject}
+          channels={channels}
           apiKeys={apiKeys}
           selectedProvider={selectedProvider}
           selectedModel={selectedModel}
@@ -868,6 +859,7 @@ const AppContent: React.FC = () => {
           onDelete={handleDeleteProject}
           onCopy={handleCopyProject}
           onRerun={handleRerunAutomation}
+          onMove={handleMoveProject}
           showToast={showToast}
         />
       )}
@@ -878,6 +870,16 @@ const AppContent: React.FC = () => {
               channel={dream100Channel}
               apiKeys={apiKeys}
               onUpdate={(updatedVideos) => handleUpdateDream100(dream100Channel.id, updatedVideos)}
+          />
+      )}
+      {isShareModalOpen && sharingChannel && user && (
+          <ShareChannelModal
+              isOpen={isShareModalOpen}
+              onClose={handleCloseModal}
+              channel={sharingChannel}
+              currentUser={user}
+              showToast={showToast}
+              onUpdateMembers={handleUpdateChannelMembers}
           />
       )}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}

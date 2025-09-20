@@ -50,6 +50,8 @@ export interface ChannelStats {
 export interface Channel {
     id: string;
     name: string;
+    ownerId: string;
+    members: Record<string, 'owner' | 'editor'>;
     dna: string;
     channelUrl?: string;
     stats?: ChannelStats;

@@ -177,7 +177,9 @@ export default {
     "noProjectsInChannel": "Chưa có dự án video nào trong kênh này.",
     "subscribers": "Người đăng ký",
     "totalViews": "Tổng lượt xem",
-    "videos": "Video"
+    "videos": "Video",
+    "sharedBy": "Được chia sẻ bởi {{name}}",
+    "owner": "(Chủ sở hữu)"
   },
   "dashboard": {
     "totalProjects": "Tổng số Dự án",
@@ -247,6 +249,10 @@ export default {
     "copy": "Sao chép",
     "rerunAutomation": "Chạy lại Tự động hóa",
     "exportToSheet": "Xuất ra Sheet",
+    "move": "Chuyển Kênh",
+    "moveToChannel": "Chuyển đến kênh:",
+    "confirmMove": "Xác nhận Chuyển",
+    "moveConfirmation": "Bạn có chắc chắn muốn chuyển dự án này sang kênh '{{channelName}}' không?",
     "save": "Lưu dự án",
     "saving": "Đang lưu..."
   },
@@ -277,7 +283,20 @@ export default {
     "deleteChannelConfirmation": "Bạn có chắc chắn muốn xóa kênh này không? Hành động này không thể hoàn tác.",
     "deleteChannelError": "Không thể xóa kênh đang chứa dự án. Vui lòng di chuyển hoặc xóa các dự án trước.",
     "buildWithAI": "Xây dựng với AI",
+    "shareChannel": "Chia sẻ Kênh",
     "channelDnaDescription": "Xác định bản sắc cho từng kênh của bạn để giúp AI tạo ra nội dung theo phong cách hoàn hảo."
+  },
+  "shareModal": {
+    "title": "Chia sẻ \"{{channelName}}\"",
+    "invite": "Mời",
+    "inviting": "Đang mời...",
+    "invitePlaceholder": "Nhập địa chỉ email người dùng",
+    "members": "Thành viên có quyền truy cập",
+    "owner": "Chủ sở hữu",
+    "editor": "Người chỉnh sửa",
+    "remove": "Xóa",
+    "removeConfirm": "Bạn chắc chắn?",
+    "you": "Bạn"
   },
   "dream100": {
     "title": "Dream 100: {{channelName}}",
@@ -519,6 +538,11 @@ export default {
     "deleteChannelError": "Không thể xóa kênh đang chứa dự án. Vui lòng di chuyển hoặc xóa các dự án trước.",
     "dream100UpdateFailed": "Cập nhật danh sách Dream 100 thất bại.",
     "ideaBankUpdateFailed": "Cập nhật Ngân hàng Ý tưởng thất bại.",
+    "userNotFound": "Không tìm thấy người dùng với email này.",
+    "userAlreadyMember": "Người dùng đã là thành viên của kênh này.",
+    "userAdded": "Đã thêm người dùng vào kênh.",
+    "userRemoved": "Đã xóa người dùng khỏi kênh.",
+    "updateMembersFailed": "Cập nhật thành viên kênh thất bại.",
     "settingsSaved": "Đã lưu cài đặt thành công!",
     "loginRequiredToSave": "Bạn phải đăng nhập để lưu dự án.",
     "loginRequiredToDelete": "Bạn phải đăng nhập để xóa dự án.",
@@ -529,6 +553,9 @@ export default {
     "projectSaveFailed": "Không thể lưu dự án.",
     "projectDeleted": "Đã xóa dự án.",
     "projectDeleteFailed": "Không thể xóa dự án.",
+    "projectMoved": "Dự án đã được chuyển thành công đến kênh '{{channelName}}'.",
+    "projectMoveFailed": "Không thể chuyển dự án.",
+    "noChannelsToMove": "Không có kênh nào khác để chuyển dự án này đến.",
     "formCleared": "Đã làm trống các trường trong form.",
     "unauthorizedDomain": "Miền không được ủy quyền. Thêm \"{{domain}}\" vào danh sách miền được ủy quyền của dự án Firebase của bạn.",
     "unsupportedEnvironment": "Đăng nhập thất bại. Môi trường trình duyệt của bạn có thể đang chặn lưu trữ. Hãy thử mở ứng dụng trong một tab mới hoặc kiểm tra cài đặt bảo mật của bạn.",

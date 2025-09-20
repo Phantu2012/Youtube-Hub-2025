@@ -1,17 +1,18 @@
 
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel } from '../types';
+import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel, Channel } from '../types';
 import { getStatusOptions } from '../constants';
 import { fetchVideoStats } from '../services/youtubeService';
 import { StatsChart } from './StatsChart';
-import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet, Copy as CopyIcon, Copy } from 'lucide-react';
+import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet, Copy, Move } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { useTranslation } from '../hooks/useTranslation';
 
 
 interface ProjectModalProps {
     project: Project | null;
+    channels: Channel[];
     apiKeys: ApiKeys;
     selectedProvider: AIProvider;
     selectedModel: AIModel;
@@ -21,6 +22,7 @@ interface ProjectModalProps {
     onDelete: (projectId: string) => Promise<void>;
     onCopy: (project: Project) => void;
     onRerun: (project: Project) => void;
+    onMove: (project: Project, newChannelId: string) => void;
     showToast: (message: string, type: ToastMessage['type']) => void;
 }
 
@@ -57,7 +59,7 @@ const TabButton: React.FC<{
 );
 
 
-export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, selectedProvider, selectedModel, isSaving, onClose, onSave, onDelete, onCopy, onRerun, showToast }) => {
+export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, apiKeys, selectedProvider, selectedModel, isSaving, onClose, onSave, onDelete, onCopy, onRerun, onMove, showToast }) => {
     const { t, language } = useTranslation();
     const [activeTab, setActiveTab] = useState<ModalTab>('content');
     const [formData, setFormData] = useState<Project | Omit<Project, 'id'>>(() => {
@@ -99,7 +101,10 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
     const statusOptions = getStatusOptions(t);
     const [confirmAction, setConfirmAction] = useState<'delete' | 'clear' | null>(null);
     const confirmTimer = useRef<number | null>(null);
+    const [isMoving, setIsMoving] = useState(false);
+    const [destinationChannelId, setDestinationChannelId] = useState('');
 
+    const movableChannels = channels.filter(c => c.id !== (formData as Project).channelId);
 
     useEffect(() => {
         return () => {
@@ -182,6 +187,22 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
         onCopy(formData as Project);
         onClose();
     };
+    
+    const handleStartMove = () => {
+        if (movableChannels.length === 0) {
+            showToast(t('toasts.noChannelsToMove'), 'info');
+            return;
+        }
+        setDestinationChannelId(movableChannels[0].id);
+        setIsMoving(true);
+    };
+
+    const handleConfirmMove = () => {
+        if (destinationChannelId) {
+            onMove(formData as Project, destinationChannelId);
+        }
+    };
+
 
     const handleExportToSheet = () => {
         const data = formData as Project;
@@ -741,70 +762,89 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, apiKeys, se
                     </div>
 
                     {/* Footer */}
-                    <div className="p-4 bg-light-bg dark:bg-dark-bg/50 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
-                         <div className="flex gap-2 flex-wrap">
-                            {!isNewProject && (
-                               <>
-                                <button
-                                    type="button"
-                                    onClick={() => handleConfirmClick('delete')}
-                                    disabled={isSaving}
-                                    className={`flex items-center gap-2 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 ${
-                                        confirmAction === 'delete' 
-                                        ? 'bg-red-500 text-white' 
-                                        : 'text-red-500 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10'
-                                    }`}
-                                >
-                                    <Trash2 size={16} /> 
-                                    {confirmAction === 'delete' ? t('projectModal.deleteConfirmation') : t('projectModal.delete')}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleConfirmClick('clear')}
-                                    disabled={isSaving}
-                                    className={`flex items-center gap-2 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 ${
-                                        confirmAction === 'clear' 
-                                        ? 'bg-yellow-500 text-white' 
-                                        : 'text-yellow-600 hover:text-yellow-800 dark:hover:text-yellow-400 hover:bg-yellow-500/10'
-                                    }`}
-                                >
-                                    <RotateCcw size={16} />
-                                    {confirmAction === 'clear' ? t('projectModal.clearFormConfirmation') : t('projectModal.clearForm')}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleCopyProjectAction}
-                                    disabled={isSaving}
-                                    className="flex items-center gap-2 text-purple-600 hover:text-purple-800 dark:hover:text-purple-400 font-semibold py-2 px-4 rounded-lg hover:bg-purple-500/10"
-                                >
-                                    <CopyIcon size={16} /> {t('projectModal.copy')}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleRerun}
-                                    disabled={isSaving}
-                                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 font-semibold py-2 px-4 rounded-lg hover:bg-blue-500/10"
-                                >
-                                    <Repeat size={16} /> {t('projectModal.rerunAutomation')}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleExportToSheet}
-                                    disabled={isSaving}
-                                    className="flex items-center gap-2 text-green-600 hover:text-green-800 dark:hover:text-green-400 font-semibold py-2 px-4 rounded-lg hover:bg-green-500/10"
-                                >
-                                    <Sheet size={16} /> {t('projectModal.exportToSheet')}
-                                </button>
-                               </>
-                            )}
-                        </div>
-                        <div className="flex gap-4">
-                            <button type="button" onClick={onClose} disabled={isSaving} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50">{t('common.cancel')}</button>
-                            <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:bg-opacity-70 disabled:cursor-wait">
-                                {isSaving ? <Loader size={16} className="animate-spin" /> : <Save size={16} />} 
-                                {isSaving ? t('projectModal.saving') : t('projectModal.save')}
-                            </button>
-                        </div>
+                    <div className="p-4 bg-light-bg dark:bg-dark-bg/50 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+                         {isMoving ? (
+                            <div className="w-full flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <label htmlFor="move-channel-select" className="font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">{t('projectModal.moveToChannel')}</label>
+                                    <select
+                                        id="move-channel-select"
+                                        value={destinationChannelId}
+                                        onChange={(e) => setDestinationChannelId(e.target.value)}
+                                        className="p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md"
+                                    >
+                                        {movableChannels.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                     <button type="button" onClick={() => setIsMoving(false)} disabled={isSaving} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50">{t('common.cancel')}</button>
+                                     <button type="button" onClick={handleConfirmMove} disabled={isSaving} className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg">
+                                        {t('projectModal.confirmMove')}
+                                     </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="w-full flex justify-between items-center">
+                                <div className="flex gap-1 flex-wrap">
+                                    {!isNewProject && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleConfirmClick('delete')}
+                                            disabled={isSaving}
+                                            className={`flex items-center gap-2 font-semibold py-2 px-3 rounded-lg text-sm transition-colors duration-200 disabled:opacity-50 ${
+                                                confirmAction === 'delete' 
+                                                ? 'bg-red-500 text-white' 
+                                                : 'text-red-500 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10'
+                                            }`}
+                                        >
+                                            <Trash2 size={16} /> 
+                                            {confirmAction === 'delete' ? t('projectModal.deleteConfirmation') : t('projectModal.delete')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleStartMove}
+                                            disabled={isSaving}
+                                            className="flex items-center gap-2 text-cyan-600 hover:text-cyan-800 dark:hover:text-cyan-400 font-semibold py-2 px-3 rounded-lg text-sm hover:bg-cyan-500/10"
+                                        >
+                                            <Move size={16} /> {t('projectModal.move')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleCopyProjectAction}
+                                            disabled={isSaving}
+                                            className="flex items-center gap-2 text-purple-600 hover:text-purple-800 dark:hover:text-purple-400 font-semibold py-2 px-3 rounded-lg text-sm hover:bg-purple-500/10"
+                                        >
+                                            <Copy size={16} /> {t('projectModal.copy')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleRerun}
+                                            disabled={isSaving}
+                                            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 font-semibold py-2 px-3 rounded-lg text-sm hover:bg-blue-500/10"
+                                        >
+                                            <Repeat size={16} /> {t('projectModal.rerunAutomation')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleExportToSheet}
+                                            disabled={isSaving}
+                                            className="flex items-center gap-2 text-green-600 hover:text-green-800 dark:hover:text-green-400 font-semibold py-2 px-3 rounded-lg text-sm hover:bg-green-500/10"
+                                        >
+                                            <Sheet size={16} /> {t('projectModal.exportToSheet')}
+                                        </button>
+                                    </>
+                                    )}
+                                </div>
+                                <div className="flex gap-4">
+                                    <button type="button" onClick={onClose} disabled={isSaving} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50">{t('common.cancel')}</button>
+                                    <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:bg-opacity-70 disabled:cursor-wait">
+                                        {isSaving ? <Loader size={16} className="animate-spin" /> : <Save size={16} />} 
+                                        {isSaving ? t('projectModal.saving') : t('projectModal.save')}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </form>
             </div>

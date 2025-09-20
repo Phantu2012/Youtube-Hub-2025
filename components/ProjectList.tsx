@@ -1,17 +1,19 @@
 
 
 
+
 import React from 'react';
-import { Project, Channel } from '../types';
+import { Project, Channel, User } from '../types';
 import { ProjectCard } from './ProjectCard';
 import { DashboardSummary } from './DashboardSummary';
-import { Loader, PlusCircle, Video, BookOpen, Users, Eye } from 'lucide-react';
+import { Loader, PlusCircle, Video, BookOpen, Users, Eye, Share2 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
 interface ProjectListProps {
     projects: Project[];
     channels: Channel[];
     projectsByChannel: Record<string, Project[]>;
+    user: User; // Add user to identify ownership
     onSelectProject: (project: Project) => void;
     isLoading: boolean;
     onAddChannel: () => void;
@@ -19,7 +21,7 @@ interface ProjectListProps {
     onManageDream100: (channelId: string) => void;
 }
 
-export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, projectsByChannel, onSelectProject, isLoading, onAddChannel, onAddVideo, onManageDream100 }) => {
+export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, projectsByChannel, user, onSelectProject, isLoading, onAddChannel, onAddVideo, onManageDream100 }) => {
     const { t, language } = useTranslation();
 
     const formatStat = (num: number): string => {
@@ -73,11 +75,20 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
             <div className="space-y-12">
                 {sortedChannels.map(channel => {
                     const channelProjects = projectsByChannel[channel.id] || [];
+                    const isOwner = channel.ownerId === user.uid;
+                    const ownerName = isOwner ? t('projects.owner') : channel.members[channel.ownerId] || '...';
+
                     return (
                         <div key={channel.id}>
                             <div className="flex flex-wrap justify-between items-center gap-y-2 mb-4 border-b-2 border-primary/30 pb-2">
                                 <div className="flex items-center gap-4">
                                     <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">{channel.name}</h2>
+                                    {!isOwner && (
+                                        <span className="text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full flex items-center gap-1.5">
+                                            <Share2 size={12}/>
+                                            {t('projects.sharedBy', { name: 'Owner' })} {/* Simple label for now */}
+                                        </span>
+                                    )}
                                     {channel.stats && (
                                         <div className="hidden md:flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 border-l border-gray-300 dark:border-gray-600 pl-4">
                                             <span className="flex items-center gap-1.5" title={`${channel.stats.videoCount.toLocaleString(language)} ${t('projects.videos')}`}>

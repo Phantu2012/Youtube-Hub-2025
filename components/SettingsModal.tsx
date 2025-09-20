@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { X, Save, Key, Eye, EyeOff, Info, Bot, Youtube, Sparkles, PlusCircle, Trash2, Link, Loader } from 'lucide-react';
-import { ChannelDna, ApiKeys, AIProvider, AIModel, Channel } from '../types';
+import { X, Save, Key, Eye, EyeOff, Info, Bot, Youtube, Sparkles, PlusCircle, Trash2, Link, Loader, Share2 } from 'lucide-react';
+import { ChannelDna, ApiKeys, AIProvider, AIModel, Channel, User } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 import { ChannelDnaWizard } from './ChannelDnaWizard';
 
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
+    user: User;
     apiKeys: ApiKeys;
     selectedProvider: AIProvider;
     selectedModel: AIModel;
@@ -15,6 +16,7 @@ interface SettingsModalProps {
     onAddChannel: (channel: Omit<Channel, 'id'>) => Promise<void>;
     onUpdateChannel: (channel: Channel) => void;
     onDeleteChannel: (channelId: string) => void;
+    onShareChannel: (channel: Channel) => void;
 }
 
 const models: Record<AIProvider, { value: AIModel, label: string }[]> = {
@@ -60,7 +62,7 @@ const ApiKeyInput: React.FC<{
     );
 };
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, apiKeys, selectedProvider, selectedModel, currentChannels, onSave, onAddChannel, onUpdateChannel, onDeleteChannel }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, user, apiKeys, selectedProvider, selectedModel, currentChannels, onSave, onAddChannel, onUpdateChannel, onDeleteChannel, onShareChannel }) => {
     const { t } = useTranslation();
     const [localApiKeys, setLocalApiKeys] = useState(apiKeys);
     const [localProvider, setLocalProvider] = useState<AIProvider>(selectedProvider);
@@ -83,15 +85,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, a
     const handleAddNewChannel = async () => {
         setIsAddingChannel(true);
         try {
-            const newChannel: Omit<Channel, 'id'> = {
+            const newChannel: Omit<Channel, 'id' | 'ownerId' | 'members'> = {
                 name: t('settings.newChannelName'),
                 dna: '',
                 channelUrl: '',
             };
-            await onAddChannel(newChannel);
+            await onAddChannel(newChannel as Omit<Channel, 'id'>);
         } catch (error) {
-            // The parent component (App.tsx) handles showing the error toast.
-            // This catch block prevents the "Script error." by handling the rejection.
             console.error("Failed to add channel:", error);
         } finally {
             setIsAddingChannel(false);
@@ -214,7 +214,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, a
                                     {t('settings.channelDnaDescription')}
                                 </p>
                                 <div className="space-y-4">
-                                    {currentChannels.map(channel => (
+                                    {currentChannels.map(channel => {
+                                        const isOwner = user.uid === channel.ownerId;
+                                        return (
                                         <div key={channel.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <input
@@ -223,10 +225,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, a
                                                     onChange={(e) => handleChannelChange(channel.id, 'name', e.target.value)}
                                                     className="text-lg font-semibold bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-primary"
                                                     placeholder={t('settings.channelNamePlaceholder')}
+                                                    readOnly={!isOwner}
                                                 />
                                                 <div className="flex items-center gap-2">
-                                                    <button type="button" onClick={() => handleLaunchWizard(channel)} className="p-2 text-gray-500 hover:text-purple-500" title={t('settings.buildWithAI')}><Sparkles size={16} /></button>
-                                                    <button type="button" onClick={() => onDeleteChannel(channel.id)} className="p-2 text-gray-500 hover:text-red-500" title={t('settings.deleteChannel')}><Trash2 size={16} /></button>
+                                                    {isOwner && (
+                                                        <>
+                                                            <button type="button" onClick={() => onShareChannel(channel)} className="p-2 text-gray-500 hover:text-green-500" title={t('settings.shareChannel')}><Share2 size={16} /></button>
+                                                            <button type="button" onClick={() => handleLaunchWizard(channel)} className="p-2 text-gray-500 hover:text-purple-500" title={t('settings.buildWithAI')}><Sparkles size={16} /></button>
+                                                            <button type="button" onClick={() => onDeleteChannel(channel.id)} className="p-2 text-gray-500 hover:text-red-500" title={t('settings.deleteChannel')}><Trash2 size={16} /></button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
                                             
@@ -238,6 +246,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, a
                                                     onChange={(e) => handleChannelChange(channel.id, 'channelUrl', e.target.value)}
                                                     className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md text-sm"
                                                     placeholder={t('settings.channelUrlPlaceholder')}
+                                                    readOnly={!isOwner}
                                                 />
                                             </div>
 
@@ -247,9 +256,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, a
                                                 className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md text-sm"
                                                 placeholder={t('settings.dna.placeholder')}
                                                 rows={4}
+                                                readOnly={!isOwner}
                                             />
                                         </div>
-                                    ))}
+                                    )})}
                                     <button
                                         type="button"
                                         onClick={handleAddNewChannel}
