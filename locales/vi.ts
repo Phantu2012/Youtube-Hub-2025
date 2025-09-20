@@ -623,6 +623,7 @@ export default {
     "sharedChannelPermissionErrorUser": "Không thể tải các kênh được chia sẻ. Cấu hình bảo mật của ứng dụng có thể đã lỗi thời. Vui lòng liên hệ với quản trị viên của bạn để được hỗ trợ.",
     "missingIndexErrorAdmin": "Thiếu một chỉ mục cơ sở dữ liệu cần thiết cho việc chia sẻ. Ứng dụng sẽ không thể tìm thấy các kênh được chia sẻ cho đến khi chỉ mục này được tạo.",
     "missingIndexErrorUser": "Không thể tải các kênh được chia sẻ do sự cố cấu hình. Vui lòng liên hệ với quản trị viên của bạn.",
+    "migrationError": "Không thể cập nhật dữ liệu kênh cũ. Một số kênh được chia sẻ có thể không hiển thị đúng. Vui lòng liên hệ hỗ trợ.",
     "generated": {
       "videoTitle": "Đã tạo tiêu đề video!",
       "description": "Đã tạo mô tả!",

@@ -623,13 +623,14 @@ export default {
     "sharedChannelPermissionErrorUser": "Could not fetch shared channels. The app's security configuration may be outdated. Please contact your administrator for assistance.",
     "missingIndexErrorAdmin": "A required database index for sharing is missing. The app will not be able to find shared channels until this is created.",
     "missingIndexErrorUser": "Could not load shared channels due to a configuration issue. Please contact your administrator.",
+    "migrationError": "Could not update old channel data. Some shared channels may not appear correctly. Please contact support.",
     "generated": {
       "videoTitle": "Video title generated!",
       "description": "Description generated!",
       "tags": "Tags generated!",
       "thumbnailPrompt": "Thumbnail prompt generated!"
     },
-    "deleteConfirm": "Xác nhận Xóa",
-    "clearConfirm": "Xác nhận Làm trống"
+    "deleteConfirm": "Confirm Delete",
+    "clearConfirm": "Confirm Clear"
   }
 }

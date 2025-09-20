@@ -250,26 +250,45 @@ const AppContent: React.FC = () => {
 
     const ownedChannelsListener = db.collection('users').doc(user.uid).collection('channels')
       .onSnapshot(snapshot => {
-        console.log(`[Data Hydration] Checking ${snapshot.docs.length} owned channels for legacy format.`);
+        const migrationBatch = db.batch();
+        let needsMigration = false;
 
         const channelsData = snapshot.docs.map(doc => {
             const data = doc.data();
             if (!data) return null;
-            
-            // --- DATA HYDRATION FOR OLD CHANNELS ---
-            // If a channel is missing ownerId or memberIds, it's an older document.
-            // We'll hydrate it in-memory to ensure the rest of the app functions correctly
-            // without performing a risky database write migration.
-            if (!data.ownerId) {
-                data.ownerId = user.uid; // It's an owned channel, so the owner is the current user.
+
+            const isLegacy = !data.ownerId || !data.memberIds;
+            const hydratedData = { ...data };
+
+            // In-memory hydration for immediate UI consistency
+            if (!hydratedData.ownerId) {
+                hydratedData.ownerId = user.uid;
             }
-            if (!data.memberIds) {
-                // Create memberIds from the old 'members' object or default to just the owner.
-                data.memberIds = data.members ? Object.keys(data.members) : [user.uid];
+            if (!hydratedData.memberIds) {
+                hydratedData.memberIds = hydratedData.members ? Object.keys(hydratedData.members) : [user.uid];
+            }
+
+            // If the document in the DB is old, queue it for a one-time update.
+            if (isLegacy) {
+                needsMigration = true;
+                migrationBatch.update(doc.ref, {
+                    ownerId: hydratedData.ownerId,
+                    memberIds: hydratedData.memberIds
+                });
             }
             
-            return { id: doc.id, ...data } as Channel;
+            return { id: doc.id, ...hydratedData } as Channel;
         }).filter((c): c is Channel => c !== null);
+
+        // If any channels were marked for migration, commit the batch update.
+        // This is safe because it only runs if legacy channels are found,
+        // and the update makes them non-legacy, so it won't run again.
+        if (needsMigration) {
+            migrationBatch.commit().catch(error => {
+                console.error("Error migrating legacy channel data:", error);
+                showToast(t('toasts.migrationError'), 'error');
+            });
+        }
 
         setOwnedChannels(channelsData);
       }, error => {
