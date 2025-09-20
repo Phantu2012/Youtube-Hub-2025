@@ -119,23 +119,24 @@ service cloud.firestore {
 
       // The owner can list their own channels.
       allow list: if request.auth.uid == ownerId;
-      // Any member can get a specific channel's details.
-      allow get: if request.auth.uid in resource.data.memberIds;
+      
+      // Any member can get a specific channel's details if the data is valid.
+      allow get: if 'memberIds' in resource.data && resource.data.memberIds is list && request.auth.uid in resource.data.memberIds;
     }
     
     // This rule is REQUIRED for the app to find channels shared with the user.
-    // It allows a collectionGroup query across all 'channels' subcollections.
     match /{path=**}/channels/{channelId} {
-      // Allow a user to list/get a channel if their UID is in the 'memberIds' array.
-      allow get, list: if request.auth.uid in resource.data.memberIds;
+      // Allow a user to list/get a channel if their UID is in the 'memberIds' array and the data is valid.
+      allow get, list: if 'memberIds' in resource.data && resource.data.memberIds is list && request.auth.uid in resource.data.memberIds;
     }
 
     // Rules for a user's 'projects' subcollection
     match /users/{ownerId}/projects/{projectId} {
-      // Any member of the project's parent channel can manage the project.
-      // This rule gets the channelId from the project being accessed (resource.data.channelId),
-      // then fetches the corresponding channel document and checks if the user is a member.
-      allow read, write, create, delete: if request.auth.uid in get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)).data.memberIds;
+      // Any member of the project's parent channel can manage the project if the data is valid.
+      allow read, write, create, delete: if 
+        'memberIds' in get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)).data &&
+        get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)).data.memberIds is list &&
+        request.auth.uid in get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)).data.memberIds;
     }
   }
 }`;
