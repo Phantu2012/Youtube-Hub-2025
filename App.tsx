@@ -70,7 +70,8 @@ const AppContent: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeView, setActiveView] = useState<'projects' | 'automation' | 'calendar' | 'admin'>('projects');
-  const [channels, setChannels] = useState<Channel[]>([]);
+  const [ownedChannels, setOwnedChannels] = useState<Channel[]>([]);
+  const [sharedChannels, setSharedChannels] = useState<Channel[]>([]);
   const { t } = useTranslation();
   const [dbConnectionError, setDbConnectionError] = useState<boolean>(false);
   const [signInError, setSignInError] = useState<{ code: string; domain?: string } | null>(null);
@@ -78,6 +79,16 @@ const AppContent: React.FC = () => {
   const [dream100Channel, setDream100Channel] = useState<Channel | null>(null);
   const [globalAutomationSteps, setGlobalAutomationSteps] = useState<AutomationStep[]>(DEFAULT_AUTOMATION_STEPS);
 
+  const channels = useMemo(() => {
+    const combined = new Map<string, Channel>();
+    ownedChannels.forEach(c => combined.set(c.id, c));
+    sharedChannels.forEach(c => {
+        if (!combined.has(c.id)) {
+            combined.set(c.id, c);
+        }
+    });
+    return Array.from(combined.values());
+  }, [ownedChannels, sharedChannels]);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -150,7 +161,8 @@ const AppContent: React.FC = () => {
         } else {
           setUser(null);
           setProjects([]);
-          setChannels([]);
+          setOwnedChannels([]);
+          setSharedChannels([]);
           setIsLoading(false);
         }
       } catch (error: any) {
@@ -158,7 +170,8 @@ const AppContent: React.FC = () => {
         setDbConnectionError(true);
         setUser(null);
         setProjects([]);
-        setChannels([]);
+        setOwnedChannels([]);
+        setSharedChannels([]);
         setIsLoading(false);
       }
     });
@@ -219,20 +232,23 @@ const AppContent: React.FC = () => {
   // Listener for channels data (owned and shared)
   useEffect(() => {
     if (!user || user.status !== 'active' || IS_DEV_MODE) {
-      if (!IS_DEV_MODE && !isLoading && !user) {
-        setChannels([]);
-      }
-      return;
+        setOwnedChannels([]);
+        setSharedChannels([]);
+        if (isLoading) setIsLoading(false);
+        return;
     }
     
+    setIsLoading(true);
+
     const ownedChannelsListener = db.collection('users').doc(user.uid).collection('channels')
       .onSnapshot(snapshot => {
         const migrationBatch = db.batch();
         let needsMigration = false;
 
-        const ownedChannelsData = snapshot.docs.map(doc => {
+        const channelsData = snapshot.docs.map(doc => {
             const data = doc.data();
-            // One-time data migration for older channels to support the sharing feature.
+            if (!data) return null; // Robustness check
+
             if (user && (!data.ownerId || !data.members)) {
                 const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(doc.id);
                 migrationBatch.update(channelDocRef, {
@@ -241,22 +257,17 @@ const AppContent: React.FC = () => {
                 });
                 needsMigration = true;
             }
-            return { id: doc.id, ...data() } as Channel;
-        });
+            return { id: doc.id, ...data } as Channel;
+        }).filter((c): c is Channel => c !== null);
         
         if (needsMigration) {
             migrationBatch.commit().catch(error => {
                 console.error("Failed to migrate old channel data:", error);
             });
-            // The snapshot listener will re-fire automatically with the updated data.
         }
 
-        setChannels(prev => {
-            const combined = new Map(prev.map(c => [c.id, c]));
-            ownedChannelsData.forEach(c => combined.set(c.id, c));
-            return Array.from(combined.values());
-        });
-        setIsLoading(false);
+        setOwnedChannels(channelsData);
+        // Loading will be set to false by the shared channels listener to avoid flashes
       }, error => {
         console.error("Error fetching owned channels:", error);
         setDbConnectionError(true);
@@ -265,16 +276,17 @@ const AppContent: React.FC = () => {
 
     const sharedChannelsListener = db.collectionGroup('channels').where(`members.${user.uid}`, '==', 'editor')
         .onSnapshot(snapshot => {
-            const sharedChannelsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Channel));
-            setChannels(prev => {
-                const combined = new Map(prev.map(c => [c.id, c]));
-                sharedChannelsData.forEach(c => combined.set(c.id, c));
-                return Array.from(combined.values());
-            });
+            const channelsData = snapshot.docs.map(doc => {
+                const data = doc.data();
+                if (!data) return null;
+                return { id: doc.id, ...doc.data() } as Channel
+            }).filter((c): c is Channel => c !== null);
+            
+            setSharedChannels(channelsData);
             setIsLoading(false);
         }, error => {
             console.error("Error fetching shared channels:", error);
-            // Don't set dbConnectionError here as it might be a rules issue for a new user
+            setSharedChannels([]);
             setIsLoading(false);
         });
 
@@ -282,8 +294,7 @@ const AppContent: React.FC = () => {
         ownedChannelsListener();
         sharedChannelsListener();
     };
-
-  }, [user, isLoading]);
+  }, [user]);
 
   // Listener for project data from all accessible channels
   useEffect(() => {
@@ -296,8 +307,6 @@ const AppContent: React.FC = () => {
     const projectMap = new Map<string, Project>();
 
     channels.forEach(channel => {
-        // BACKWARDS COMPATIBILITY FIX: Older channels might not have an ownerId field.
-        // Default to the current user's UID to prevent crashes.
         const ownerId = channel.ownerId || user.uid;
         
         const projectsCollectionRef = db.collection('users').doc(ownerId).collection('projects')
