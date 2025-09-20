@@ -227,7 +227,30 @@ const AppContent: React.FC = () => {
     
     const ownedChannelsListener = db.collection('users').doc(user.uid).collection('channels')
       .onSnapshot(snapshot => {
-        const ownedChannelsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Channel));
+        const migrationBatch = db.batch();
+        let needsMigration = false;
+
+        const ownedChannelsData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            // One-time data migration for older channels to support the sharing feature.
+            if (user && (!data.ownerId || !data.members)) {
+                const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(doc.id);
+                migrationBatch.update(channelDocRef, {
+                    ownerId: user.uid,
+                    members: { [user.uid]: 'owner' }
+                });
+                needsMigration = true;
+            }
+            return { id: doc.id, ...data() } as Channel;
+        });
+        
+        if (needsMigration) {
+            migrationBatch.commit().catch(error => {
+                console.error("Failed to migrate old channel data:", error);
+            });
+            // The snapshot listener will re-fire automatically with the updated data.
+        }
+
         setChannels(prev => {
             const combined = new Map(prev.map(c => [c.id, c]));
             ownedChannelsData.forEach(c => combined.set(c.id, c));
