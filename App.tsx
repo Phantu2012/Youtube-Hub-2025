@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -328,46 +329,57 @@ const AppContent: React.FC = () => {
   
     // Listener for member profiles of visible channels
     useEffect(() => {
-        if (channels.length === 0) {
+        if (channels.length === 0 || !user) {
             setChannelMembers({});
             return;
         }
 
         const allMemberIds = new Set<string>();
         channels.forEach(channel => {
-            if (channel.members) {
+            if (channel.memberIds) {
+                channel.memberIds.forEach(uid => allMemberIds.add(uid));
+            } else if (channel.members) { // Fallback for older data structure
                 Object.keys(channel.members).forEach(uid => allMemberIds.add(uid));
             }
         });
-        
+
         const idsToFetch = Array.from(allMemberIds);
+        const unsubscribes: (() => void)[] = [];
 
         if (idsToFetch.length > 0) {
-            const membersQuery = db.collection('users').where(firebase.firestore.FieldPath.documentId(), 'in', idsToFetch);
+            const newMembers: Record<string, User> = {};
             
-            const unsubscribe = membersQuery.onSnapshot(snapshot => {
-                const membersMap: Record<string, User> = {};
-                snapshot.docs.forEach(doc => {
-                    const data = doc.data();
-                     membersMap[doc.id] = {
-                        uid: doc.id,
-                        name: data.name,
-                        email: data.email,
-                        avatar: data.avatar,
-                        status: data.status,
-                        expiresAt: data.expiresAt ? data.expiresAt.toDate().toISOString() : null,
-                        isAdmin: data.isAdmin || false,
-                    };
+            idsToFetch.forEach(uid => {
+                // Fetch each user document individually. This uses a 'get' operation,
+                // which is permitted for all authenticated users by the security rules,
+                // unlike a 'list' operation (like a where-in query) which is admin-only.
+                const docRef = db.collection('users').doc(uid);
+                const unsubscribe = docRef.onSnapshot(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        newMembers[doc.id] = {
+                            uid: doc.id,
+                            name: data.name,
+                            email: data.email,
+                            avatar: data.avatar,
+                            status: data.status,
+                            expiresAt: data.expiresAt ? data.expiresAt.toDate().toISOString() : null,
+                            isAdmin: data.isAdmin || false,
+                        };
+                        // Update state with the latest complete map of members
+                        setChannelMembers(currentMembers => ({ ...currentMembers, ...newMembers }));
+                    }
+                }, error => {
+                    console.error(`Error fetching profile for user ${uid}:`, error);
                 });
-                setChannelMembers(prev => ({...prev, ...membersMap}));
-            }, error => {
-                console.error("Error fetching channel members:", error);
+                unsubscribes.push(unsubscribe);
             });
-
-            return () => unsubscribe();
         }
-
-    }, [channels]);
+        
+        return () => {
+            unsubscribes.forEach(unsub => unsub());
+        };
+    }, [channels, user]);
 
   // Listener for project data from all accessible channels
   useEffect(() => {

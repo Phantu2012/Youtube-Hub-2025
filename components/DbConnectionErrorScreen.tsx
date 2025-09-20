@@ -46,13 +46,13 @@ service cloud.firestore {
     match /users/{userId} {
       allow write: if request.auth.uid == userId;
       allow get: if request.auth != null;
-      allow list, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      allow list, update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
     // Admins can read/write global settings. Authenticated users can read them.
     match /system_settings/{settingId} {
         allow read: if request.auth != null;
-        allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+        allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
     // Rules for a user's 'channels' subcollection (direct access)
@@ -77,6 +77,7 @@ service cloud.firestore {
     match /users/{ownerId}/projects/{projectId} {
       // Any member of the project's parent channel can manage the project if the data is valid.
       allow read, write, create, delete: if 
+        exists(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)) &&
         'memberIds' in get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)).data &&
         get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)).data.memberIds is list &&
         request.auth.uid in get(/databases/$(database)/documents/users/$(ownerId)/channels/$(resource.data.channelId)).data.memberIds;
