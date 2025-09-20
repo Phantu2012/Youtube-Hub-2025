@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { db, firebase } from '../firebase';
@@ -100,10 +102,12 @@ const PermissionErrorGuide: React.FC<{ onRetry: () => void }> = ({ onRetry }) =>
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can manage their own document. Admins can manage any user document.
+    // Users can write to their own doc, and any authenticated user can read public profile data.
+    // Admins have extra rights.
     match /users/{userId} {
-      allow read, write: if request.auth.uid == userId;
-      allow list, get, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      allow write: if request.auth.uid == userId;
+      allow get: if request.auth != null;
+      allow list, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
     // Admins can read/write global settings. Authenticated users can read them.

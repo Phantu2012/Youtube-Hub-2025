@@ -15,7 +15,8 @@ interface ProjectListProps {
     projects: Project[];
     channels: Channel[];
     projectsByChannel: Record<string, Project[]>;
-    user: User; // Add user to identify ownership
+    user: User;
+    channelMembers: Record<string, User>;
     onSelectProject: (project: Project) => void;
     isLoading: boolean;
     onAddChannel: () => void;
@@ -23,7 +24,7 @@ interface ProjectListProps {
     onManageDream100: (channelId: string) => void;
 }
 
-export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, projectsByChannel, user, onSelectProject, isLoading, onAddChannel, onAddVideo, onManageDream100 }) => {
+export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, projectsByChannel, user, channelMembers, onSelectProject, isLoading, onAddChannel, onAddVideo, onManageDream100 }) => {
     const { t, language } = useTranslation();
 
     const formatStat = (num: number): string => {
@@ -78,6 +79,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
                 {sortedChannels.map(channel => {
                     const channelProjects = projectsByChannel[channel.id] || [];
                     const isOwner = channel.ownerId === user.uid;
+                    const owner = channelMembers[channel.ownerId];
+                    const ownerName = owner ? owner.name : t('projects.owner');
 
                     return (
                         <div key={channel.id}>
@@ -87,7 +90,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
                                     {!isOwner && (
                                         <span className="text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full flex items-center gap-1.5">
                                             <Share2 size={12}/>
-                                            {t('projects.sharedBy', { name: 'Owner' })} {/* Simple label for now */}
+                                            {t('projects.sharedBy', { name: ownerName })}
                                         </span>
                                     )}
                                     {channel.stats && (

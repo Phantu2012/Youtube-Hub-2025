@@ -1,6 +1,5 @@
 
 
-
 export default {
   "common": {
     "cancel": "Cancel",
@@ -81,6 +80,12 @@ export default {
       "button": "Check API Keys on Google Cloud"
     },
     "outro": "After completing Step 1 (and checking the others if needed), come back here and try again.",
+    "tryAgainButton": "Try Again"
+  },
+  "dbErrorNonAdmin": {
+    "title": "Connection Error",
+    "message": "The application could not connect to the database. This might be a temporary network issue. Please try again in a moment.",
+    "contactAdmin": "If the problem persists, please contact your administrator.",
     "tryAgainButton": "Try Again"
   },
   "authConfigError": {
@@ -617,4 +622,4 @@ export default {
     "deleteConfirm": "Confirm",
     "clearConfirm": "Confirm"
   }
-};
+}

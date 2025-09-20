@@ -1,6 +1,5 @@
 
 
-
 export default {
   "common": {
     "cancel": "Hủy",
@@ -81,6 +80,12 @@ export default {
       "button": "Kiểm tra Khóa API trên Google Cloud"
     },
     "outro": "Sau khi hoàn thành bước 1 (và kiểm tra các bước khác nếu cần), hãy quay lại đây và thử lại.",
+    "tryAgainButton": "Thử lại"
+  },
+  "dbErrorNonAdmin": {
+    "title": "Lỗi Kết nối",
+    "message": "Ứng dụng không thể kết nối đến cơ sở dữ liệu. Đây có thể là sự cố mạng tạm thời. Vui lòng thử lại sau giây lát.",
+    "contactAdmin": "Nếu sự cố vẫn tiếp diễn, vui lòng liên hệ với quản trị viên của bạn.",
     "tryAgainButton": "Thử lại"
   },
   "authConfigError": {
@@ -612,4 +617,4 @@ export default {
     "deleteConfirm": "Xác nhận",
     "clearConfirm": "Xác nhận"
   }
-};
+}

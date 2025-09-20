@@ -78,6 +78,7 @@ const AppContent: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [dream100Channel, setDream100Channel] = useState<Channel | null>(null);
   const [globalAutomationSteps, setGlobalAutomationSteps] = useState<AutomationStep[]>(DEFAULT_AUTOMATION_STEPS);
+  const [channelMembers, setChannelMembers] = useState<Record<string, User>>({});
 
   const channels = useMemo(() => {
     const combined = new Map<string, Channel>();
@@ -127,9 +128,9 @@ const AppContent: React.FC = () => {
 
             const userData: User = {
               uid: firebaseUser.uid,
-              name: firebaseUser.displayName || 'User',
-              email: firebaseUser.email || 'No email',
-              avatar: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+              name: firebaseUser.displayName || docData.name || 'User',
+              email: firebaseUser.email || docData.email || 'No email',
+              avatar: firebaseUser.photoURL || docData.avatar || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
               status: finalStatus,
               expiresAt: docData.expiresAt ? docData.expiresAt.toDate().toISOString() : null,
               isAdmin: docData.isAdmin || false,
@@ -295,6 +296,50 @@ const AppContent: React.FC = () => {
         sharedChannelsListener();
     };
   }, [user]);
+  
+    // Listener for member profiles of visible channels
+    useEffect(() => {
+        if (channels.length === 0) {
+            setChannelMembers({});
+            return;
+        }
+
+        const allMemberIds = new Set<string>();
+        channels.forEach(channel => {
+            if (channel.members) {
+                Object.keys(channel.members).forEach(uid => allMemberIds.add(uid));
+            }
+        });
+        
+        const idsToFetch = Array.from(allMemberIds);
+
+        // Firestore 'in' query is limited to 30 items in v9. Handle batching if needed.
+        if (idsToFetch.length > 0) {
+            const membersQuery = db.collection('users').where(firebase.firestore.FieldPath.documentId(), 'in', idsToFetch);
+            
+            const unsubscribe = membersQuery.onSnapshot(snapshot => {
+                const membersMap: Record<string, User> = {};
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                     membersMap[doc.id] = {
+                        uid: doc.id,
+                        name: data.name,
+                        email: data.email,
+                        avatar: data.avatar,
+                        status: data.status,
+                        expiresAt: data.expiresAt ? data.expiresAt.toDate().toISOString() : null,
+                        isAdmin: data.isAdmin || false,
+                    };
+                });
+                setChannelMembers(prev => ({...prev, ...membersMap}));
+            }, error => {
+                console.error("Error fetching channel members:", error);
+            });
+
+            return () => unsubscribe();
+        }
+
+    }, [channels]);
 
   // Listener for project data from all accessible channels
   useEffect(() => {
@@ -307,7 +352,12 @@ const AppContent: React.FC = () => {
     const projectMap = new Map<string, Project>();
 
     channels.forEach(channel => {
-        const ownerId = channel.ownerId || user.uid;
+        const ownerId = channel.ownerId; // Crucially, do not fall back to user.uid
+        
+        if (!ownerId) {
+            console.warn(`Channel "${channel.name}" is missing an ownerId and will be skipped.`);
+            return; // Skip channels that haven't been migrated
+        }
         
         const projectsCollectionRef = db.collection('users').doc(ownerId).collection('projects')
                                       .where('channelId', '==', channel.id);
@@ -564,11 +614,11 @@ const AppContent: React.FC = () => {
     
     const performSave = async () => {
         const channel = channels.find(c => c.id === projectToSave.channelId);
-        if (!channel) {
-            throw new Error("Channel not found for this project.");
+        if (!channel || !channel.ownerId) {
+            throw new Error("Channel or channel owner not found for this project.");
         }
         
-        const ownerId = channel.ownerId || user.uid;
+        const ownerId = channel.ownerId;
 
         const dataToSave = {
             channelId: projectToSave.channelId,
@@ -643,11 +693,11 @@ const AppContent: React.FC = () => {
     if (!projectToDelete) return;
 
     const channel = channels.find(c => c.id === projectToDelete.channelId);
-    if (!channel) {
+    if (!channel || !channel.ownerId) {
         showToast(t('toasts.projectDeleteFailed'), 'error');
-        throw new Error("Channel not found for project");
+        throw new Error("Channel or channel owner not found for project");
     }
-    const ownerId = channel.ownerId || user.uid;
+    const ownerId = channel.ownerId;
 
     try {
         const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectId);
@@ -670,7 +720,7 @@ const AppContent: React.FC = () => {
     const originalChannel = channels.find(c => c.id === projectToMove.channelId);
     const destinationChannel = channels.find(c => c.id === newChannelId);
 
-    if (!originalChannel || !destinationChannel) {
+    if (!originalChannel || !destinationChannel || !originalChannel.ownerId) {
         showToast(t('toasts.projectMoveFailed'), 'error');
         return;
     }
@@ -681,7 +731,7 @@ const AppContent: React.FC = () => {
     }
 
     setIsSaving(true);
-    const ownerId = originalChannel.ownerId || user.uid;
+    const ownerId = originalChannel.ownerId;
     try {
         const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectToMove.id);
         await projectDocRef.update({ channelId: newChannelId });
@@ -805,7 +855,7 @@ const AppContent: React.FC = () => {
   }
 
   if (dbConnectionError) {
-      return <DbConnectionErrorScreen onReset={() => window.location.reload()} />;
+      return <DbConnectionErrorScreen onReset={() => window.location.reload()} user={user} />;
   }
 
   if (!user) {
@@ -844,6 +894,7 @@ const AppContent: React.FC = () => {
               channels={channels}
               projectsByChannel={projectsByChannel} 
               user={user}
+              channelMembers={channelMembers}
               onSelectProject={handleOpenModal} 
               isLoading={isLoading && projects.length === 0}
               onAddChannel={handleOpenSettingsModal}
