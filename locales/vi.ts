@@ -159,7 +159,7 @@ export default {
     },
     "setupGuide": {
         "step4Title": "Tạo Index Firestore cho Chia sẻ",
-        "step4Desc": "Để tìm các kênh được chia sẻ, cần có một chỉ mục cơ sở dữ liệu. Firebase cung cấp một liên kết trong nhật ký lỗi của bảng điều khiển nhà phát triển của trình duyệt để tạo tự động. Hãy tìm thông báo lỗi bắt đầu bằng 'The query requires an index...' và nhấp vào liên kết được cung cấp ở đó."
+        "step4Desc": "Để bật tính năng chia sẻ kênh, cần có một chỉ mục cơ sở dữ liệu. Nếu ứng dụng báo lỗi thiếu chỉ mục, Firebase sẽ cung cấp một liên kết trực tiếp để tạo tự động. Hãy nhấp vào liên kết đó, sau đó nhấp vào \"Tạo\" trong bảng điều khiển Firebase. Chỉ mục này dành cho nhóm collection 'channels' trên trường 'memberIds'."
     }
   },
   "adminPrompts": {

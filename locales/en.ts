@@ -159,7 +159,7 @@ export default {
     },
     "setupGuide": {
         "step4Title": "Create Firestore Index for Sharing",
-        "step4Desc": "To find shared channels, a database index is required. Firebase provides a link in the browser's developer console error log to create this automatically. Look for an error message starting with 'The query requires an index...' and click the link provided there."
+        "step4Desc": "To enable channel sharing, a specific database index is required. If the app shows an error about a missing index, Firebase provides a direct link to create it automatically. Click the link, then click \"Create\" in the Firebase console. This index is for the 'channels' collection group on the 'memberIds' field."
     }
   },
    "adminPrompts": {

@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -255,13 +256,15 @@ const AppContent: React.FC = () => {
 
         const channelsData = snapshot.docs.map(doc => {
             const data = doc.data();
-            if (!data) return null; // Robustness check
+            if (!data) return null;
 
-            if (user && (!data.ownerId || !data.members)) {
+            if (user && (!data.ownerId || !data.members || !data.memberIds)) {
                 const channelDocRef = db.collection('users').doc(user.uid).collection('channels').doc(doc.id);
+                const members = data.members || { [user.uid]: 'owner' };
                 migrationBatch.update(channelDocRef, {
-                    ownerId: user.uid,
-                    members: { [user.uid]: 'owner' }
+                    ownerId: data.ownerId || user.uid,
+                    members: members,
+                    memberIds: Object.keys(members)
                 });
                 needsMigration = true;
             }
@@ -275,18 +278,22 @@ const AppContent: React.FC = () => {
         }
 
         setOwnedChannels(channelsData);
-        // Loading will be set to false by the shared channels listener to avoid flashes
       }, error => {
         console.error("Error fetching owned channels:", error);
-        setDbConnectionError(true);
+        if (error.code === 'permission-denied') {
+            const messageKey = user?.isAdmin ? 'toasts.sharedChannelPermissionErrorAdmin' : 'toasts.sharedChannelPermissionErrorUser';
+            showToast(t(messageKey), 'error');
+        } else {
+            setDbConnectionError(true);
+        }
         setIsLoading(false);
       });
 
-    const sharedChannelsListener = db.collectionGroup('channels').where(`members.${user.uid}`, '==', 'editor')
+    const sharedChannelsListener = db.collectionGroup('channels').where('memberIds', 'array-contains', user.uid)
         .onSnapshot(snapshot => {
             const channelsData = snapshot.docs.map(doc => {
                 const data = doc.data();
-                if (!data) return null;
+                if (!data || data.ownerId === user.uid) return null;
                 return { id: doc.id, ...doc.data() } as Channel
             }).filter((c): c is Channel => c !== null);
             
@@ -335,7 +342,6 @@ const AppContent: React.FC = () => {
         
         const idsToFetch = Array.from(allMemberIds);
 
-        // Firestore 'in' query is limited to 30 items in v9. Handle batching if needed.
         if (idsToFetch.length > 0) {
             const membersQuery = db.collection('users').where(firebase.firestore.FieldPath.documentId(), 'in', idsToFetch);
             
@@ -405,7 +411,6 @@ const AppContent: React.FC = () => {
 
         }, (error: any) => {
             console.error(`Error fetching projects for channel ${channel.id}:`, error);
-            // On error, remove this channel's projects from state to prevent stale data
             setProjectsFromListeners(prev => {
                 const newState = {...prev};
                 delete newState[channel.id];
@@ -416,7 +421,6 @@ const AppContent: React.FC = () => {
         allListeners.push(listener);
     });
     
-    // Cleanup projects from channels that are no longer visible
     setProjectsFromListeners(prev => {
         const newState: Record<string, Project[]> = {};
         Object.keys(prev).forEach(channelId => {
@@ -527,6 +531,7 @@ const AppContent: React.FC = () => {
         ...newChannelData,
         ownerId: user.uid,
         members: { [user.uid]: 'owner' as const },
+        memberIds: [user.uid],
         ideas: [],
         dream100Videos: [],
         automationSteps: DEFAULT_AUTOMATION_STEPS,
@@ -562,7 +567,8 @@ const AppContent: React.FC = () => {
     const ownerId = channel.ownerId || user.uid;
     try {
         const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channel.id);
-        await channelDocRef.update({ members: newMembers });
+        const newMemberIds = Object.keys(newMembers);
+        await channelDocRef.update({ members: newMembers, memberIds: newMemberIds });
     } catch (error) {
         console.error("Error updating channel members:", error);
         showToast(t('toasts.updateMembersFailed'), 'error');
