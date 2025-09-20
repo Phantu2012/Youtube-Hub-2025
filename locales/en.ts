@@ -613,6 +613,8 @@ export default {
      "ideaAdded": "Idea(s) added successfully!",
     "ideaUpdated": "Idea status updated.",
     "ideaDeleted": "Idea deleted.",
+    "sharedChannelPermissionErrorAdmin": "Could not fetch shared channels. Your Firestore security rules are likely missing an update for sharing features. Please go to the Admin Panel -> Setup Guide and apply the latest rules to your Firebase project.",
+    "sharedChannelPermissionErrorUser": "Could not fetch shared channels. The app's security configuration may be outdated. Please contact your administrator for assistance.",
     "generated": {
       "videoTitle": "Video title generated!",
       "description": "Description generated!",

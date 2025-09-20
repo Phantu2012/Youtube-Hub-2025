@@ -293,6 +293,10 @@ const AppContent: React.FC = () => {
             setIsLoading(false);
         }, error => {
             console.error("Error fetching shared channels:", error);
+            if (error.code === 'permission-denied') {
+                const messageKey = user?.isAdmin ? 'toasts.sharedChannelPermissionErrorAdmin' : 'toasts.sharedChannelPermissionErrorUser';
+                showToast(t(messageKey), 'error');
+            }
             setSharedChannels([]);
             setIsLoading(false);
         });
@@ -301,7 +305,7 @@ const AppContent: React.FC = () => {
         ownedChannelsListener();
         sharedChannelsListener();
     };
-  }, [user]);
+  }, [user, showToast, t]);
   
     // Listener for member profiles of visible channels
     useEffect(() => {

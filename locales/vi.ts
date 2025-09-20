@@ -608,6 +608,8 @@ export default {
      "ideaAdded": "Đã thêm (các) ý tưởng thành công!",
     "ideaUpdated": "Đã cập nhật trạng thái ý tưởng.",
     "ideaDeleted": "Đã xóa ý tưởng.",
+    "sharedChannelPermissionErrorAdmin": "Không thể tải các kênh được chia sẻ. Quy tắc bảo mật Firestore của bạn có thể chưa được cập nhật cho tính năng chia sẻ. Vui lòng vào Bảng điều khiển Admin -> Hướng dẫn Cài đặt và áp dụng các quy tắc mới nhất cho dự án Firebase của bạn.",
+    "sharedChannelPermissionErrorUser": "Không thể tải các kênh được chia sẻ. Cấu hình bảo mật của ứng dụng có thể đã lỗi thời. Vui lòng liên hệ với quản trị viên của bạn để được hỗ trợ.",
     "generated": {
       "videoTitle": "Đã tạo tiêu đề video!",
       "description": "Đã tạo mô tả!",
