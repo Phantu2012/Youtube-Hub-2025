@@ -1,6 +1,5 @@
 
 
-
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { db, firebase } from '../firebase';
@@ -106,6 +105,15 @@ service cloud.firestore {
 
       // Allow an ADMIN to list all users, get any user, and update any user.
       allow list, get, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Rule for system-wide settings (e.g., Global Prompts)
+    match /system_settings/{settingId} {
+        // Allow any authenticated user to read settings.
+        allow read: if request.auth != null;
+        
+        // ONLY allow admins to write/update settings.
+        allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
     // Rules for the 'projects' subcollection

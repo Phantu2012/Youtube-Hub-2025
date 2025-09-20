@@ -1,10 +1,13 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
 import { AutomationStep } from '../types';
 import { DEFAULT_AUTOMATION_STEPS } from '../constants';
 import { useTranslation } from '../hooks/useTranslation';
-import { Loader, Save, Sparkles, RotateCcw, ChevronDown } from 'lucide-react';
+import { Loader, Save, Sparkles, RotateCcw, ChevronDown, AlertTriangle, ExternalLink } from 'lucide-react';
+import { CodeBlock } from './CodeBlock';
+import { firebaseConfig } from '../firebase';
 
 // Reusable card for editing a prompt
 const PromptEditCard: React.FC<{
@@ -77,6 +80,60 @@ const PromptEditCard: React.FC<{
     );
 };
 
+const PermissionErrorGuideForPrompts: React.FC<{ onRetry: () => void }> = ({ onRetry }) => {
+    const { t } = useTranslation();
+    const rulesUrl = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore/rules`;
+
+    const newRules = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow list, get, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Rule for system-wide settings (e.g., Global Prompts)
+    match /system_settings/{settingId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Rules for subcollections
+    match /users/{userId}/{collectionId}/{docId} {
+      allow read, write, create, delete: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}`;
+
+    return (
+        <div className="max-w-3xl mx-auto mt-8 p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-800 dark:text-yellow-200">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="text-yellow-600 dark:text-yellow-400" size={24} />
+              <h3 className="text-xl font-bold">{t('adminPanel.permissionError.title')}</h3>
+            </div>
+            <p className="mt-2 mb-4 text-sm">{t('adminPanel.permissionError.intro')}</p>
+            <div className="text-left bg-light-bg dark:bg-dark-bg p-4 rounded-lg text-light-text dark:text-dark-text">
+                <p className="text-sm">{t('adminPanel.permissionError.step1')}</p>
+                <a href={rulesUrl} target="_blank" rel="noopener noreferrer" className="inline-flex my-2 items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow">
+                    {t('adminPanel.permissionError.button')} <ExternalLink size={16} />
+                </a>
+                <p className="text-sm">{t('adminPanel.permissionError.step2')}</p>
+                <CodeBlock code={newRules} title={t('adminPanel.permissionError.rulesTitle')} />
+                <p className="text-sm mt-3">{t('adminPanel.permissionError.step3')}</p>
+            </div>
+             <button
+                onClick={onRetry}
+                className="w-full mt-6 flex items-center justify-center gap-3 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg shadow-md transition-colors"
+                >
+                <RotateCcw size={20} />
+                {t('adminPanel.permissionError.retryButton')}
+            </button>
+        </div>
+    );
+};
+
 
 export const AdminPromptsPanel: React.FC<{
     showToast: (message: string, type: 'success' | 'error' | 'info') => void;
@@ -85,10 +142,12 @@ export const AdminPromptsPanel: React.FC<{
     const [prompts, setPrompts] = useState<AutomationStep[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [permissionError, setPermissionError] = useState(false);
 
     useEffect(() => {
         const docRef = db.collection('system_settings').doc('automation_prompts');
         const unsubscribe = docRef.onSnapshot((doc) => {
+            setPermissionError(false); // Reset error on successful snapshot
             if (doc.exists) {
                 const data = doc.data();
                 if (data && data.steps && Array.isArray(data.steps)) {
@@ -105,9 +164,13 @@ export const AdminPromptsPanel: React.FC<{
                 setPrompts(DEFAULT_AUTOMATION_STEPS);
             }
             setIsLoading(false);
-        }, (error) => {
+        }, (error: any) => {
             console.error("Error fetching global prompts:", error);
-            showToast(t('adminPrompts.saveError'), 'error');
+            if (error.code === 'permission-denied') {
+                setPermissionError(true);
+            } else {
+                showToast(t('adminPrompts.saveError'), 'error');
+            }
             setPrompts(DEFAULT_AUTOMATION_STEPS);
             setIsLoading(false);
         });
@@ -128,13 +191,18 @@ export const AdminPromptsPanel: React.FC<{
 
     const handleSave = async () => {
         setIsSaving(true);
+        setPermissionError(false);
         try {
             const docRef = db.collection('system_settings').doc('automation_prompts');
             await docRef.set({ steps: prompts });
             showToast(t('adminPrompts.saveSuccess'), 'success');
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving global prompts:", error);
-            showToast(t('adminPrompts.saveError'), 'error');
+            if (error.code === 'permission-denied') {
+                setPermissionError(true);
+            } else {
+                showToast(t('adminPrompts.saveError'), 'error');
+            }
         } finally {
             setIsSaving(false);
         }
@@ -146,6 +214,10 @@ export const AdminPromptsPanel: React.FC<{
                 <Loader className="w-10 h-10 animate-spin text-primary" />
             </div>
         );
+    }
+    
+    if (permissionError) {
+        return <PermissionErrorGuideForPrompts onRetry={() => window.location.reload()} />;
     }
 
     return (
