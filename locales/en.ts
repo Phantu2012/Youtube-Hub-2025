@@ -1,3 +1,6 @@
+
+
+
 export default {
   "common": {
     "cancel": "Cancel",
@@ -108,7 +111,10 @@ export default {
   },
   "adminPanel": {
     "title": "Admin Panel",
-    "description": "Manage user accounts, approve new registrations, and set subscription expiry dates.",
+    "description": "Manage user accounts and global application settings.",
+    "userManagementTab": "User Management",
+    "promptManagementTab": "Global Prompts",
+    "setupGuideTab": "Setup Guide",
     "administrator": "Administrator",
     "loadingUsers": "Loading users...",
     "user": "User",
@@ -148,6 +154,16 @@ export default {
         "step5": "Set your 'status' to 'active' and grant yourself a long 'expiresAt' date.",
         "step6": "Reload this application. You should now see the Admin panel."
     }
+  },
+   "adminPrompts": {
+    "title": "Manage Global Prompts",
+    "description": "Edit the default prompt templates used by the AI Automation Engine for all users. Changes saved here will become the new default.",
+    "saveButton": "Save All Changes",
+    "savingButton": "Saving...",
+    "saveSuccess": "Global prompts have been updated successfully.",
+    "saveError": "Failed to save global prompts.",
+    "resetPrompt": "Reset to Original",
+    "confirmReset": "Confirm Reset"
   },
   "projects": {
     "title": "Channel Projects",

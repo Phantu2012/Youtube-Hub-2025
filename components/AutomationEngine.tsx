@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { Channel, ChannelDna, Project, ProjectStatus, ToastMessage, AutomationStep, AutomationStepStatus, YouTubeVideoDetails, ApiKeys, AIProvider, AIModel, Idea } from '../types';
@@ -22,6 +18,7 @@ interface AutomationEngineProps {
     selectedModel: AIModel;
     onUpdateIdeas: (channelId: string, updatedIdeas: Idea[]) => void;
     onUpdateAutomationSteps: (channelId: string, updatedSteps: AutomationStep[]) => void;
+    globalAutomationSteps: AutomationStep[];
 }
 
 interface AutomationInput {
@@ -49,7 +46,7 @@ interface Step5Inputs {
 type StepSettings = Record<number, Record<string, string | number>>;
 
 
-export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, onOpenProjectModal, showToast, apiKeys, selectedProvider, selectedModel, onUpdateIdeas, onUpdateAutomationSteps }) => {
+export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, onOpenProjectModal, showToast, apiKeys, selectedProvider, selectedModel, onUpdateIdeas, onUpdateAutomationSteps, globalAutomationSteps }) => {
     const { t } = useTranslation();
     const [selectedChannelId, setSelectedChannelId] = useLocalStorage<string>('automation-selected-channel', '');
     const selectedChannel = channels.find(c => c.id === selectedChannelId);
@@ -70,7 +67,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
     const [isRunning, setIsRunning] = useState(false);
     const [isStopping, setIsStopping] = useState(false);
     const stopExecutionRef = useRef(false);
-    const [steps, setSteps] = useState<AutomationStep[]>(DEFAULT_AUTOMATION_STEPS);
+    const [steps, setSteps] = useState<AutomationStep[]>(globalAutomationSteps);
     const [stepStatus, setStepStatus] = useLocalStorage<Record<number, AutomationStepStatus>>('automation-status', {});
     const [stepOutputs, setStepOutputs] = useLocalStorage<Record<number, string>>('automation-outputs', {});
     const [currentStep, setCurrentStep] = useState<number | null>(null);
@@ -79,18 +76,19 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
     const [isIdeaBankOpen, setIsIdeaBankOpen] = useState(false);
 
     useEffect(() => {
-        // Load custom steps for the selected channel, or default if none exist
-        if (selectedChannel?.automationSteps) {
-            // Merge with default steps to ensure all steps are present, even if new ones were added to the app
-            const mergedSteps = DEFAULT_AUTOMATION_STEPS.map(defaultStep => {
-                const customStep = selectedChannel.automationSteps.find(cs => cs.id === defaultStep.id);
-                return customStep ? { ...defaultStep, ...customStep } : defaultStep;
+        // Load user-specific custom steps for the channel, or fall back to global defaults
+        if (selectedChannel?.automationSteps && selectedChannel.automationSteps.length > 0) {
+            // Merge with global steps to ensure all steps are present, even if new ones were added to the app
+            const mergedSteps = globalAutomationSteps.map(globalStep => {
+                const customStep = selectedChannel.automationSteps!.find(cs => cs.id === globalStep.id);
+                return customStep ? { ...globalStep, ...customStep } : globalStep;
             });
             setSteps(mergedSteps);
         } else {
-            setSteps(DEFAULT_AUTOMATION_STEPS);
+            // No custom steps for this channel, use the global ones
+            setSteps(globalAutomationSteps);
         }
-    }, [selectedChannelId, channels, selectedChannel]);
+    }, [selectedChannel, globalAutomationSteps]);
 
 
     useEffect(() => {
@@ -174,11 +172,11 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
     };
 
     const handleRestoreDefaultPrompt = (stepId: number) => {
-        const defaultStep = DEFAULT_AUTOMATION_STEPS.find(s => s.id === stepId);
-        if (defaultStep) {
+        const globalStep = globalAutomationSteps.find(s => s.id === stepId);
+        if (globalStep) {
             const updatedSteps = steps.map(step => 
                 step.id === stepId 
-                ? { ...step, promptTemplate: defaultStep.promptTemplate } 
+                ? { ...step, promptTemplate: globalStep.promptTemplate } 
                 : step
             );
             setSteps(updatedSteps);
@@ -370,13 +368,6 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                 setPausedAtStep(step.id);
                 showToast(t('toasts.automationStopped'), 'info');
                 break;
-            }
-
-            if (step.id === 9 && !srtContent.trim()) {
-                showToast(t('toasts.srtRequired'), 'info');
-                setPausedAtStep(9);
-                setIsRunning(false);
-                return;
             }
 
             setCurrentStep(step.id);

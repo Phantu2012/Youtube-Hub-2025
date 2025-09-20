@@ -1,12 +1,14 @@
 
 
+
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { db, firebase } from '../firebase';
 import { useTranslation } from '../hooks/useTranslation';
-import { Loader, Save, Shield, AlertTriangle, ExternalLink, RotateCcw } from 'lucide-react';
+import { Loader, Save, Shield, AlertTriangle, ExternalLink, RotateCcw, Users, Edit3, Info } from 'lucide-react';
 import { CodeBlock } from './CodeBlock'; 
 import { firebaseConfig } from '../firebase';
+import { AdminPromptsPanel } from './AdminPromptsPanel';
 
 interface AdminPanelProps {
     showToast: (message: string, type: 'success' | 'error' | 'info') => void;
@@ -147,12 +149,33 @@ service cloud.firestore {
     );
 };
 
+const TabButton: React.FC<{
+    label: string;
+    icon: React.ReactNode;
+    isActive: boolean;
+    onClick: () => void;
+}> = ({ label, icon, isActive, onClick }) => (
+    <button
+        onClick={onClick}
+        className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
+            isActive
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-light-text dark:hover:text-dark-text'
+        }`}
+    >
+        {icon}
+        {label}
+    </button>
+);
+
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({ showToast }) => {
     const { t } = useTranslation();
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFirstAdmin, setIsFirstAdmin] = useState(false);
     const [permissionError, setPermissionError] = useState(false);
+    const [activeTab, setActiveTab] = useState<'users' | 'prompts' | 'setup'>('users');
 
     const fetchUsers = async () => {
         setIsLoading(true);
@@ -195,8 +218,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ showToast }) => {
     };
     
     useEffect(() => {
-        fetchUsers();
-    }, []);
+        if (activeTab === 'users') {
+            fetchUsers();
+        } else {
+            setIsLoading(false); 
+        }
+    }, [activeTab]);
 
     const handleUpdateUser = async (uid: string, status: User['status'], expiresAt: string | null) => {
         try {
@@ -221,48 +248,130 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ showToast }) => {
         }
     };
 
-    if (isLoading) {
+    const renderUsersPanel = () => {
+        if (isLoading) {
+            return (
+                <div className="flex justify-center items-center py-16">
+                    <Loader className="w-10 h-10 animate-spin text-primary" />
+                    <p className="ml-4 text-lg text-gray-500 dark:text-gray-400">{t('adminPanel.loadingUsers')}</p>
+                </div>
+            );
+        }
+        
+        if (permissionError) {
+            return <PermissionErrorGuide onRetry={fetchUsers} />;
+        }
+        
+        if (isFirstAdmin) {
+            return (
+                <div className="max-w-3xl mx-auto mt-8 p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-800 dark:text-yellow-200">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle className="text-yellow-600 dark:text-yellow-400" size={24} />
+                      <h3 className="text-xl font-bold">{t('adminPanel.firstAdminSetup.title')}</h3>
+                    </div>
+                    <p className="mt-2 mb-4 text-sm">{t('adminPanel.firstAdminSetup.intro')}</p>
+
+                    <ol className="list-decimal list-inside space-y-2 text-sm">
+                        <li>{t('adminPanel.firstAdminSetup.step1')}</li>
+                        <li>{t('adminPanel.firstAdminSetup.step2')}</li>
+                        <li>{t('adminPanel.firstAdminSetup.step3')}</li>
+                        <li>{t('adminPanel.firstAdminSetup.step4')}</li>
+                        <li>{t('adminPanel.firstAdminSetup.step5')}</li>
+                        <li>{t('adminPanel.firstAdminSetup.step6')}</li>
+                    </ol>
+                </div>
+            )
+        }
+
         return (
-            <div className="flex justify-center items-center py-16">
-                <Loader className="w-10 h-10 animate-spin text-primary" />
-                <p className="ml-4 text-lg text-gray-500 dark:text-gray-400">{t('adminPanel.loadingUsers')}</p>
+            <div className="space-y-4">
+                {users.map(user => (
+                    <UserCard key={user.uid} user={user} onUpdate={handleUpdateUser} />
+                ))}
             </div>
         );
-    }
-    
-    if (permissionError) {
-        return <PermissionErrorGuide onRetry={fetchUsers} />;
-    }
-    
-    if (isFirstAdmin) {
-        return (
-            <div className="max-w-3xl mx-auto mt-8 p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-800 dark:text-yellow-200">
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="text-yellow-600 dark:text-yellow-400" size={24} />
-                  <h3 className="text-xl font-bold">{t('adminPanel.firstAdminSetup.title')}</h3>
-                </div>
-                <p className="mt-2 mb-4 text-sm">{t('adminPanel.firstAdminSetup.intro')}</p>
+    };
 
-                <ol className="list-decimal list-inside space-y-2 text-sm">
-                    <li>{t('adminPanel.firstAdminSetup.step1')}</li>
-                    <li>{t('adminPanel.firstAdminSetup.step2')}</li>
-                    <li>{t('adminPanel.firstAdminSetup.step3')}</li>
-                    <li>{t('adminPanel.firstAdminSetup.step4')}</li>
-                    <li>{t('adminPanel.firstAdminSetup.step5')}</li>
-                    <li>{t('adminPanel.firstAdminSetup.step6')}</li>
-                </ol>
-            </div>
-        )
-    }
+    const renderSetupGuidePanel = () => (
+      <div className="p-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-800 dark:text-yellow-200">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="text-yellow-600 dark:text-yellow-400" size={24} />
+          <h3 className="text-xl font-bold">{t('login.setupGuide.title')}</h3>
+        </div>
+        <p className="mt-2 mb-6 text-sm">{t('login.setupGuide.intro')}</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+          <div className="bg-light-card dark:bg-dark-card/30 p-4 rounded-md">
+            <h4 className="font-bold">{t('login.setupGuide.step1Title')}</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-3">{t('login.setupGuide.step1Desc')}</p>
+            <a
+              href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/providers`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow"
+            >
+              {t('login.setupGuide.step1Button')} <ExternalLink size={14} />
+            </a>
+          </div>
+          <div className="bg-light-card dark:bg-dark-card/30 p-4 rounded-md">
+            <h4 className="font-bold">{t('login.setupGuide.step2Title')}</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-3">{t('login.setupGuide.step2Desc')}</p>
+             <a
+              href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/settings`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow"
+            >
+              {t('login.setupGuide.step2Button')} <ExternalLink size={14} />
+            </a>
+          </div>
+          <div className="bg-light-card dark:bg-dark-card/30 p-4 rounded-md">
+            <h4 className="font-bold">{t('login.setupGuide.step3Title')}</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-3">{t('login.setupGuide.step3Desc')}</p>
+             <a
+              href={`https://console.cloud.google.com/apis/credentials?project=${firebaseConfig.projectId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow"
+            >
+              {t('login.setupGuide.step3Button')} <ExternalLink size={14} />
+            </a>
+          </div>
+        </div>
+      </div>
+    );
 
     return (
         <div className="max-w-5xl mx-auto">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">{t('adminPanel.title')}</h1>
             <p className="text-gray-500 dark:text-gray-400 mb-6">{t('adminPanel.description')}</p>
-            <div className="space-y-4">
-                {users.map(user => (
-                    <UserCard key={user.uid} user={user} onUpdate={handleUpdateUser} />
-                ))}
+            
+            <div className="border-b border-gray-200 dark:border-gray-700">
+                <nav className="flex space-x-2" aria-label="Tabs">
+                    <TabButton 
+                        label={t('adminPanel.userManagementTab')} 
+                        icon={<Users size={16} />} 
+                        isActive={activeTab === 'users'} 
+                        onClick={() => setActiveTab('users')} 
+                    />
+                    <TabButton 
+                        label={t('adminPanel.promptManagementTab')} 
+                        icon={<Edit3 size={16} />} 
+                        isActive={activeTab === 'prompts'} 
+                        onClick={() => setActiveTab('prompts')} 
+                    />
+                    <TabButton 
+                        label={t('adminPanel.setupGuideTab')} 
+                        icon={<Info size={16} />} 
+                        isActive={activeTab === 'setup'} 
+                        onClick={() => setActiveTab('setup')} 
+                    />
+                </nav>
+            </div>
+
+            <div className="mt-6">
+                {activeTab === 'users' && renderUsersPanel()}
+                {activeTab === 'prompts' && <AdminPromptsPanel showToast={showToast} />}
+                {activeTab === 'setup' && renderSetupGuidePanel()}
             </div>
         </div>
     );

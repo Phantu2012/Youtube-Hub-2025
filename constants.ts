@@ -1,4 +1,3 @@
-
 import { ProjectStatus, AutomationStep, Dream100VideoStatus, IdeaStatus } from './types';
 
 // The 't' function will be provided by the useTranslation hook in the component
@@ -519,35 +518,36 @@ track=
         name: 'automation.step9.name',
         description: 'automation.step9.description',
         promptTemplate: `ROLE & GOAL
-Bạn là “The SRT Merge Mapper.” Tìm thời điểm bắt đầu cho từng mục trong output của bước 6 bằng cách đối khớp nội dung với câu thoại trong SRT. Xuất bảng 3 cột sạch để dùng trong pipeline dựng hình theo thời gian.
+Bạn là “The SRT Merge Mapper.” Nhiệm vụ của bạn là tạo một bản đồ timecode.
+1. **NẾU CÓ SRT:** Tìm thời điểm bắt đầu cho từng mục trong output của bước 6 bằng cách đối khớp nội dung với câu thoại trong SRT.
+2. **NẾU KHÔNG CÓ SRT:** Tạo một bảng và JSON mặc định mà không có thời gian, ghi "NOT_FOUND" cho tất cả "Start Time".
 
 REQUIRED INPUTS
 1. The output from step 6 is provided below:
 {{STEP_6_OUTPUT}}
 
-2. The raw SRT content is provided below:
+2. The raw SRT content is provided below (CÓ THỂ TRỐNG):
 {{SRT_CONTENT}}
 
-WHEN NO INPUT (STRICT)
-Nếu không có SRT được dán vào: in chính xác
-ACK: NEED [SRT_RAW]. Paste your .srt file content (standard SRT format).
-
+WHEN NO INPUT
 Nếu không tìm thấy output của bước 6: in chính xác
 INPUT_NEEDED: No visual prompt output found.
 
-CONTENT MATCHING LOGIC (STRICT)
-Duyệt từng dòng từ output của bước 6 theo thứ tự (01→50):
-Exact contains (case-insensitive):
-Tìm cue đầu tiên, chưa dùng trong SRT chứa nguyên văn “Đoạn Kịch Bản” làm substring.
-Normalized contains:
-Nếu chưa khớp → chuẩn hoá cả hai phía (gộp khoảng trắng, bỏ dấu ba chấm đầu/đuôi, quy về lowercase, thống nhất quote) rồi tìm lại.
-Fuzzy token match (threshold ≥ 0.82):
-Nếu vẫn chưa khớp → dùng fuzzy theo token, chọn cue sớm nhất chưa dùng có điểm cao nhất ≥ 0.82.
-Lock cue sau khi ghép (không dùng lại cho mục khác).
-Nếu không tìm thấy → Start Time = NOT_FOUND và báo trong Validation.
+EXECUTION LOGIC (STRICT)
 
-TIME NORMALIZATION RULES
-Chấp nhận: H:MM:SS,ms, HH:MM:SS,ms, hoặc MM:SS,ms. Chuẩn hoá về HH:MM:SS,mmm.
+**PATH A: IF SRT_CONTENT IS PROVIDED AND NOT EMPTY**
+- Follow the matching logic below to find the correct Start Time for each script snippet.
+- CONTENT MATCHING LOGIC:
+  - Exact contains (case-insensitive): Find the first unused cue in the SRT that contains the "Script Snippet" as a substring.
+  - Normalized contains: If no match, normalize both strings (lowercase, trim, remove extra spaces) and search again.
+  - Fuzzy token match (threshold ≥ 0.82): If still no match, use a fuzzy token match and pick the earliest unused cue with the highest score ≥ 0.82.
+  - Lock cue after matching to prevent reuse.
+- If a match is not found for a snippet, its Start Time must be "NOT_FOUND".
+
+**PATH B: IF SRT_CONTENT IS EMPTY OR WHITESPACE**
+- For every script snippet found in the STEP_6_OUTPUT, generate a row.
+- The "Start Time" for EVERY row MUST be exactly "NOT_FOUND".
+- Do not perform any matching.
 
 OUTPUT FORMAT — EXACT 3-COLUMN TAB-SEPARATED TABLE (FOR SPREADSHEETS)
 Create a Tab-Separated Value (TSV) block for easy pasting into spreadsheets.
@@ -557,9 +557,11 @@ RULES:
 - DO NOT use Markdown pipes (|).
 - STT: keep zero-padding 01…50.
 - Start Time: HH:MM:SS,mmm or NOT_FOUND.
-- Script Snippet: paste the original snippet from the step 7 output.
+- Script Snippet: paste the original snippet from the step 6 output.
 
 VALIDATION REPORT (≤6 dòng, sau bảng)
+- If PATH B was used, state: "SRT was not provided. Default times used." and set stats to 0.
+- Otherwise, generate the normal report:
 Not found (STT): ...
 SRT leftover cue indices: ...
 Malformed timecodes fixed: N
@@ -570,25 +572,25 @@ POST-PROCESS — MANDATORY EXPORT BLOCK
 Cuối câu trả lời, XUẤT block máy-đọc để pipeline dùng tiếp:
 [STEP11_TIMECODE_MAP_EXPORT]
 {
-  "version": "1.4",
+  "version": "1.5",
   "name": "S11_TimecodeMap_<YYYYMMDD>_<6char>",
   "session_id": "S11-<YYYYMMDD>-<6char>",
   "refs": {
-    "step9_found": <true|false>,
-    "step14_fallback_used": <true|false>
+    "step9_found": true,
+    "step14_fallback_used": false
   },
   "rows": [
     { "stt": "01", "start_time": "00:00:03,120", "script_snippet": "<Đoạn Kịch Bản từ S9>" },
-    { "stt": "02", "start_time": "00:00:06,480", "script_snippet": "<...>" }
+    { "stt": "02", "start_time": "NOT_FOUND", "script_snippet": "<...>" }
   ],
   "stats": {
     "matched": <int>,
     "not_found": <int>,
     "fuzzy_used": <int>,
     "malformed_times_fixed": <int>,
-    "srt_leftover_indices": "<compact ranges or empty>"
+    "srt_leftover_indices": "<compact ranges or empty, or 'N/A' if SRT not provided>"
   },
-  "compliance": "<yes|no>"
+  "compliance": "yes"
 }
 [/STEP11_TIMECODE_MAP_EXPORT]`
     }

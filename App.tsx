@@ -7,6 +7,7 @@ import { ProjectList } from './components/ProjectList';
 import { AutomationEngine } from './components/AutomationEngine';
 import { CalendarView } from './components/CalendarView';
 import { AdminPanel } from './components/AdminPanel';
+import { AdminPromptsPanel } from './components/AdminPromptsPanel';
 import { ProjectModal } from './components/ProjectModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Dream100Modal } from './components/Dream100Modal';
@@ -80,6 +81,8 @@ const AppContent: React.FC = () => {
   const [signInError, setSignInError] = useState<{ code: string; domain?: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [dream100Channel, setDream100Channel] = useState<Channel | null>(null);
+  const [globalAutomationSteps, setGlobalAutomationSteps] = useState<AutomationStep[]>(DEFAULT_AUTOMATION_STEPS);
+
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -194,6 +197,43 @@ const AppContent: React.FC = () => {
     
     checkRedirectResult();
   }, [showToast, t]);
+  
+  // Listener for global automation prompts
+  useEffect(() => {
+    if (IS_DEV_MODE) {
+        setGlobalAutomationSteps(DEFAULT_AUTOMATION_STEPS);
+        return;
+    }
+
+    const docRef = db.collection('system_settings').doc('automation_prompts');
+
+    const unsubscribe = docRef.onSnapshot((doc) => {
+        if (doc.exists) {
+            const data = doc.data();
+            if (data && data.steps && Array.isArray(data.steps)) {
+                const dbSteps = data.steps as AutomationStep[];
+                // Merge with defaults to ensure new steps from code are included for admins to see
+                const mergedSteps = DEFAULT_AUTOMATION_STEPS.map(defaultStep => {
+                    const dbStep = dbSteps.find(s => s.id === defaultStep.id);
+                    return dbStep ? { ...defaultStep, ...dbStep } : defaultStep;
+                });
+                setGlobalAutomationSteps(mergedSteps);
+            } else {
+                setGlobalAutomationSteps(DEFAULT_AUTOMATION_STEPS);
+            }
+        } else {
+            // Document doesn't exist, use hardcoded defaults.
+            // The Admin Prompts panel will create it on first save.
+            setGlobalAutomationSteps(DEFAULT_AUTOMATION_STEPS);
+        }
+    }, (error: any) => {
+        console.error("Error fetching global automation prompts:", error);
+        // Fallback to hardcoded defaults on error
+        setGlobalAutomationSteps(DEFAULT_AUTOMATION_STEPS);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Listener for project data from Firestore using v8 syntax
   useEffect(() => {
@@ -786,6 +826,7 @@ const AppContent: React.FC = () => {
               selectedProvider={selectedProvider}
               selectedModel={selectedModel}
               onUpdateIdeas={handleUpdateIdeas}
+              globalAutomationSteps={globalAutomationSteps}
               onUpdateAutomationSteps={handleSaveAutomationSteps}
             />
         )}

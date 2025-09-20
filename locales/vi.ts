@@ -1,3 +1,6 @@
+
+
+
 export default {
   "common": {
     "cancel": "Hủy",
@@ -108,7 +111,10 @@ export default {
   },
   "adminPanel": {
     "title": "Bảng điều khiển Admin",
-    "description": "Quản lý tài khoản người dùng, phê duyệt đăng ký mới và đặt ngày hết hạn.",
+    "description": "Quản lý tài khoản người dùng và các cài đặt chung của ứng dụng.",
+    "userManagementTab": "Quản lý Người dùng",
+    "promptManagementTab": "Câu lệnh Chung",
+    "setupGuideTab": "Hướng dẫn Cài đặt",
     "administrator": "Quản trị viên",
     "loadingUsers": "Đang tải danh sách người dùng...",
     "user": "Người dùng",
@@ -148,6 +154,16 @@ export default {
         "step5": "Đặt 'status' của bạn thành 'active' và cấp cho mình một ngày 'expiresAt' thật xa.",
         "step6": "Tải lại ứng dụng này. Bây giờ bạn sẽ thấy bảng điều khiển Admin."
     }
+  },
+  "adminPrompts": {
+    "title": "Quản lý Câu lệnh Chung",
+    "description": "Chỉnh sửa các mẫu câu lệnh (prompt) mặc định được sử dụng bởi Công cụ Tự động hóa AI cho tất cả người dùng. Các thay đổi được lưu tại đây sẽ trở thành mặc định mới.",
+    "saveButton": "Lưu Tất cả Thay đổi",
+    "savingButton": "Đang lưu...",
+    "saveSuccess": "Đã cập nhật câu lệnh chung thành công.",
+    "saveError": "Không thể lưu câu lệnh chung.",
+    "resetPrompt": "Reset về Gốc",
+    "confirmReset": "Xác nhận Reset"
   },
   "projects": {
     "title": "Dự án theo Kênh",

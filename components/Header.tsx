@@ -1,7 +1,6 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Sun, Moon, Youtube, Settings, LogOut, Globe, ChevronDown, Calendar, Shield } from 'lucide-react';
+import { Sun, Moon, Youtube, Settings, LogOut, Globe, ChevronDown, Calendar, Shield, Edit3, Bot, LayoutDashboard } from 'lucide-react';
 import { User } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -17,18 +16,20 @@ interface HeaderProps {
 
 const NavButton: React.FC<{
     label: string,
+    icon: React.ReactNode,
     isActive: boolean,
     onClick: () => void
-}> = ({ label, isActive, onClick }) => (
+}> = ({ label, icon, isActive, onClick }) => (
     <button
         onClick={onClick}
-        className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
+        className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-colors ${
             isActive
-                ? 'bg-primary text-white'
+                ? 'bg-primary/10 text-primary'
                 : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
         }`}
     >
-        {label}
+        {icon}
+        <span className="hidden lg:inline">{label}</span>
     </button>
 );
 
@@ -71,33 +72,39 @@ export const Header: React.FC<HeaderProps> = ({ user, theme, toggleTheme, onOpen
                 </div>
 
                 {/* Center Section - Navigation */}
-                <nav className="flex items-center gap-2">
+                <nav className="flex items-center gap-1 sm:gap-2">
                     <NavButton
                         label={t('header.projects')}
+                        icon={<LayoutDashboard size={18}/>}
                         isActive={activeView === 'projects'}
                         onClick={() => setActiveView('projects')}
                     />
                     <NavButton
                         label={t('header.automation')}
+                        icon={<Bot size={18}/>}
                         isActive={activeView === 'automation'}
                         onClick={() => setActiveView('automation')}
                     />
                     <NavButton
                         label={t('header.calendar')}
+                        icon={<Calendar size={18}/>}
                         isActive={activeView === 'calendar'}
                         onClick={() => setActiveView('calendar')}
                     />
                     {user?.isAdmin && (
-                         <NavButton
-                            label={t('header.admin')}
-                            isActive={activeView === 'admin'}
-                            onClick={() => setActiveView('admin')}
-                        />
+                         <>
+                            <NavButton
+                               label={t('header.admin')}
+                               icon={<Shield size={18}/>}
+                               isActive={activeView === 'admin'}
+                               onClick={() => setActiveView('admin')}
+                           />
+                        </>
                     )}
                 </nav>
 
                 {/* Right Section */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4">
                      <div className="relative" ref={langMenuRef}>
                         <button onClick={() => setIsLangMenuOpen(prev => !prev)} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 relative" aria-label="Change language">
                              <Globe size={20} />
