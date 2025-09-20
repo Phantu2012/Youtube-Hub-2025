@@ -1,5 +1,3 @@
-
-
 export default {
   "common": {
     "cancel": "Cancel",
@@ -293,7 +291,7 @@ export default {
     "channelUrl": "YouTube Channel URL",
     "channelUrlPlaceholder": "e.g., https://www.youtube.com/channel/...",
     "deleteChannel": "Delete Channel",
-    "deleteChannelConfirmation": "Are you sure you want to delete this channel? This action cannot be undone.",
+    "deleteChannelConfirmation": "Confirm Delete",
     "deleteChannelError": "Cannot delete a channel that contains projects. Please move or delete the projects first.",
     "buildWithAI": "Build with AI",
     "shareChannel": "Share Channel",
@@ -631,7 +629,7 @@ export default {
       "tags": "Tags generated!",
       "thumbnailPrompt": "Thumbnail prompt generated!"
     },
-    "deleteConfirm": "Confirm",
-    "clearConfirm": "Confirm"
+    "deleteConfirm": "Confirm Delete",
+    "clearConfirm": "Confirm Clear"
   }
 }

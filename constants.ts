@@ -465,7 +465,6 @@ CORE LOGIC & RULES
 
 5.  **FFmpeg Metadata Rules**:
     -   For \`metadata.txt\`, \`description\` and \`comment\` fields must be a single line (merge with spaces).
-// FIX: Corrected the problematic line that was prematurely terminating the template literal. Rephrased to be syntactically safe while preserving the instruction's intent.
     -   Sanitize these fields by removing special characters: / \\ | > < : * ? % & # " ' \\\`
     - Allowed characters: letters, numbers, periods, commas, hyphens, underscores.
 

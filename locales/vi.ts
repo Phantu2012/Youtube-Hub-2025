@@ -1,5 +1,3 @@
-
-
 export default {
   "common": {
     "cancel": "Hủy",
@@ -258,7 +256,7 @@ export default {
     "enterLinkForStats": "Nhập một đường dẫn YouTube hợp lệ để xem số liệu thống kê.",
     "delete": "Xóa",
     "deleting": "Đang xóa...",
-    "clearForm": "Làm trống Form",
+    "clearForm": "Xóa nội dung",
     "copy": "Sao chép",
     "rerunAutomation": "Chạy lại Tự động hóa",
     "exportToSheet": "Xuất ra Sheet",
@@ -293,11 +291,16 @@ export default {
     "channelUrl": "URL Kênh YouTube",
     "channelUrlPlaceholder": "VD: https://www.youtube.com/channel/...",
     "deleteChannel": "Xóa Kênh",
-    "deleteChannelConfirmation": "Bạn có chắc chắn muốn xóa kênh này không? Hành động này không thể hoàn tác.",
+    "deleteChannelConfirmation": "Xác nhận Xóa",
     "deleteChannelError": "Không thể xóa kênh đang chứa dự án. Vui lòng di chuyển hoặc xóa các dự án trước.",
     "buildWithAI": "Xây dựng với AI",
     "shareChannel": "Chia sẻ Kênh",
-    "channelDnaDescription": "Xác định bản sắc cho từng kênh của bạn để giúp AI tạo ra nội dung theo phong cách hoàn hảo."
+    "channelDnaDescription": "Xác định bản sắc cho từng kênh của bạn để giúp AI tạo ra nội dung theo phong cách hoàn hảo.",
+    "save": "Lưu cài đặt",
+    "dna": {
+      "label": "Hồ sơ kênh",
+      "placeholder": "VD: Vai trò của tôi là một Đầu bếp Chuyên nghiệp. Giọng văn của tôi hài hước và truyền cảm hứng. Tôi tạo nội dung cho những người mới bắt đầu nấu ăn tại nhà. Tôi nói về các công thức nấu ăn thuần chay và hướng dẫn JavaScript. Tôi xưng hô với khán giả của mình là 'Chào mọi người!'..."
+    }
   },
   "shareModal": {
     "title": "Chia sẻ \"{{channelName}}\"",
@@ -469,3 +472,164 @@ export default {
     "promptHint": "Bạn có thể chỉnh sửa câu lệnh này. Sử dụng các biến như `{{TARGET_VIDEO_TITLE}}` hoặc `{{VIRAL_VIDEO_TRANSCRIPT}}` để nối các bước.",
     "output": "Kết quả",
     "copyOutput": "Sao chép kết quả",
+    "settings": "Cài đặt",
+    "rerunStep": "Chạy lại",
+    "rerunStepOnly": "Chỉ chạy lại bước này",
+    "rerunFromThisStep": "Chạy lại từ bước này",
+    "defaultDescription": "Vui lòng xem lại và chỉnh sửa mô tả được tạo tự động.",
+    "step1": {
+      "name": "Phân tích Viral & Tạo dàn ý",
+      "description": "Phân tích cấu trúc của video viral để tạo dàn ý phù hợp cho chủ đề video mới của bạn."
+    },
+    "step2": {
+      "name": "Viết kịch bản đầy đủ",
+      "description": "Viết một kịch bản hoàn chỉnh từ dàn ý, phù hợp với giọng văn của kênh và số từ đã chỉ định."
+    },
+    "step3": {
+      "name": "Biên soạn kịch bản lồng tiếng (VO)",
+      "description": "Biên soạn kịch bản cuối cùng thành định dạng sạch, sẵn sàng cho diễn viên lồng tiếng, loại bỏ ghi chú sản xuất và thêm thương hiệu."
+    },
+    "step4": {
+      "name": "Phân tích Tiêu đề & Thumbnail",
+      "description": "Tạo các tiêu đề và ý tưởng thumbnail hấp dẫn, sau đó phân tích và chọn ra phương án tốt nhất kèm điểm đánh giá."
+    },
+    "step5": {
+      "name": "Gói phân phối SEO",
+      "description": "Tạo mô tả, thẻ và bài đăng mạng xã hội, được tự động điền từ bước trước.",
+      "inputsTitle": "Ghi đè thủ công",
+      "finalTitle": "Tiêu đề cuối cùng",
+      "thumbOverlay": "Chữ trên Thumbnail",
+      "thumbOverlayL1": "Dòng 1",
+      "thumbOverlayL2": "Dòng 2",
+      "nextVideoUrl": "URL Video tiếp theo",
+      "mainKeywords": "Từ khóa chính (3-6, cách nhau bởi dấu phẩy)"
+    },
+    "step6": {
+      "name": "Tạo Prompt hình ảnh minh họa",
+      "description": "Phân tích kịch bản lồng tiếng và ADN Kênh để tạo một bộ hoàn chỉnh các prompt hình ảnh chân thực, phù hợp văn hóa cho video."
+    },
+    "step7": {
+      "name": "Xây dựng bảng Prompt",
+      "description": "Chuyển đổi các prompt hình ảnh từ bước trước thành một bảng và khối CSV có cấu trúc."
+    },
+    "step8": {
+      "name": "Tạo SEO & Metadata",
+      "description": "Tạo hồ sơ SEO toàn diện và tệp siêu dữ liệu sẵn sàng cho FFmpeg dựa trên tất cả các bước trước."
+    },
+    "step9": {
+      "name": "Ghép nối Timecode từ SRT",
+      "description": "Đối chiếu các prompt hình ảnh với dấu thời gian hội thoại từ một tệp SRT được cung cấp để tạo danh sách cảnh quay được đồng bộ hóa."
+    }
+  },
+   "ideaBankModal": {
+    "title": "Ngân hàng Ý tưởng",
+    "addNewIdea": "Thêm Ý tưởng Mới",
+    "addNewIdeaPlaceholder": "Nhập mỗi ý tưởng trên một dòng...",
+    "add": "Thêm",
+    "table": {
+        "title": "Tiêu đề",
+        "status": "Trạng thái",
+        "actions": "Hành động"
+    },
+    "status": {
+        "notStarted": "Chưa bắt đầu",
+        "done": "Hoàn thành",
+        "redo": "Làm lại"
+    },
+    "actions": {
+        "useAsMain": "Dùng làm Chủ đề chính",
+        "useAsNext": "Dùng làm Chủ đề tiếp theo",
+        "delete": "Xóa"
+    },
+    "noIdeas": "Chưa có ý tưởng nào. Hãy thêm một ý tưởng ở trên để bắt đầu!",
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa ý tưởng này không?"
+  },
+  "toasts": {
+    "fetchProjectsError": "Không thể tải các dự án.",
+    "fetchChannelsError": "Không thể tải các kênh.",
+    "channelAdded": "Đã thêm kênh thành công!",
+    "channelSaveFailed": "Lưu kênh thất bại.",
+    "channelDeleted": "Đã xóa kênh thành công.",
+    "channelDeleteFailed": "Xóa kênh thất bại.",
+    "deleteChannelError": "Không thể xóa kênh đang chứa dự án. Vui lòng di chuyển hoặc xóa các dự án trước.",
+    "dream100UpdateFailed": "Cập nhật danh sách Dream 100 thất bại.",
+    "ideaBankUpdateFailed": "Cập nhật Ngân hàng Ý tưởng thất bại.",
+    "userNotFound": "Không tìm thấy người dùng với email đó.",
+    "userAlreadyMember": "Người dùng đã là thành viên của kênh này.",
+    "userAdded": "Đã thêm người dùng vào kênh.",
+    "userRemoved": "Đã xóa người dùng khỏi kênh.",
+    "updateMembersFailed": "Cập nhật thành viên kênh thất bại.",
+    "settingsSaved": "Đã lưu cài đặt thành công!",
+    "loginRequiredToSave": "Bạn phải đăng nhập để lưu dự án.",
+    "loginRequiredToDelete": "Bạn phải đăng nhập để xóa dự án.",
+    "projectUpdated": "Đã cập nhật dự án thành công!",
+    "projectCreated": "Đã tạo dự án thành công!",
+    "projectCopied": "Đã sao chép dự án thành công!",
+    "copyingProject": "Đang sao chép dự án...",
+    "projectSaveFailed": "Lưu dự án thất bại.",
+    "projectDeleted": "Đã xóa dự án.",
+    "projectDeleteFailed": "Xóa dự án thất bại.",
+    "projectMoved": "Đã chuyển dự án sang kênh '{{channelName}}' thành công.",
+    "projectMoveFailed": "Chuyển dự án thất bại.",
+    "noChannelsToMove": "Không có kênh nào khác để chuyển dự án này đến.",
+    "formCleared": "Các trường trong biểu mẫu đã được xóa.",
+    "unauthorizedDomain": "Miền không được ủy quyền. Thêm \"{{domain}}\" vào danh sách miền được ủy quyền của dự án Firebase của bạn.",
+    "unsupportedEnvironment": "Đăng nhập thất bại. Môi trường trình duyệt của bạn có thể đang chặn lưu trữ. Hãy thử mở ứng dụng trong một tab mới hoặc kiểm tra cài đặt bảo mật của bạn.",
+    "googleSignInNotEnabled": "Lỗi: Vui lòng bật Đăng nhập bằng Google trong cài đặt dự án Firebase của bạn.",
+    "signInError": "Đã xảy ra lỗi trong quá trình đăng nhập.",
+    "invalidCredentials": "Email hoặc mật khẩu không hợp lệ. Vui lòng thử lại.",
+    "emailInUse": "Địa chỉ email này đã được sử dụng bởi một tài khoản khác.",
+    "weakPassword": "Mật khẩu phải có ít nhất 6 ký tự.",
+    "registrationFailed": "Tạo tài khoản thất bại. Vui lòng thử lại.",
+    "logoutDisabledDev": "Chức năng đăng xuất bị tắt trong chế độ phát triển.",
+    "loggedOut": "Bạn đã đăng xuất.",
+    "logoutFailed": "Đăng xuất thất bại.",
+    "milestone": "🎉 Wow! \"{{title}}\" đã đạt hơn 10,000 lượt xem!",
+    "aiKeyMissing": "Chưa định cấu hình khóa API {{provider}}. Vui lòng đặt trong Cài đặt.",
+    "promptRequired": "Vui lòng nhập prompt cho hình thu nhỏ trước.",
+    "imageGenerated": "Đã tạo hình thu nhỏ!",
+    "imageGenerateFailed": "Không thể tạo hình ảnh bằng AI.",
+    "invalidImageFile": "Vui lòng chọn một tệp hình ảnh hợp lệ.",
+    "thumbnailTooLarge": "Ảnh thumbnail quá lớn (tối đa 700KB). Vui lòng dùng file nhỏ hơn.",
+    "generateFailed": "Không thể tạo nội dung bằng AI.",
+    "youtubeLinkRequired": "Vui lòng nhập đường dẫn YouTube trước.",
+    "fetchVideoDetailsSuccess": "Tải chi tiết video thành công!",
+    "fetchVideoDetailsError": "Không thể tải chi tiết video này. Kiểm tra lại đường dẫn và khóa API của bạn.",
+    "viralInfoAndTargetTitleRequired": "Vui lòng cung cấp bản ghi lời của video viral và tiêu đề mục tiêu.",
+    "channelRequired": "Vui lòng chọn kênh mục tiêu trước khi chạy tự động hóa.",
+    "stepError": "Đã xảy ra lỗi ở bước: {{stepName}}.",
+    "stepError500": "Đã xảy ra lỗi nội bộ tạm thời ở bước: {{stepName}}. Vui lòng thử lại sau giây lát.",
+    "stepRerunSuccess": "Chạy lại bước '{{stepName}}' thành công!",
+    "chainCompleted": "Chuỗi tự động hóa đã hoàn tất!",
+    "automationStopped": "Người dùng đã dừng tự động hóa.",
+    "stoppingAutomation": "Đang dừng tự động hóa...",
+    "automationStepsSaved": "Đã lưu các câu lệnh tự động hóa thành công.",
+    "automationStepsSaveFailed": "Lưu các câu lệnh tự động hóa thất bại.",
+    "srtRequired": "Vui lòng cung cấp nội dung SRT cho bước cuối cùng để tiếp tục.",
+    "chainAlreadyCompleted": "Chuỗi tự động hóa đã hoàn thành.",
+    "rerunDataLoaded": "Đã tải dữ liệu từ dự án '{{projectName}}' cho một lần chạy tự động hóa mới.",
+    "resetChainSuccess": "Tiến trình của chuỗi đã được reset.",
+    "resetInputsSuccess": "Tất cả dữ liệu đầu vào đã được xóa.",
+    "dbConnectionError": "Không thể kết nối với cơ sở dữ liệu. Điều này có thể do sự cố mạng hoặc cấu hình dự án Firebase không chính xác (ví dụ: Firestore chưa được bật).",
+    "copied": "Đã sao chép vào clipboard!",
+    "step5AutoFilled": "Dữ liệu cho Bước 5 đã được điền tự động từ lựa chọn tốt nhất của Bước 4!",
+    "projectExported": "Đã sao chép dữ liệu dự án!",
+    "exportFailed": "Không thể sao chép dữ liệu.",
+    "promptRestored": "Câu lệnh cho Bước {{id}} đã được khôi phục về mặc định.",
+     "ideaAdded": "Đã thêm (các) ý tưởng thành công!",
+    "ideaUpdated": "Đã cập nhật trạng thái ý tưởng.",
+    "ideaDeleted": "Đã xóa ý tưởng.",
+    "sharedChannelPermissionErrorAdmin": "Không thể tải các kênh được chia sẻ. Quy tắc bảo mật và/hoặc chỉ mục cơ sở dữ liệu Firestore của bạn có thể chưa được cập nhật cho các tính năng chia sẻ. Vui lòng vào Bảng điều khiển Admin -> Hướng dẫn Cài đặt và áp dụng cấu hình mới nhất.",
+    "sharedChannelPermissionErrorUser": "Không thể tải các kênh được chia sẻ. Cấu hình bảo mật của ứng dụng có thể đã lỗi thời. Vui lòng liên hệ với quản trị viên của bạn để được hỗ trợ.",
+    "missingIndexErrorAdmin": "Thiếu một chỉ mục cơ sở dữ liệu cần thiết cho việc chia sẻ. Ứng dụng sẽ không thể tìm thấy các kênh được chia sẻ cho đến khi chỉ mục này được tạo.",
+    "missingIndexErrorUser": "Không thể tải các kênh được chia sẻ do sự cố cấu hình. Vui lòng liên hệ với quản trị viên của bạn.",
+    "generated": {
+      "videoTitle": "Đã tạo tiêu đề video!",
+      "description": "Đã tạo mô tả!",
+      "tags": "Đã tạo thẻ!",
+      "thumbnailPrompt": "Đã tạo prompt hình thu nhỏ!"
+    },
+    "deleteConfirm": "Xác nhận",
+    "clearConfirm": "Xác nhận"
+  }
+}

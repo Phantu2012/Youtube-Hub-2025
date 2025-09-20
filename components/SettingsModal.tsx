@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Save, Key, Eye, EyeOff, Info, Bot, Youtube, Sparkles, PlusCircle, Trash2, Link, Loader, Share2 } from 'lucide-react';
 import { ChannelDna, ApiKeys, AIProvider, AIModel, Channel, User } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
@@ -70,6 +70,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
     const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
     const [isWizardOpen, setIsWizardOpen] = useState(false);
     const [isAddingChannel, setIsAddingChannel] = useState(false);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    const confirmTimerRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+        };
+    }, []);
 
     const handleApiKeyChange = (provider: keyof ApiKeys, value: string) => {
         setLocalApiKeys(prev => ({ ...prev, [provider]: value }));
@@ -95,6 +103,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
             console.error("Failed to add channel:", error);
         } finally {
             setIsAddingChannel(false);
+        }
+    };
+    
+    const handleDeleteChannelClick = (channelId: string) => {
+        if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+
+        if (confirmDeleteId === channelId) {
+            onDeleteChannel(channelId);
+            setConfirmDeleteId(null);
+        } else {
+            setConfirmDeleteId(channelId);
+            confirmTimerRef.current = window.setTimeout(() => {
+                setConfirmDeleteId(null);
+            }, 4000);
         }
     };
     
@@ -232,7 +254,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
                                                         <>
                                                             <button type="button" onClick={() => onShareChannel(channel)} className="p-2 text-gray-500 hover:text-green-500" title={t('settings.shareChannel')}><Share2 size={16} /></button>
                                                             <button type="button" onClick={() => handleLaunchWizard(channel)} className="p-2 text-gray-500 hover:text-purple-500" title={t('settings.buildWithAI')}><Sparkles size={16} /></button>
-                                                            <button type="button" onClick={() => onDeleteChannel(channel.id)} className="p-2 text-gray-500 hover:text-red-500" title={t('settings.deleteChannel')}><Trash2 size={16} /></button>
+                                                            <button 
+                                                                type="button" 
+                                                                onClick={() => handleDeleteChannelClick(channel.id)} 
+                                                                className={`p-2 rounded-md transition-colors ${confirmDeleteId === channel.id ? 'bg-red-500 text-white' : 'text-gray-500 hover:text-red-500'}`} 
+                                                                title={confirmDeleteId === channel.id ? t('settings.deleteChannelConfirmation') : t('settings.deleteChannel')}
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
                                                         </>
                                                     )}
                                                 </div>
