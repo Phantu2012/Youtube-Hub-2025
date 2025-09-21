@@ -785,7 +785,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                             </div>
                         ) : (
                             <div className="w-full flex justify-between items-center">
-                                <div className="flex gap-2 flex-wrap">
+                                <div className="flex gap-4 flex-wrap">
                                     {!isNewProject && (
                                     <>
                                         <button

@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
 import { AutomationStep } from '../types';
@@ -113,20 +114,20 @@ service cloud.firestore {
 
     // === MAIN RULES ===
 
-    // Users can write to their own doc. Admins have higher privileges.
+    // Users can write to their own doc, read any other user's profile. Admins can list/update all.
     match /users/{userId} {
       allow write: if request.auth.uid == userId;
       allow get: if request.auth != null;
       allow list, update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // System settings rules.
+    // System settings rules for global prompts.
     match /system_settings/{settingId} {
       allow read: if request.auth != null;
       allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Rules for 'channels' subcollection (direct access).
+    // Rules for 'channels' subcollection (direct access by owner).
     match /users/{ownerId}/channels/{channelId} {
       allow create, delete, write: if request.auth.uid == ownerId;
       allow list: if request.auth.uid == ownerId;
@@ -139,7 +140,7 @@ service cloud.firestore {
                        ('members' in resource.data && resource.data.members is map && request.auth.uid in resource.data.members);
     }
 
-    // Rules for 'projects' subcollection.
+    // Rules for 'projects' subcollection, allowing access to owners and channel members.
     match /users/{ownerId}/projects/{projectId} {
       
       function getProjectChannel() {
@@ -156,11 +157,9 @@ service cloud.firestore {
                );
       }
 
-      // Allow access if the user is the direct owner of the content path,
-      // OR if they are a member of the project's designated channel (for sharing).
       allow read, write: if request.auth.uid == ownerId || isProjectChannelMember();
 
-      // Rule for the data subcollection containing large fields
+      // Rule for the data subcollection containing large fields.
       match /data/{dataId} {
         allow read, write: if request.auth.uid == ownerId || isProjectChannelMemberForSubcollection(ownerId, projectId);
       }
