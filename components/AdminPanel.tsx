@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { db, firebase } from '../firebase';
@@ -155,8 +156,9 @@ service cloud.firestore {
                );
       }
 
-      // Allow read and write (create, update, delete) if the user is a member of the project's channel.
-      allow read, write: if isProjectChannelMember();
+      // Allow access if the user is the direct owner of the content path,
+      // OR if they are a member of the project's designated channel (for sharing).
+      allow read, write: if request.auth.uid == ownerId || isProjectChannelMember();
     }
   }
 }`;
