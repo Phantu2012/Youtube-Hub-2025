@@ -104,9 +104,8 @@ service cloud.firestore {
       let hasValidOwner = 'ownerId' in channelResource.data &&
                           exists(/databases/$(database)/documents/users/$(channelResource.data.ownerId));
       
-      let isListedMember = 'memberIds' in channelResource.data &&
-                           channelResource.data.memberIds is list &&
-                           request.auth.uid in channelResource.data.memberIds;
+      let isListedMember = ('memberIds' in channelResource.data && channelResource.data.memberIds is list && request.auth.uid in channelResource.data.memberIds) ||
+                           ('members' in channelResource.data && channelResource.data.members is map && request.auth.uid in channelResource.data.members);
                            
       return hasValidOwner && isListedMember;
     }
@@ -135,28 +134,25 @@ service cloud.firestore {
     
     // This collection group rule allows the app to find shared channels.
     match /{path=**}/channels/{channelId} {
-      allow get, list: if 'memberIds' in resource.data &&
-                         resource.data.memberIds is list &&
-                         request.auth.uid in resource.data.memberIds;
+      allow get, list: ('memberIds' in resource.data && resource.data.memberIds is list && request.auth.uid in resource.data.memberIds) ||
+                       ('members' in resource.data && resource.data.members is map && request.auth.uid in resource.data.members);
     }
 
     // Rules for 'projects' subcollection.
     match /users/{ownerId}/projects/{projectId} {
       
       function getProjectChannel() {
-        // For create/update, use channelId from the incoming data.
-        // For read/delete, use channelId from the existing data.
         let channelId = request.resource != null ? request.resource.data.channelId : resource.data.channelId;
         return get(/databases/$(database)/documents/users/$(ownerId)/channels/$(channelId));
       }
       
       function isProjectChannelMember() {
         let channel = getProjectChannel();
-        // Check if the channel document exists and the user is a member.
         return channel != null &&
-               'memberIds' in channel.data &&
-               channel.data.memberIds is list &&
-               request.auth.uid in channel.data.memberIds;
+               (
+                 ('memberIds' in channel.data && channel.data.memberIds is list && request.auth.uid in channel.data.memberIds) ||
+                 ('members' in channel.data && channel.data.members is map && request.auth.uid in channel.data.members)
+               );
       }
 
       // Allow read and write (create, update, delete) if the user is a member of the project's channel.
