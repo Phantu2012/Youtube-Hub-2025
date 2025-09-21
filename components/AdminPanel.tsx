@@ -111,6 +111,17 @@ service cloud.firestore {
       return hasValidOwner && isListedMember;
     }
 
+    function isProjectChannelMemberForSubcollection(ownerId, projectId) {
+      let projectDoc = get(/databases/$(database)/documents/users/$(ownerId)/projects/$(projectId));
+      // Projects are always under their channel's owner, so ownerId is correct for channel path.
+      let channel = get(/databases/$(database)/documents/users/$(ownerId)/channels/$(projectDoc.data.channelId));
+      
+      return channel.data != null && (
+         ('memberIds' in channel.data && channel.data.memberIds is list && request.auth.uid in channel.data.memberIds) ||
+         ('members' in channel.data && channel.data.members is map && request.auth.uid in channel.data.members)
+      );
+    }
+
     // === MAIN RULES ===
 
     // Users can write to their own doc. Admins have higher privileges.
@@ -159,6 +170,11 @@ service cloud.firestore {
       // Allow access if the user is the direct owner of the content path,
       // OR if they are a member of the project's designated channel (for sharing).
       allow read, write: if request.auth.uid == ownerId || isProjectChannelMember();
+
+      // Rule for the data subcollection containing large fields
+      match /data/{dataId} {
+        allow read, write: if request.auth.uid == ownerId || isProjectChannelMemberForSubcollection(ownerId, projectId);
+      }
     }
   }
 }`;

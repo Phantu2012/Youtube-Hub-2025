@@ -305,6 +305,8 @@
       "description": "Đã tạo mô tả!",
       "tags": "Đã tạo thẻ!",
       "thumbnailPrompt": "Đã tạo prompt hình thu nhỏ!"
-    }
+    },
+    "deleteConfirm": "Xác nhận Xóa",
+    "clearConfirm": "Xác nhận Xóa Form"
   }
 }
