@@ -410,19 +410,32 @@ const AppContent: React.FC = () => {
         const projectsCollectionRef = db.collection('users').doc(ownerId).collection('projects')
                                       .where('channelId', '==', channel.id);
         
-        const listener = projectsCollectionRef.onSnapshot((snapshot) => {
-            const channelProjects = snapshot.docs.map(doc => {
+        const listener = projectsCollectionRef.onSnapshot(async (snapshot) => {
+            const channelProjectsPromises = snapshot.docs.map(async (doc) => {
                 const data = doc.data();
                 const publishDateTime = data.publishDateTime instanceof firebase.firestore.Timestamp 
                     ? data.publishDateTime.toDate().toISOString().slice(0, 16) 
                     : data.publishDateTime;
                 
+                let largeData = {};
+                try {
+                    const dataDoc = await doc.ref.collection('data').doc('content').get();
+                    if (dataDoc.exists) {
+                        largeData = dataDoc.data();
+                    }
+                } catch (e) {
+                    console.error(`Error fetching large data for project ${doc.id}: ${e}`);
+                }
+
                 return {
                     id: doc.id,
                     ...data,
+                    ...largeData,
                     publishDateTime,
                 } as Project;
             });
+
+            const channelProjects = await Promise.all(channelProjectsPromises);
 
             setProjectsFromListeners(prev => ({
                 ...prev,
@@ -671,6 +684,7 @@ const AppContent: React.FC = () => {
         return;
     }
     
+    // Base64 string length check; 950k chars is ~700KB binary data.
     if (projectToSave.thumbnailData && projectToSave.thumbnailData.length > 950000) {
       showToast(t('toasts.thumbnailTooLarge'), 'error');
       return;
@@ -686,36 +700,70 @@ const AppContent: React.FC = () => {
         
         const ownerId = channel.ownerId;
 
-        const dataToSave = {
-            channelId: projectToSave.channelId,
-            projectName: projectToSave.projectName,
+        // Separate data into main doc and sub-collection doc for large fields
+        // to avoid hitting Firestore's indexing limits on large text fields.
+        const {
+            script,
+            thumbnailData,
+            description,
+            pinnedComment,
+            communityPost,
+            facebookPost,
+            thumbnailPrompt,
+            voiceoverScript,
+            promptTable,
+            timecodeMap,
+            metadata,
+            seoMetadata,
+            visualPrompts,
+            ...mainData
+        } = projectToSave;
+
+        const largeData = {
+            script: script || '',
+            thumbnailData: thumbnailData || '',
+            description: description || '',
+            pinnedComment: pinnedComment || '',
+            communityPost: communityPost || '',
+            facebookPost: facebookPost || '',
+            thumbnailPrompt: thumbnailPrompt || '',
+            voiceoverScript: voiceoverScript || '',
+            promptTable: promptTable || '',
+            timecodeMap: timecodeMap || '',
+            metadata: metadata || '',
+            seoMetadata: seoMetadata || '',
+            visualPrompts: visualPrompts || '',
+        };
+
+        // Prepare main data for saving, ensuring 'id' is not written and date is a Timestamp
+        const { id, ...savableMainData } = mainData;
+        const projectDataToSave = {
+            ...savableMainData,
             publishDateTime: firebase.firestore.Timestamp.fromDate(new Date(projectToSave.publishDateTime)),
-            status: projectToSave.status,
-            videoTitle: projectToSave.videoTitle,
-            thumbnailData: projectToSave.thumbnailData,
-            description: projectToSave.description,
-            tags: projectToSave.tags,
-            pinnedComment: projectToSave.pinnedComment,
-            communityPost: projectToSave.communityPost,
-            facebookPost: projectToSave.facebookPost,
-            youtubeLink: projectToSave.youtubeLink,
-            script: projectToSave.script,
-            thumbnailPrompt: projectToSave.thumbnailPrompt,
-            voiceoverScript: projectToSave.voiceoverScript || '',
-            promptTable: projectToSave.promptTable || '',
-            timecodeMap: projectToSave.timecodeMap || '',
-            metadata: projectToSave.metadata || '',
-            seoMetadata: projectToSave.seoMetadata || '',
-            visualPrompts: projectToSave.visualPrompts || '',
-            ...(projectToSave.stats && typeof projectToSave.stats.views === 'number' && { stats: projectToSave.stats }),
         };
 
         if (projectToSave.id) {
+            // Update existing project
             const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectToSave.id);
-            await projectDocRef.update(dataToSave);
+            const dataDocRef = projectDocRef.collection('data').doc('content');
+            
+            const batch = db.batch();
+            batch.update(projectDocRef, projectDataToSave);
+            batch.set(dataDocRef, largeData, { merge: true }); // Use set with merge to handle create/update of data doc
+            await batch.commit();
+            
             showToast(t('toasts.projectUpdated'), 'success');
         } else {
-            await db.collection('users').doc(ownerId).collection('projects').add(dataToSave);
+            // Create new project
+            const projectCollectionRef = db.collection('users').doc(ownerId).collection('projects');
+            const newProjectRef = projectCollectionRef.doc(); // Generate a new doc ref with an ID
+            const dataDocRef = newProjectRef.collection('data').doc('content');
+
+            const batch = db.batch();
+            batch.set(newProjectRef, projectDataToSave);
+            batch.set(dataDocRef, largeData);
+            await batch.commit();
+            
             showToast(t('toasts.projectCreated'), 'success');
         }
     };
@@ -767,7 +815,13 @@ const AppContent: React.FC = () => {
 
     try {
         const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectId);
+        const dataDocRef = projectDocRef.collection('data').doc('content');
+        
+        // Delete the large content data first, then the main project document.
+        // Firestore's delete is idempotent, so it won't fail if 'content' doesn't exist.
+        await dataDocRef.delete();
         await projectDocRef.delete();
+
         showToast(t('toasts.projectDeleted'), 'info');
         handleCloseModal();
     } catch (error) {
