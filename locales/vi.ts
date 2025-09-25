@@ -206,7 +206,9 @@ export default {
     "thumbnailAlt": "Hình thu nhỏ của video",
     "views": "lượt xem",
     "likes": "lượt thích",
-    "comments": "bình luận"
+    "comments": "bình luận",
+    "local": "Đã lưu cục bộ",
+    "cloud": "Đã lưu trên đám mây"
   },
   "projectModal": {
     "createTitle": "Tạo dự án mới",
@@ -261,11 +263,13 @@ export default {
     "rerunAutomation": "Chạy lại Tự động hóa",
     "exportToSheet": "Xuất ra Sheet",
     "move": "Chuyển Kênh",
+    "moveDisabledLocal": "Không thể chuyển dự án cục bộ. Vui lòng lưu lên đám mây trước.",
     "moveToChannel": "Chuyển đến kênh:",
     "confirmMove": "Xác nhận Chuyển",
     "moveConfirmation": "Bạn có chắc chắn muốn chuyển dự án này sang kênh '{{channelName}}' không?",
     "save": "Lưu dự án",
-    "saving": "Đang lưu..."
+    "saving": "Đang lưu...",
+    "saveToCloud": "Lưu lên Đám mây & Đồng bộ"
   },
   "settings": {
     "title": "Cài đặt",
@@ -449,7 +453,8 @@ export default {
     },
     "srtInput": {
       "label": "Nội dung tệp SRT",
-      "placeholder": "Dán toàn bộ nội dung của tệp .srt của bạn vào đây..."
+      "placeholder": "Dán toàn bộ nội dung của tệp .srt của bạn vào đây...",
+      "prompt": "Vui lòng cung cấp nội dung SRT bên dưới và nhấp 'Tiếp tục chạy' để tiếp tục."
     },
     "runButton": "Chạy chuỗi tự động hóa",
     "runningButton": "Đang chạy...",
@@ -572,6 +577,8 @@ export default {
     "projectMoved": "Đã chuyển dự án sang kênh '{{channelName}}' thành công.",
     "projectMoveFailed": "Chuyển dự án thất bại.",
     "noChannelsToMove": "Không có kênh nào khác để chuyển dự án này đến.",
+    "projectSynced": "Dự án đã được lưu lên đám mây thành công.",
+    "projectSyncFailed": "Lưu dự án lên đám mây thất bại.",
     "formCleared": "Các trường trong biểu mẫu đã được xóa.",
     "unauthorizedDomain": "Miền không được ủy quyền. Thêm \"{{domain}}\" vào danh sách miền được ủy quyền của dự án Firebase của bạn.",
     "unsupportedEnvironment": "Đăng nhập thất bại. Môi trường trình duyệt của bạn có thể đang chặn lưu trữ. Hãy thử mở ứng dụng trong một tab mới hoặc kiểm tra cài đặt bảo mật của bạn.",

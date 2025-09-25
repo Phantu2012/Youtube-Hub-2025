@@ -206,7 +206,9 @@ export default {
     "thumbnailAlt": "Video Thumbnail",
     "views": "views",
     "likes": "likes",
-    "comments": "comments"
+    "comments": "comments",
+    "local": "Saved locally",
+    "cloud": "Saved to cloud"
   },
   "projectModal": {
     "createTitle": "Create New Project",
@@ -261,11 +263,13 @@ export default {
     "rerunAutomation": "Rerun Automation",
     "exportToSheet": "Export for Sheet",
     "move": "Move Channel",
+    "moveDisabledLocal": "Cannot move a local project. Save to cloud first.",
     "moveToChannel": "Move to channel:",
     "confirmMove": "Confirm Move",
     "moveConfirmation": "Are you sure you want to move this project to '{{channelName}}'?",
     "save": "Save Project",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "saveToCloud": "Save to Cloud & Sync"
   },
   "settings": {
     "title": "Settings",
@@ -449,7 +453,8 @@ export default {
     },
     "srtInput": {
       "label": "SRT File Content",
-      "placeholder": "Paste the full content of your .srt file here..."
+      "placeholder": "Paste the full content of your .srt file here...",
+      "prompt": "Please provide SRT content below and click 'Resume Chain' to continue."
     },
     "runButton": "Run Automation Chain",
     "runningButton": "Running Chain...",
@@ -572,6 +577,8 @@ export default {
     "projectMoved": "Project successfully moved to '{{channelName}}'.",
     "projectMoveFailed": "Failed to move project.",
     "noChannelsToMove": "There are no other channels to move this project to.",
+    "projectSynced": "Project saved to cloud successfully.",
+    "projectSyncFailed": "Failed to save project to the cloud.",
     "formCleared": "Form fields have been cleared.",
     "unauthorizedDomain": "Domain not authorized. Add \"{{domain}}\" to your Firebase project's authorized domains list.",
     "unsupportedEnvironment": "Sign-in failed. Your browser environment may be blocking storage. Try opening the app in a new tab or check your privacy settings.",

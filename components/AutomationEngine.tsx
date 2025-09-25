@@ -363,6 +363,15 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
         let stoppedByUser = false;
 
         for (const step of stepsToRun) {
+            const isFirstRunOfStep9 = step.id === 9 && !srtContent.trim() && pausedAtStep !== 9;
+            if (isFirstRunOfStep9 && !isRerunning) {
+                setPausedAtStep(9);
+                setIsRunning(false);
+                setCurrentStep(null);
+                showToast(t('automation.srtInput.prompt'), 'info');
+                return; 
+            }
+
             if (stopExecutionRef.current) {
                 stoppedByUser = true;
                 setPausedAtStep(step.id);
@@ -540,6 +549,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
             timecodeMap: timecodeMapOutput,
             metadata: '',
             seoMetadata: seoMetadataOutput,
+            storage: 'local',
         };
         onOpenProjectModal(newProject as Project);
     };
@@ -767,7 +777,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                                 <><StopCircle size={20} /> {t('automation.stopButton')}</>
                             )
                         ) : (
-                            <><PlayCircle size={20} /> {t('automation.runButton')}</>
+                            <><PlayCircle size={20} /> {pausedAtStep ? t('automation.resumeButton') : t('automation.runButton')}</>
                         )}
                     </button>
                     <div className="flex justify-center gap-4 pt-2">

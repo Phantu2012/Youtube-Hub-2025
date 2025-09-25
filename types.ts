@@ -84,6 +84,7 @@ export interface Project {
     metadata?: string;
     seoMetadata?: string;
     visualPrompts?: string;
+    storage?: 'local' | 'cloud';
 }
 
 export interface YouTubeStats {

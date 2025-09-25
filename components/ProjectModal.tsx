@@ -5,7 +5,7 @@ import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, Ap
 import { getStatusOptions } from '../constants';
 import { fetchVideoStats } from '../services/youtubeService';
 import { StatsChart } from './StatsChart';
-import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet, Copy, Move } from 'lucide-react';
+import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet, Copy, Move, Cloud } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -19,6 +19,7 @@ interface ProjectModalProps {
     isSaving: boolean;
     onClose: () => void;
     onSave: (project: Project) => void;
+    onPushToCloud: (project: Project) => void;
     onDelete: (projectId: string) => Promise<void>;
     onCopy: (project: Project) => void;
     onRerun: (project: Project) => void;
@@ -59,14 +60,10 @@ const TabButton: React.FC<{
 );
 
 
-export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, apiKeys, selectedProvider, selectedModel, isSaving, onClose, onSave, onDelete, onCopy, onRerun, onMove, showToast }) => {
+export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, apiKeys, selectedProvider, selectedModel, isSaving, onClose, onSave, onPushToCloud, onDelete, onCopy, onRerun, onMove, showToast }) => {
     const { t, language } = useTranslation();
     const [activeTab, setActiveTab] = useState<ModalTab>('content');
     const [formData, setFormData] = useState<Project | Omit<Project, 'id'>>(() => {
-        // A robust way to initialize the form state.
-        // It creates a default structure for all fields to ensure they are controlled,
-        // and then merges the project data passed in props.
-        // This makes all fields, including AI-generated ones, editable from the start.
         const defaultProject = {
             channelId: '',
             projectName: '',
@@ -88,6 +85,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
             metadata: '',
             seoMetadata: '',
             visualPrompts: '',
+            storage: 'local' as const,
         };
         return { ...defaultProject, ...project };
     });
@@ -116,14 +114,12 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
 
     const handleConfirmClick = (action: 'delete' | 'clear') => {
         if (confirmAction === action) {
-            // This is the second click, execute action
             if (action === 'delete' && 'id' in project) onDelete(project.id);
             if (action === 'clear') handleClearFormAction();
             
             setConfirmAction(null);
             if (confirmTimer.current) clearTimeout(confirmTimer.current);
         } else {
-            // This is the first click
             setConfirmAction(action);
             if (confirmTimer.current) clearTimeout(confirmTimer.current);
             confirmTimer.current = window.setTimeout(() => {
@@ -454,6 +450,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
     if (!project) return null;
     
     const isNewProject = !('id' in project) || !project.id;
+    const storageType = formData.storage || (project.id && !project.id.startsWith('local_') ? 'cloud' : 'local');
 
     const GenerateButton = ({ field }: { field: 'videoTitle' | 'description' | 'tags' | 'thumbnailPrompt' }) => (
       <button
@@ -785,7 +782,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                             </div>
                         ) : (
                             <div className="w-full flex justify-between items-center">
-                                <div className="flex gap-4 flex-wrap">
+                                <div className="flex gap-2 flex-wrap">
                                     {!isNewProject && (
                                     <>
                                         <button
@@ -804,8 +801,9 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                                         <button
                                             type="button"
                                             onClick={handleStartMove}
-                                            disabled={isSaving}
-                                            className="flex items-center gap-2 text-cyan-600 hover:text-cyan-800 dark:hover:text-cyan-400 font-semibold py-2 px-3 rounded-lg text-sm hover:bg-cyan-500/10"
+                                            disabled={isSaving || storageType === 'local'}
+                                            className="flex items-center gap-2 text-cyan-600 hover:text-cyan-800 dark:hover:text-cyan-400 font-semibold py-2 px-3 rounded-lg text-sm hover:bg-cyan-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            title={storageType === 'local' ? t('projectModal.moveDisabledLocal') : t('projectModal.move')}
                                         >
                                             <Move size={16} /> {t('projectModal.move')}
                                         </button>
@@ -837,6 +835,17 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                                     )}
                                 </div>
                                 <div className="flex gap-4">
+                                    {storageType === 'local' && (
+                                         <button
+                                            type="button"
+                                            onClick={() => onPushToCloud(formData as Project)}
+                                            disabled={isSaving}
+                                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:bg-opacity-70 disabled:cursor-wait"
+                                        >
+                                            <Cloud size={16} />
+                                            {t('projectModal.saveToCloud')}
+                                        </button>
+                                    )}
                                     <button type="button" onClick={onClose} disabled={isSaving} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50">{t('common.cancel')}</button>
                                     <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:bg-opacity-70 disabled:cursor-wait">
                                         {isSaving ? <Loader size={16} className="animate-spin" /> : <Save size={16} />} 

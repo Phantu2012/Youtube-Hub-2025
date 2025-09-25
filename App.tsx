@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -33,7 +32,7 @@ type FirebaseUser = {
 };
 
 
-const IS_DEV_MODE = false;
+const IS_DEV_MODE = true;
 
 const MOCK_USER: User = {
   uid: 'dev-user-01',
@@ -54,6 +53,7 @@ const DEV_DEFAULT_API_KEYS: ApiKeys = {
 
 const AppContent: React.FC = () => {
   const [projectsFromListeners, setProjectsFromListeners] = useState<Record<string, Project[]>>({});
+  const [localProjects, setLocalProjects] = useLocalStorage<Project[]>('local-projects', []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -82,10 +82,12 @@ const AppContent: React.FC = () => {
   const [missingIndexError, setMissingIndexError] = useState<{ message: string, url: string | null } | null>(null);
   
   const projects = useMemo(() => {
-    const allProjects = Object.values(projectsFromListeners).flat();
-    allProjects.sort((a, b) => new Date(b.publishDateTime).getTime() - new Date(a.publishDateTime).getTime());
-    return allProjects;
-  }, [projectsFromListeners]);
+    const cloudProjects = Object.values(projectsFromListeners).flat();
+    const allProjects = [...cloudProjects, ...localProjects];
+    const uniqueProjects = Array.from(new Map(allProjects.map(p => [p.id, p])).values());
+    uniqueProjects.sort((a: Project, b: Project) => new Date(b.publishDateTime).getTime() - new Date(a.publishDateTime).getTime());
+    return uniqueProjects;
+  }, [projectsFromListeners, localProjects]);
 
   const channels = useMemo(() => {
     const combined = new Map<string, Channel>();
@@ -364,7 +366,7 @@ const AppContent: React.FC = () => {
                 const docRef = db.collection('users').doc(uid);
                 const unsubscribe = docRef.onSnapshot(doc => {
                     if (doc.exists) {
-                        const data = doc.data();
+                        const data = doc.data() as any;
                         newMembers[doc.id] = {
                             uid: doc.id,
                             name: data.name,
@@ -421,7 +423,7 @@ const AppContent: React.FC = () => {
                 try {
                     const dataDoc = await doc.ref.collection('data').doc('content').get();
                     if (dataDoc.exists) {
-                        largeData = dataDoc.data();
+                        largeData = dataDoc.data()!;
                     }
                 } catch (e) {
                     console.error(`Error fetching large data for project ${doc.id}: ${e}`);
@@ -432,6 +434,7 @@ const AppContent: React.FC = () => {
                     ...data,
                     ...largeData,
                     publishDateTime,
+                    storage: 'cloud',
                 } as Project;
             });
 
@@ -679,12 +682,31 @@ const AppContent: React.FC = () => {
 
 
   const handleSaveProject = (projectToSave: Project) => {
+    if (!projectToSave.storage) {
+        projectToSave.storage = projectToSave.id && !projectToSave.id.startsWith('local_') ? 'cloud' : 'local';
+    }
+
+    if (projectToSave.storage === 'local') {
+        setIsSaving(true);
+        if (projectToSave.id) { // Update existing
+            setLocalProjects(prev => prev.map(p => p.id === projectToSave.id ? projectToSave : p));
+            showToast(t('toasts.projectUpdated'), 'success');
+        } else { // Create new
+            const newLocalProject = { ...projectToSave, id: `local_${Date.now()}` };
+            setLocalProjects(prev => [...prev, newLocalProject]);
+            showToast(t('toasts.projectCreated'), 'success');
+        }
+        handleCloseModal();
+        setIsSaving(false);
+        return;
+    }
+    
+    // Cloud save logic below
     if (!user) {
         showToast(t('toasts.loginRequiredToSave'), 'error');
         return;
     }
     
-    // Base64 string length check; 950k chars is ~700KB binary data.
     if (projectToSave.thumbnailData && projectToSave.thumbnailData.length > 950000) {
       showToast(t('toasts.thumbnailTooLarge'), 'error');
       return;
@@ -700,8 +722,6 @@ const AppContent: React.FC = () => {
         
         const ownerId = channel.ownerId;
 
-        // Separate data into main doc and sub-collection doc for large fields
-        // to avoid hitting Firestore's indexing limits on large text fields.
         const {
             script,
             thumbnailData,
@@ -716,6 +736,7 @@ const AppContent: React.FC = () => {
             metadata,
             seoMetadata,
             visualPrompts,
+            storage, // Exclude storage from Firestore doc
             ...mainData
         } = projectToSave;
 
@@ -735,28 +756,25 @@ const AppContent: React.FC = () => {
             visualPrompts: visualPrompts || '',
         };
 
-        // Prepare main data for saving, ensuring 'id' is not written and date is a Timestamp
         const { id, ...savableMainData } = mainData;
         const projectDataToSave = {
             ...savableMainData,
             publishDateTime: firebase.firestore.Timestamp.fromDate(new Date(projectToSave.publishDateTime)),
         };
 
-        if (projectToSave.id) {
-            // Update existing project
+        if (projectToSave.id && !projectToSave.id.startsWith('local_')) {
             const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectToSave.id);
             const dataDocRef = projectDocRef.collection('data').doc('content');
             
             const batch = db.batch();
             batch.update(projectDocRef, projectDataToSave);
-            batch.set(dataDocRef, largeData, { merge: true }); // Use set with merge to handle create/update of data doc
+            batch.set(dataDocRef, largeData, { merge: true });
             await batch.commit();
             
             showToast(t('toasts.projectUpdated'), 'success');
         } else {
-            // Create new project
             const projectCollectionRef = db.collection('users').doc(ownerId).collection('projects');
-            const newProjectRef = projectCollectionRef.doc(); // Generate a new doc ref with an ID
+            const newProjectRef = projectCollectionRef.doc();
             const dataDocRef = newProjectRef.collection('data').doc('content');
 
             const batch = db.batch();
@@ -781,6 +799,23 @@ const AppContent: React.FC = () => {
       });
   };
 
+  const handlePushProjectToCloud = (projectToPush: Project) => {
+    if (!user) {
+      showToast(t('toasts.loginRequiredToSave'), 'error');
+      return;
+    }
+    // 1. Remove from local projects state
+    setLocalProjects(prev => prev.filter(p => p.id !== projectToPush.id));
+    
+    // 2. Prepare for cloud save (remove local ID and set storage type)
+    const { id, ...cloudData } = projectToPush;
+    const projectForCloud: Project = { ...cloudData, storage: 'cloud' } as Project;
+
+    // 3. Call handleSaveProject, which will now use the cloud logic
+    handleSaveProject(projectForCloud);
+    showToast(t('toasts.projectSynced'), 'success');
+  };
+
   const handleCopyProject = async (projectToCopy: Project) => {
       showToast(t('toasts.copyingProject'), 'info');
       const { id, stats, ...projectData } = projectToCopy;
@@ -791,6 +826,7 @@ const AppContent: React.FC = () => {
           publishDateTime: new Date().toISOString().slice(0, 16),
           status: ProjectStatus.Idea,
           youtubeLink: '',
+          storage: 'local', // Copies are always local first
       };
       
       handleSaveProject(newProject as Project);
@@ -798,13 +834,21 @@ const AppContent: React.FC = () => {
   };
 
   const handleDeleteProject = async (projectId: string) => {
+    const projectToDelete = projects.find(p => p.id === projectId);
+    if (!projectToDelete) return;
+
+    if (projectToDelete.storage === 'local') {
+        setLocalProjects(prev => prev.filter(p => p.id !== projectId));
+        showToast(t('toasts.projectDeleted'), 'info');
+        handleCloseModal();
+        return;
+    }
+
+    // Cloud deletion logic
     if (!user) {
         showToast(t('toasts.loginRequiredToDelete'), 'error');
         throw new Error('User not logged in');
     }
-    
-    const projectToDelete = projects.find(p => p.id === projectId);
-    if (!projectToDelete) return;
 
     const channel = channels.find(c => c.id === projectToDelete.channelId);
     if (!channel || !channel.ownerId) {
@@ -817,8 +861,6 @@ const AppContent: React.FC = () => {
         const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectId);
         const dataDocRef = projectDocRef.collection('data').doc('content');
         
-        // Delete the large content data first, then the main project document.
-        // Firestore's delete is idempotent, so it won't fail if 'content' doesn't exist.
         await dataDocRef.delete();
         await projectDocRef.delete();
 
@@ -832,7 +874,7 @@ const AppContent: React.FC = () => {
   };
   
   const handleMoveProject = async (projectToMove: Project, newChannelId: string) => {
-    if (!user || !projectToMove.id) {
+    if (!user || !projectToMove.id || projectToMove.storage === 'local') {
         showToast(t('toasts.projectMoveFailed'), 'error');
         return;
     }
@@ -887,6 +929,7 @@ const AppContent: React.FC = () => {
         metadata: '',
         seoMetadata: '',
         visualPrompts: '',
+        storage: 'local',
     };
     handleOpenModal(newProjectTemplate as Project);
   };
@@ -1064,16 +1107,17 @@ const AppContent: React.FC = () => {
         />
       )}
 
-      {isModalOpen && (
-        <ProjectModal
-          project={selectedProject}
+      {isModalOpen && user && (
+        <ProjectModal 
+          project={selectedProject} 
           channels={channels}
           apiKeys={apiKeys}
           selectedProvider={selectedProvider}
           selectedModel={selectedModel}
           isSaving={isSaving}
-          onClose={handleCloseModal}
+          onClose={handleCloseModal} 
           onSave={handleSaveProject}
+          onPushToCloud={handlePushProjectToCloud}
           onDelete={handleDeleteProject}
           onCopy={handleCopyProject}
           onRerun={handleRerunAutomation}
@@ -1081,38 +1125,37 @@ const AppContent: React.FC = () => {
           showToast={showToast}
         />
       )}
+      
       {dream100Channel && (
-          <Dream100Modal
-              isOpen={!!dream100Channel}
-              onClose={() => setDream100Channel(null)}
-              channel={dream100Channel}
-              apiKeys={apiKeys}
-              onUpdate={(updatedVideos) => handleUpdateDream100(dream100Channel.id, updatedVideos)}
+          <Dream100Modal 
+            isOpen={!!dream100Channel}
+            onClose={() => setDream100Channel(null)}
+            channel={dream100Channel}
+            apiKeys={apiKeys}
+            onUpdate={(updatedVideos) => handleUpdateDream100(dream100Channel.id, updatedVideos)}
           />
       )}
+
       {isShareModalOpen && sharingChannel && user && (
           <ShareChannelModal
-              isOpen={isShareModalOpen}
-              onClose={handleCloseModal}
-              channel={sharingChannel}
-              currentUser={user}
-              showToast={showToast}
-              onUpdateMembers={handleUpdateChannelMembers}
+            isOpen={isShareModalOpen}
+            onClose={handleCloseModal}
+            channel={sharingChannel}
+            currentUser={user}
+            showToast={showToast}
+            onUpdateMembers={handleUpdateChannelMembers}
           />
       )}
+
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 };
 
-
-const App: React.FC = () => {
-  return (
-    <LanguageProvider>
-      <AppContent />
-    </LanguageProvider>
-  );
-};
-
+const App: React.FC = () => (
+  <LanguageProvider>
+    <AppContent />
+  </LanguageProvider>
+);
 
 export default App;

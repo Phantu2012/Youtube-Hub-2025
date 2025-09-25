@@ -1,8 +1,9 @@
 
+
 import React from 'react';
 import { Project } from '../types';
 import { getStatusOptions, STATUS_COLORS } from '../constants';
-import { Calendar, Eye, Image as ImageIcon, ThumbsUp, MessageSquare } from 'lucide-react';
+import { Calendar, Eye, Image as ImageIcon, ThumbsUp, MessageSquare, Cloud, Laptop } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
 interface ProjectCardProps {
@@ -27,6 +28,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
       month: 'short',
       day: 'numeric',
     });
+    
+    const storageType = project.storage || (project.id.startsWith('local_') ? 'local' : 'cloud');
 
     return (
         <div
@@ -49,6 +52,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
                     <span className={`px-2 py-1 text-xs font-semibold text-white rounded-full ${statusColor}`}>
                         {statusLabel}
                     </span>
+                </div>
+                 {/* FIX: Moved title attribute to parent div as it's not a valid prop for lucide-react icons. */}
+                 <div className="absolute bottom-2 left-2 p-1 bg-black/30 rounded-full" title={storageType === 'local' ? t('projectCard.local') : t('projectCard.cloud')}>
+                    {storageType === 'local' ? (
+                        <Laptop size={14} className="text-white/80" />
+                    ) : (
+                        <Cloud size={14} className="text-white/80" />
+                    )}
                 </div>
             </div>
             <div className="p-4">
