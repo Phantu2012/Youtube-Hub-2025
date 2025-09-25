@@ -32,7 +32,7 @@ type FirebaseUser = {
 };
 
 
-const IS_DEV_MODE = true;
+const IS_DEV_MODE = false;
 
 const MOCK_USER: User = {
   uid: 'dev-user-01',
