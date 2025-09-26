@@ -352,6 +352,11 @@ export default {
         "videoRemoved": "Video removed from list."
     }
   },
+  "dream100Selector": {
+    "title": "Select a Viral Video",
+    "searchPlaceholder": "Search by title...",
+    "noVideos": "No Dream 100 videos found for this channel."
+  },
   "channelDnaWizard": {
     "title": "Build Your Channel DNA",
     "step": "Step {{current}} of {{total}}",
@@ -433,6 +438,7 @@ export default {
     "selectChannel": "Select Target Channel",
     "selectChannelPlaceholder": "-- Select a channel to begin --",
     "noChannelsPlaceholder": "-- No channels configured --",
+    "selectFromDream100": "Select from Dream 100",
     "viralVideo": {
       "title": "Viral Video Analysis",
       "youtubeLink": "Viral YouTube Link",
@@ -558,6 +564,7 @@ export default {
     "channelDeleteFailed": "Failed to delete channel.",
     "deleteChannelError": "Cannot delete a channel that contains projects. Please move or delete the projects first.",
     "dream100UpdateFailed": "Failed to update Dream 100 list.",
+    "dream100VideoSelected": "Viral video link and description have been populated.",
     "ideaBankUpdateFailed": "Failed to update Idea Bank.",
     "userNotFound": "User with that email not found.",
     "userAlreadyMember": "User is already a member of this channel.",

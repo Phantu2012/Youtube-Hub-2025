@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI } from "@google/genai";
-import { Channel, ChannelDna, Project, ProjectStatus, ToastMessage, AutomationStep, AutomationStepStatus, YouTubeVideoDetails, ApiKeys, AIProvider, AIModel, Idea } from '../types';
-import { Bot, Loader, Sparkles, FilePlus2, PlayCircle, Youtube, Search, RotateCcw, Trash2, ChevronDown, StopCircle, Lightbulb } from 'lucide-react';
+import { Channel, ChannelDna, Project, ProjectStatus, ToastMessage, AutomationStep, AutomationStepStatus, YouTubeVideoDetails, ApiKeys, AIProvider, AIModel, Idea, Dream100Video } from '../types';
+import { Bot, Loader, Sparkles, FilePlus2, PlayCircle, Youtube, Search, RotateCcw, Trash2, ChevronDown, StopCircle, Lightbulb, BookOpen } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { DEFAULT_AUTOMATION_STEPS } from '../constants';
 import { AutomationStepCard } from './AutomationStepCard';
 import { useTranslation } from '../hooks/useTranslation';
 import { fetchVideoDetails } from '../services/youtubeService';
 import { IdeaBankModal } from './IdeaBankModal';
+import { Dream100SelectorModal } from './Dream100SelectorModal';
 
 interface AutomationEngineProps {
     channels: Channel[];
@@ -74,6 +75,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
     const [pausedAtStep, setPausedAtStep] = useLocalStorage<number | null>('automation-paused-step', null);
     const [stepSettings, setStepSettings] = useLocalStorage<StepSettings>('automation-settings', {});
     const [isIdeaBankOpen, setIsIdeaBankOpen] = useState(false);
+    const [isDream100SelectorOpen, setIsDream100SelectorOpen] = useState(false);
 
     useEffect(() => {
         // Load user-specific custom steps for the channel, or fall back to global defaults
@@ -130,8 +132,8 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
         setStep5Inputs(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleFetchVideoDetails = async () => {
-        const link = automationInput.viralVideo.link;
+    const handleFetchVideoDetails = async (linkToFetch?: string) => {
+        const link = linkToFetch || automationInput.viralVideo.link;
         if (!link.trim()) {
             showToast(t('toasts.youtubeLinkRequired'), 'info');
             return;
@@ -592,6 +594,24 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
         handleInputChange('targetVideo', 'nextTitle', title);
         setIsIdeaBankOpen(false);
     };
+    
+    const handleSelectDream100Video = (video: Dream100Video) => {
+        const newViralVideoState = {
+            ...automationInput.viralVideo,
+            link: video.youtubeLink,
+            transcript: video.description, 
+        };
+    
+        setAutomationInput(prev => ({
+            ...prev,
+            viralVideo: newViralVideoState
+        }));
+        
+        setIsDream100SelectorOpen(false);
+        showToast(t('toasts.dream100VideoSelected'), 'success');
+        
+        handleFetchVideoDetails(video.youtubeLink);
+    };
 
     const canCreateProject = stepStatus[8] === AutomationStepStatus.Completed;
     const details = automationInput.viralVideo.details;
@@ -642,7 +662,16 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                                         className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md text-sm"
                                         disabled={isRunning}
                                     />
-                                    <button onClick={handleFetchVideoDetails} disabled={isFetchingDetails || isRunning} className="p-2 bg-primary text-white rounded-md hover:bg-primary-dark disabled:bg-opacity-50">
+                                     <button 
+                                        type="button"
+                                        onClick={() => setIsDream100SelectorOpen(true)}
+                                        disabled={!selectedChannelId || isRunning}
+                                        title={t('automation.selectFromDream100')}
+                                        className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 flex-shrink-0"
+                                    >
+                                        <BookOpen size={20} />
+                                    </button>
+                                    <button onClick={() => handleFetchVideoDetails()} disabled={isFetchingDetails || isRunning} className="p-2 bg-primary text-white rounded-md hover:bg-primary-dark disabled:bg-opacity-50 flex-shrink-0">
                                         {isFetchingDetails ? <Loader size={20} className="animate-spin" /> : <Search size={20} />}
                                     </button>
                                 </div>
@@ -863,6 +892,14 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                     onSelectAsMain={handleSelectIdeaAsMain}
                     onSelectAsNext={handleSelectIdeaAsNext}
                     showToast={showToast}
+                />
+            )}
+            {isDream100SelectorOpen && selectedChannel && (
+                <Dream100SelectorModal
+                    isOpen={isDream100SelectorOpen}
+                    onClose={() => setIsDream100SelectorOpen(false)}
+                    videos={selectedChannel.dream100Videos || []}
+                    onSelect={handleSelectDream100Video}
                 />
             )}
         </div>

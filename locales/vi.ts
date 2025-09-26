@@ -352,6 +352,11 @@ export default {
         "videoRemoved": "Đã xóa video khỏi danh sách."
     }
   },
+   "dream100Selector": {
+    "title": "Chọn một Video Viral",
+    "searchPlaceholder": "Tìm theo tiêu đề...",
+    "noVideos": "Không tìm thấy video Dream 100 nào cho kênh này."
+  },
    "channelDnaWizard": {
     "title": "Xây dựng ADN Kênh của bạn",
     "step": "Bước {{current}} trên {{total}}",
@@ -433,6 +438,7 @@ export default {
     "selectChannel": "Chọn Kênh Mục tiêu",
     "selectChannelPlaceholder": "-- Chọn một kênh để bắt đầu --",
     "noChannelsPlaceholder": "-- Chưa có kênh nào được cấu hình --",
+    "selectFromDream100": "Chọn từ Dream 100",
     "viralVideo": {
       "title": "Phân tích Video Viral",
       "youtubeLink": "Link YouTube Viral",
@@ -558,6 +564,7 @@ export default {
     "channelDeleteFailed": "Xóa kênh thất bại.",
     "deleteChannelError": "Không thể xóa kênh đang chứa dự án. Vui lòng di chuyển hoặc xóa các dự án trước.",
     "dream100UpdateFailed": "Cập nhật danh sách Dream 100 thất bại.",
+    "dream100VideoSelected": "Đã điền link và mô tả video viral.",
     "ideaBankUpdateFailed": "Cập nhật Ngân hàng Ý tưởng thất bại.",
     "userNotFound": "Không tìm thấy người dùng với email đó.",
     "userAlreadyMember": "Người dùng đã là thành viên của kênh này.",

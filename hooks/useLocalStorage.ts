@@ -1,5 +1,6 @@
 
-import { useState, useEffect } from 'react';
+// FIX: Import React to make React.Dispatch and other types available.
+import React, { useState, useEffect } from 'react';
 
 export function useLocalStorage<T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
     const [storedValue, setStoredValue] = useState<T>(() => {
@@ -26,4 +27,3 @@ export function useLocalStorage<T,>(key: string, initialValue: T): [T, React.Dis
 
     return [storedValue, setStoredValue];
 }
-   

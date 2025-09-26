@@ -174,6 +174,7 @@
   },
   "automation": {
     "title": "Công cụ Tự động hóa AI",
+    "selectFromDream100": "Chọn từ Dream 100",
     "viralVideo": {
       "title": "Phân tích Video Viral",
       "youtubeLink": "Link YouTube Viral",
@@ -257,6 +258,11 @@
       "description": "Đối chiếu các prompt hình ảnh với dấu thời gian hội thoại từ một tệp SRT được cung cấp để tạo danh sách cảnh quay được đồng bộ hóa."
     }
   },
+  "dream100Selector": {
+    "title": "Chọn một Video Viral",
+    "searchPlaceholder": "Tìm theo tiêu đề...",
+    "noVideos": "Không tìm thấy video Dream 100 nào cho kênh này."
+  },
   "toasts": {
     "fetchProjectsError": "Không thể tải các dự án.",
     "settingsSaved": "Đã lưu cài đặt thành công!",
@@ -300,6 +306,7 @@
     "step5AutoFilled": "Dữ liệu cho Bước 5 đã được điền tự động từ lựa chọn tốt nhất của Bước 4!",
     "projectExported": "Đã sao chép dữ liệu dự án!",
     "exportFailed": "Không thể sao chép dữ liệu.",
+    "dream100VideoSelected": "Đã điền link và mô tả video viral.",
     "generated": {
       "videoTitle": "Đã tạo tiêu đề video!",
       "description": "Đã tạo mô tả!",

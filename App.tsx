@@ -84,7 +84,8 @@ const AppContent: React.FC = () => {
   const projects = useMemo(() => {
     const cloudProjects = Object.values(projectsFromListeners).flat();
     const allProjects = [...cloudProjects, ...localProjects];
-    const uniqueProjects = Array.from(new Map(allProjects.map(p => [p.id, p])).values());
+    // FIX: Added a filter to ensure all projects have an ID before creating the Map, preventing a crash if a malformed project is encountered.
+    const uniqueProjects = Array.from(new Map(allProjects.filter(p => p && p.id).map(p => [p.id, p])).values());
     uniqueProjects.sort((a: Project, b: Project) => new Date(b.publishDateTime).getTime() - new Date(a.publishDateTime).getTime());
     return uniqueProjects;
   }, [projectsFromListeners, localProjects]);
@@ -292,7 +293,7 @@ const AppContent: React.FC = () => {
                 // Infers the ownerId from the document path if it's missing from the data.
                 // This is crucial for legacy shared channels where the field might not exist.
                 // The path structure is /users/{ownerId}/channels/{channelId}
-                const ownerId = data.ownerId || doc.ref.parent.parent?.id;
+                const ownerId = data.ownerId || (doc.ref.parent.parent as any)?.id;
 
                 if (!ownerId) {
                     // This case should be rare, but it's a safe guard.

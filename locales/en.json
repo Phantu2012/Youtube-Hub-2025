@@ -174,6 +174,7 @@
   },
   "automation": {
     "title": "AI Automation Engine",
+    "selectFromDream100": "Select from Dream 100",
     "viralVideo": {
       "title": "Viral Video Analysis",
       "youtubeLink": "Viral YouTube Link",
@@ -257,6 +258,11 @@
       "description": "Matches visual prompts to dialogue timestamps from a provided SRT file to create a synchronized shot list."
     }
   },
+  "dream100Selector": {
+    "title": "Select a Viral Video",
+    "searchPlaceholder": "Search by title...",
+    "noVideos": "No Dream 100 videos found for this channel."
+  },
   "toasts": {
     "fetchProjectsError": "Could not fetch projects.",
     "settingsSaved": "Settings saved successfully!",
@@ -300,6 +306,7 @@
     "step5AutoFilled": "Step 5 inputs have been auto-filled from Step 4's best choice!",
     "projectExported": "Project data copied to clipboard!",
     "exportFailed": "Could not copy data to clipboard.",
+    "dream100VideoSelected": "Viral video link and description have been populated.",
     "generated": {
       "videoTitle": "Video title generated!",
       "description": "Description generated!",
