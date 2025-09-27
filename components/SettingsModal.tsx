@@ -13,7 +13,7 @@ interface SettingsModalProps {
     selectedModel: AIModel;
     currentChannels: ChannelDna;
     onSave: (settings: { apiKeys: ApiKeys, selectedProvider: AIProvider, selectedModel: AIModel }) => void;
-    onAddChannel: (channel: Omit<Channel, 'id'>) => Promise<void>;
+    onAddChannel: (channel: Omit<Channel, 'id' | 'ownerId' | 'members'>) => Promise<void>;
     onUpdateChannel: (channel: Channel) => void;
     onDeleteChannel: (channelId: string) => void;
     onShareChannel: (channel: Channel) => void;
@@ -98,7 +98,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
                 dna: '',
                 channelUrl: '',
             };
-            await onAddChannel(newChannel as Omit<Channel, 'id'>);
+            await onAddChannel(newChannel);
         } catch (error) {
             console.error("Failed to add channel:", error);
         } finally {
