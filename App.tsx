@@ -84,10 +84,10 @@ const AppContent: React.FC = () => {
   const projects = useMemo(() => {
     const cloudProjects = Object.values(projectsFromListeners).flat();
     const allProjects = [...cloudProjects, ...localProjects];
-    // FIX: Added a filter to ensure all projects have an ID before creating the Map, preventing a crash if a malformed project is encountered.
-    const uniqueProjects = Array.from(new Map(allProjects.filter(p => p && p.id).map(p => [p.id, p])).values());
+    // FIX: Add explicit typing to handle potentially malformed project data from different sources, resolving the 'unknown' type error.
+    const uniqueProjects = Array.from(new Map((allProjects as any[]).filter(p => p && p.id).map(p => [p.id, p])).values());
     uniqueProjects.sort((a: Project, b: Project) => new Date(b.publishDateTime).getTime() - new Date(a.publishDateTime).getTime());
-    return uniqueProjects;
+    return uniqueProjects as Project[];
   }, [projectsFromListeners, localProjects]);
 
   const channels = useMemo(() => {
@@ -724,20 +724,12 @@ const AppContent: React.FC = () => {
         const ownerId = channel.ownerId;
 
         const {
-            script,
-            thumbnailData,
-            description,
-            pinnedComment,
-            communityPost,
-            facebookPost,
-            thumbnailPrompt,
-            voiceoverScript,
-            promptTable,
-            timecodeMap,
-            metadata,
-            seoMetadata,
-            visualPrompts,
-            storage, // Exclude storage from Firestore doc
+            // Large data fields for subcollection
+            script, thumbnailData, description, pinnedComment, communityPost,
+            facebookPost, thumbnailPrompt, voiceoverScript, promptTable,
+            timecodeMap, metadata, seoMetadata, visualPrompts,
+            // Fields to exclude from the main document
+            id, storage, stats,
             ...mainData
         } = projectToSave;
 
@@ -757,9 +749,9 @@ const AppContent: React.FC = () => {
             visualPrompts: visualPrompts || '',
         };
 
-        const { id, ...savableMainData } = mainData;
         const projectDataToSave = {
-            ...savableMainData,
+            ...mainData,
+            tags: mainData.tags || [], // Ensure 'tags' is always an array
             publishDateTime: firebase.firestore.Timestamp.fromDate(new Date(projectToSave.publishDateTime)),
         };
 

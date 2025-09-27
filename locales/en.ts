@@ -269,7 +269,9 @@ export default {
     "moveConfirmation": "Are you sure you want to move this project to '{{channelName}}'?",
     "save": "Save Project",
     "saving": "Saving...",
-    "saveToCloud": "Save to Cloud & Sync"
+    "saveToCloud": "Save to Cloud & Sync",
+    "saveLocal": "Save Locally",
+    "saveCloud": "Save to Cloud"
   },
   "settings": {
     "title": "Settings",

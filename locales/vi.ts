@@ -269,7 +269,9 @@ export default {
     "moveConfirmation": "Bạn có chắc chắn muốn chuyển dự án này sang kênh '{{channelName}}' không?",
     "save": "Lưu dự án",
     "saving": "Đang lưu...",
-    "saveToCloud": "Lưu lên Đám mây & Đồng bộ"
+    "saveToCloud": "Lưu lên Đám mây & Đồng bộ",
+    "saveLocal": "Lưu trên máy",
+    "saveCloud": "Lưu lên Đám mây"
   },
   "settings": {
     "title": "Cài đặt",

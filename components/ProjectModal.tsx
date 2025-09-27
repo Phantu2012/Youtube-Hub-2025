@@ -5,7 +5,7 @@ import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, Ap
 import { getStatusOptions } from '../constants';
 import { fetchVideoStats } from '../services/youtubeService';
 import { StatsChart } from './StatsChart';
-import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet, Copy, Move, Cloud } from 'lucide-react';
+import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet, Copy, Move, Cloud, Laptop } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -737,7 +737,13 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                     {/* Header */}
                     <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                         <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold">{isNewProject ? t('projectModal.createTitle') : t('projectModal.editTitle')}</h2>
+                            <h2 className="text-2xl font-bold flex items-center gap-3">
+                                {isNewProject ? t('projectModal.createTitle') : t('projectModal.editTitle')}
+                                <span title={storageType === 'local' ? t('projectCard.local') : t('projectCard.cloud')} className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center gap-1.5">
+                                    {storageType === 'local' ? <Laptop size={12} /> : <Cloud size={12} />}
+                                    {storageType === 'local' ? t('projectCard.local') : t('projectCard.cloud')}
+                                </span>
+                            </h2>
                             <button type="button" onClick={onClose} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"><X /></button>
                         </div>
                     </div>
@@ -849,7 +855,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                                     <button type="button" onClick={onClose} disabled={isSaving} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50">{t('common.cancel')}</button>
                                     <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:bg-opacity-70 disabled:cursor-wait">
                                         {isSaving ? <Loader size={16} className="animate-spin" /> : <Save size={16} />} 
-                                        {isSaving ? t('projectModal.saving') : t('projectModal.save')}
+                                        {isSaving ? t('projectModal.saving') : (storageType === 'local' ? t('projectModal.saveLocal') : t('projectModal.saveCloud'))}
                                     </button>
                                 </div>
                             </div>

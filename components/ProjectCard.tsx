@@ -53,7 +53,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
                         {statusLabel}
                     </span>
                 </div>
-                 {/* FIX: Moved title attribute to parent div as it's not a valid prop for lucide-react icons. */}
                  <div className="absolute bottom-2 left-2 p-1 bg-black/30 rounded-full" title={storageType === 'local' ? t('projectCard.local') : t('projectCard.cloud')}>
                     {storageType === 'local' ? (
                         <Laptop size={14} className="text-white/80" />
