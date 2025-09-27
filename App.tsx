@@ -566,10 +566,6 @@ const AppContent: React.FC = () => {
         throw new Error("User not logged in");
     }
 
-    // Firestore can sometimes return a "Bad Request" error when trying to create a document with a large,
-    // complex array in a single 'add' operation. To work around this, we create the channel with basic
-    // information first, and then immediately update it with the default automation steps in a second operation.
-    // This two-step process is more reliable.
     const initialChannelData = {
         ...newChannelData,
         ownerId: user.uid,
@@ -583,10 +579,20 @@ const AppContent: React.FC = () => {
         // Step 1: Create the channel with basic info.
         const newChannelRef = await db.collection('users').doc(user.uid).collection('channels').add(initialChannelData);
 
-        // Step 2: Update the new channel with the complex automation steps array.
-        // We send the plain object directly, as the SDK handles serialization.
+        // Step 2: Sanitize the default automation steps to remove any `undefined` values,
+        // which cause a "Bad Request" error in Firestore.
+        const sanitizedAutomationSteps = DEFAULT_AUTOMATION_STEPS.map(step => ({
+            id: step.id,
+            name: step.name,
+            description: step.description,
+            promptTemplate: step.promptTemplate,
+            settings: step.settings || [], // Ensure settings is an array
+            enabled: step.enabled ?? true,   // Ensure enabled is a boolean
+        }));
+
+        // Step 3: Update the new channel with the sanitized automation steps.
         await newChannelRef.update({
-            automationSteps: DEFAULT_AUTOMATION_STEPS,
+            automationSteps: sanitizedAutomationSteps,
         });
 
         showToast(t('toasts.channelAdded'), 'success');
@@ -596,6 +602,7 @@ const AppContent: React.FC = () => {
         throw error;
     }
   };
+
 
   const handleSaveChannelChanges = async (channel: Channel) => {
     if (!user) return;
