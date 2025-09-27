@@ -184,7 +184,7 @@ REASONING: <A brief, 1-2 sentence explanation of why this combination is the bes
 • Create a concise, high-CTR publishing package: YouTube Description, Pinned Comment, Community Tab Post, Facebook Post, and Tags. The language and style must match the Channel DNA.
 
 HANDSHAKE — ACKNOWLEDGEMENT REQUIRED
-• If TITLE_FINAL & THUMB_FINAL_OVERLAY are not provided in the input below AND cannot be inferred from Step 4's output → respond with ONLY this string:
+• If TITLE_FINAL & THUMB_FINAL_OVERLAY are not provided in the input below AND cannot be inferred from Step 4's output -> respond with ONLY this string:
 ACK_NEEDED: Please provide TITLE_FINAL and THUMB_FINAL_OVERLAY (L1/L2).
 
 AUTO-FETCH (Mandatory sources, in order)
@@ -215,8 +215,8 @@ STYLE & LENGTH GUARDS
 RULES LEARNED FROM VIRAL VIDEO (Apply concisely)
 • **ANALYZE VIRAL DESCRIPTION STRUCTURE**: Review the structure of the provided viral video's description (opening sentence, CTA placement, info layout). **LEARN FROM** that structure to create the new [YT_DESCRIPTION], while still adhering to length limits and other rules.
 • Description: Natural keywords in the first 140 characters; DO NOT put links in the first line.
-• Pinned comment: Should contain a summary & question → drive initial engagement.
-• Community post: 1-line question + link → drive the next viewing session.
+• Pinned comment: Should contain a summary & question -> drive initial engagement.
+• Community post: 1-line question + link -> drive the next viewing session.
 • FB post: Max 3 sentences, open with a pain point, close with a link.
 • Include a "Save video" reminder for quick-win content; use soft CTAs, avoid absolute commands.
 
@@ -233,14 +233,14 @@ OUTPUT — 5 BLOCKS
 • "3 Quick Steps to Remember" (from STEP4, each step ≤ 12 words).
 • 1–2 open-ended questions.
 • "Type 'I will...' to commit to this tonight."
-• 👉 Next video: [VIDEO_URL_NEXT or <fill in later>]
+• -> Next video: [VIDEO_URL_NEXT or <fill in later>]
 
 3) [COMMUNITY_POST]
 • 1 sentence benefit + 1 quick question (vote/reply).
 • Link to [VIDEO_URL_NEXT or <fill in later>].
 
 4) [FACEBOOK_POST]
-• 2–3 sentences: pain point → benefit tonight → invite others to watch.
+• 2–3 sentences: pain point -> benefit tonight -> invite others to watch.
 • End with a CTA: "Click to watch now: [VIDEO_URL_NEXT or <fill in later>]".
 • Sign off: — [Channel Name from DNA].
 
@@ -257,7 +257,7 @@ OUTPUT — 5 BLOCKS
 • Step 3: ...
 — What's the biggest challenge for you right now? Let me know in one line.
 — Type “I will [3-word action]”.
-👉 Next video: [VIDEO_URL_NEXT or <fill in later>]
+-> Next video: [VIDEO_URL_NEXT or <fill in later>]
 
 [COMMUNITY_POST]
 “[Benefit tonight, 1 sentence]. Which step will you try first? (1) … (2) … (3) …
@@ -370,13 +370,14 @@ ZERO-INPUT — AUTO FETCH (BẮT BUỘC)
 Load mới nhất output của bước 6 dưới đây.
 {{STEP_6_OUTPUT}}
 
-Nếu không có dữ liệu → in chính xác chuỗi:
+Nếu không có dữ liệu -> in chính xác chuỗi:
 INPUT_NEEDED: No Visual Prompts output found.
 
 WHAT TO EXTRACT (CHUẨN HOÁ)
 // FIX: Replaced unicode ellipsis with standard three dots to prevent parsing errors.
 STT = chỉ số ảnh (01, 02, ..., 50).
-Nếu thiếu số trong nguồn → suy ra theo thứ tự rồi chèn đủ 2 chữ số.
+// FIX: Replaced unicode ellipsis with standard three dots to prevent parsing errors.
+Nếu thiếu số trong nguồn -> suy ra theo thứ tự rồi chèn đủ 2 chữ số.
 // FIX: Replaced unicode ellipsis with standard three dots to prevent parsing errors.
 Nếu trùng số: giữ bản đầu, các bản sau ghi 07_b, 07_c... trong cột STT (Prompt giữ nguyên).
 // FIX: Replaced unicode ellipsis with standard three dots to prevent parsing errors.
@@ -399,7 +400,7 @@ In một code block dạng CSV tiêu đề: STT,Prompt
 Mỗi hàng = 1 prompt, bọc Prompt trong dấu ngoặc kép "; nếu trong prompt có dấu " thì escape thành "".
 File name gợi ý: visual_prompts_table_step10.csv (không in link; chỉ in block CSV).
 
-Lưu ý: Nếu tổng prompt <1 → in đúng chuỗi: “INPUT_NEEDED: Empty STEP9 prompt list.”
+Lưu ý: Nếu tổng prompt <1 -> in đúng chuỗi: “INPUT_NEEDED: Empty STEP9 prompt list.”
 
 POST-PROCESS — MANDATORY EXPORT BLOCK
 Cuối câu trả lời, XUẤT block máy-đọc:
