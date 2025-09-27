@@ -566,11 +566,11 @@ const AppContent: React.FC = () => {
         throw new Error("User not logged in");
     }
 
-    // Separate the complex automation steps from the initial, simple payload.
-    // This makes the initial 'add' operation more robust against "Bad Request" errors.
-    const automationSteps = JSON.parse(JSON.stringify(DEFAULT_AUTOMATION_STEPS));
-    
-    const baseChannelData = {
+    // Firestore can sometimes return a "Bad Request" error when trying to create a document with a large,
+    // complex array in a single 'add' operation. To work around this, we create the channel with basic
+    // information first, and then immediately update it with the default automation steps in a second operation.
+    // This two-step process is more reliable.
+    const initialChannelData = {
         ...newChannelData,
         ownerId: user.uid,
         members: { [user.uid]: 'owner' as const },
@@ -578,13 +578,15 @@ const AppContent: React.FC = () => {
         ideas: [],
         dream100Videos: [],
     };
-
+    
     try {
-        // Step 1: Create the channel document with the simple data.
-        const newChannelRef = await db.collection('users').doc(user.uid).collection('channels').add(baseChannelData);
-        
-        // Step 2: Immediately update the new document with the complex automation steps data.
-        await newChannelRef.update({ automationSteps });
+        // Step 1: Create the channel with basic info.
+        const newChannelRef = await db.collection('users').doc(user.uid).collection('channels').add(initialChannelData);
+
+        // Step 2: Update the new channel with the complex automation steps array.
+        await newChannelRef.update({
+            automationSteps: JSON.parse(JSON.stringify(DEFAULT_AUTOMATION_STEPS)),
+        });
 
         showToast(t('toasts.channelAdded'), 'success');
     } catch (error) {
