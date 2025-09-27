@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -571,7 +572,7 @@ const AppContent: React.FC = () => {
         memberIds: [user.uid],
         ideas: [],
         dream100Videos: [],
-        automationSteps: DEFAULT_AUTOMATION_STEPS,
+        automationSteps: JSON.parse(JSON.stringify(DEFAULT_AUTOMATION_STEPS)),
     };
     try {
         await db.collection('users').doc(user.uid).collection('channels').add(channelPayload);
