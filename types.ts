@@ -133,6 +133,7 @@ export enum AutomationStepStatus {
     Running = 'Running',
     Completed = 'Completed',
     Error = 'Error',
+    Skipped = 'Skipped',
 }
 
 export interface AutomationStepSetting {
@@ -148,6 +149,7 @@ export interface AutomationStep {
     description: string;
     promptTemplate: string;
     settings?: AutomationStepSetting[];
+    enabled?: boolean;
 }
 
 export type AIProvider = 'gemini' | 'openai';

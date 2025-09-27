@@ -172,6 +172,20 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
             onUpdateAutomationSteps(selectedChannelId, updatedSteps);
         }
     };
+    
+    const handleToggleStep = (stepId: number) => {
+        const updatedSteps = steps.map(step => {
+            if (step.id === stepId) {
+                // Default to true if undefined, then toggle
+                return { ...step, enabled: !(step.enabled ?? true) };
+            }
+            return step;
+        });
+        setSteps(updatedSteps);
+        if (selectedChannelId) {
+            onUpdateAutomationSteps(selectedChannelId, updatedSteps);
+        }
+    };
 
     const handleRestoreDefaultPrompt = (stepId: number) => {
         const globalStep = globalAutomationSteps.find(s => s.id === stepId);
@@ -365,6 +379,14 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
         let stoppedByUser = false;
 
         for (const step of stepsToRun) {
+            // Check if step is enabled. Default to true if property is missing.
+            if ((step.enabled ?? true) === false) {
+                setStepStatus(prev => ({ ...prev, [step.id]: AutomationStepStatus.Skipped }));
+                currentOutputs[step.id] = ''; // Ensure skipped steps have empty output
+                setStepOutputs(prev => ({ ...prev, [step.id]: '' }));
+                continue; // Skip to the next step
+            }
+            
             const isFirstRunOfStep9 = step.id === 9 && !srtContent.trim() && pausedAtStep !== 9;
             if (isFirstRunOfStep9 && !isRerunning) {
                 setPausedAtStep(9);
@@ -836,6 +858,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                                 output={stepOutputs[step.id] || ''}
                                 onPromptChange={handlePromptChange}
                                 onRestoreDefault={handleRestoreDefaultPrompt}
+                                onToggle={handleToggleStep}
                                 settings={stepSettings[step.id] || {}}
                                 onSettingChange={(key, value) => handleSettingChange(step.id, key, value)}
                                 isRunning={isRunning}

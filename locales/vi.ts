@@ -441,6 +441,8 @@ export default {
     "selectChannelPlaceholder": "-- Chọn một kênh để bắt đầu --",
     "noChannelsPlaceholder": "-- Chưa có kênh nào được cấu hình --",
     "selectFromDream100": "Chọn từ Dream 100",
+    "enableStep": "Bật bước này",
+    "disableStep": "Tắt bước này",
     "viralVideo": {
       "title": "Phân tích Video Viral",
       "youtubeLink": "Link YouTube Viral",

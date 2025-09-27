@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AutomationStep, AutomationStepStatus, ToastMessage } from '../types';
-import { CheckCircle, Loader, XCircle, AlertTriangle, Sparkles, ChevronDown, ClipboardCopy, Settings, Check, RotateCcw, Play, ListVideo } from 'lucide-react';
+import { CheckCircle, Loader, XCircle, AlertTriangle, Sparkles, ChevronDown, ClipboardCopy, Settings, Check, RotateCcw, Play, ListVideo, SkipForward } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
 interface Step5Inputs {
@@ -17,6 +17,7 @@ interface AutomationStepCardProps {
     output: string;
     onPromptChange: (id: number, newPrompt: string) => void;
     onRestoreDefault: (stepId: number) => void;
+    onToggle: (id: number) => void;
     settings: Record<string, string | number>;
     onSettingChange: (key: string, value: string | number) => void;
     isRunning: boolean;
@@ -34,13 +35,15 @@ const StatusIcon: React.FC<{ status: AutomationStepStatus }> = ({ status }) => {
             return <CheckCircle size={20} className="text-green-500" />;
         case AutomationStepStatus.Error:
             return <XCircle size={20} className="text-red-500" />;
+        case AutomationStepStatus.Skipped:
+            return <SkipForward size={20} className="text-gray-500" />;
         case AutomationStepStatus.Pending:
         default:
             return <AlertTriangle size={20} className="text-gray-400" />;
     }
 };
 
-export const AutomationStepCard: React.FC<AutomationStepCardProps> = ({ step, status, output, onPromptChange, onRestoreDefault, settings, onSettingChange, isRunning, showToast, onRerun, step5Inputs, onStep5InputChange }) => {
+export const AutomationStepCard: React.FC<AutomationStepCardProps> = ({ step, status, output, onPromptChange, onRestoreDefault, onToggle, settings, onSettingChange, isRunning, showToast, onRerun, step5Inputs, onStep5InputChange }) => {
     const { t } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
@@ -48,6 +51,7 @@ export const AutomationStepCard: React.FC<AutomationStepCardProps> = ({ step, st
     const rerunMenuRef = useRef<HTMLDivElement>(null);
     const [confirmRestore, setConfirmRestore] = useState(false);
     const confirmTimerRef = useRef<number | null>(null);
+    const isEnabled = step.enabled ?? true;
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -101,9 +105,23 @@ export const AutomationStepCard: React.FC<AutomationStepCardProps> = ({ step, st
     };
 
     return (
-        <div className="bg-light-card dark:bg-dark-card rounded-lg shadow-md transition-all duration-300">
+        <div className={`bg-light-card dark:bg-dark-card rounded-lg shadow-md transition-all duration-300 ${!isEnabled ? 'opacity-60 bg-gray-50 dark:bg-dark-bg/50' : ''}`}>
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                 <div className="flex items-center gap-3">
+                    <label htmlFor={`toggle-step-${step.id}`} className="flex items-center cursor-pointer" title={t(isEnabled ? 'automation.disableStep' : 'automation.enableStep')}>
+                        <div className="relative">
+                            <input
+                                id={`toggle-step-${step.id}`}
+                                type="checkbox"
+                                className="sr-only"
+                                checked={isEnabled}
+                                onChange={() => onToggle(step.id)}
+                                disabled={isRunning}
+                            />
+                            <div className={`block w-10 h-6 rounded-full transition-colors ${isEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isEnabled ? 'translate-x-4' : ''}`}></div>
+                        </div>
+                    </label>
                     <StatusIcon status={status} />
                     <div className="flex items-baseline gap-2">
                         <h3 className="font-bold text-lg">{t('automation.stepLabel', { id: step.id })}</h3>

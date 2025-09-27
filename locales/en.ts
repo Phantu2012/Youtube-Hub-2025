@@ -441,6 +441,8 @@ export default {
     "selectChannelPlaceholder": "-- Select a channel to begin --",
     "noChannelsPlaceholder": "-- No channels configured --",
     "selectFromDream100": "Select from Dream 100",
+    "enableStep": "Enable this step",
+    "disableStep": "Disable this step",
     "viralVideo": {
       "title": "Viral Video Analysis",
       "youtubeLink": "Viral YouTube Link",
