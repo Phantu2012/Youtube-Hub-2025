@@ -565,17 +565,27 @@ const AppContent: React.FC = () => {
         showToast(t('toasts.loginRequiredToSave'), 'error');
         throw new Error("User not logged in");
     }
-    const channelPayload = {
+
+    // Separate the complex automation steps from the initial, simple payload.
+    // This makes the initial 'add' operation more robust against "Bad Request" errors.
+    const automationSteps = JSON.parse(JSON.stringify(DEFAULT_AUTOMATION_STEPS));
+    
+    const baseChannelData = {
         ...newChannelData,
         ownerId: user.uid,
         members: { [user.uid]: 'owner' as const },
         memberIds: [user.uid],
         ideas: [],
         dream100Videos: [],
-        automationSteps: JSON.parse(JSON.stringify(DEFAULT_AUTOMATION_STEPS)),
     };
+
     try {
-        await db.collection('users').doc(user.uid).collection('channels').add(channelPayload);
+        // Step 1: Create the channel document with the simple data.
+        const newChannelRef = await db.collection('users').doc(user.uid).collection('channels').add(baseChannelData);
+        
+        // Step 2: Immediately update the new document with the complex automation steps data.
+        await newChannelRef.update({ automationSteps });
+
         showToast(t('toasts.channelAdded'), 'success');
     } catch (error) {
         console.error("Error adding channel:", error);
