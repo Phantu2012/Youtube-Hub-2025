@@ -566,35 +566,31 @@ const AppContent: React.FC = () => {
         throw new Error("User not logged in");
     }
 
-    const initialChannelData = {
+    // Sanitize the default automation steps to remove any `undefined` values,
+    // which cause a "Bad Request" error in Firestore.
+    const sanitizedAutomationSteps = DEFAULT_AUTOMATION_STEPS.map(step => ({
+        id: step.id,
+        name: step.name,
+        description: step.description,
+        promptTemplate: step.promptTemplate,
+        settings: step.settings || [], // Ensure settings is an array
+        enabled: step.enabled ?? true,   // Ensure enabled is a boolean
+    }));
+
+    // Prepare the complete data package for the new channel in one go.
+    const fullChannelData = {
         ...newChannelData,
         ownerId: user.uid,
         members: { [user.uid]: 'owner' as const },
         memberIds: [user.uid],
         ideas: [],
         dream100Videos: [],
+        automationSteps: sanitizedAutomationSteps, // Include the sanitized steps
     };
     
     try {
-        // Step 1: Create the channel with basic info.
-        const newChannelRef = await db.collection('users').doc(user.uid).collection('channels').add(initialChannelData);
-
-        // Step 2: Sanitize the default automation steps to remove any `undefined` values,
-        // which cause a "Bad Request" error in Firestore.
-        const sanitizedAutomationSteps = DEFAULT_AUTOMATION_STEPS.map(step => ({
-            id: step.id,
-            name: step.name,
-            description: step.description,
-            promptTemplate: step.promptTemplate,
-            settings: step.settings || [], // Ensure settings is an array
-            enabled: step.enabled ?? true,   // Ensure enabled is a boolean
-        }));
-
-        // Step 3: Update the new channel with the sanitized automation steps.
-        await newChannelRef.update({
-            automationSteps: sanitizedAutomationSteps,
-        });
-
+        // Use a single `add` operation to create the channel with all its data.
+        await db.collection('users').doc(user.uid).collection('channels').add(fullChannelData);
         showToast(t('toasts.channelAdded'), 'success');
     } catch (error) {
         console.error("Error adding channel:", error);
