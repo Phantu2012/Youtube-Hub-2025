@@ -584,8 +584,9 @@ const AppContent: React.FC = () => {
         const newChannelRef = await db.collection('users').doc(user.uid).collection('channels').add(initialChannelData);
 
         // Step 2: Update the new channel with the complex automation steps array.
+        // We send the plain object directly, as the SDK handles serialization.
         await newChannelRef.update({
-            automationSteps: JSON.parse(JSON.stringify(DEFAULT_AUTOMATION_STEPS)),
+            automationSteps: DEFAULT_AUTOMATION_STEPS,
         });
 
         showToast(t('toasts.channelAdded'), 'success');
