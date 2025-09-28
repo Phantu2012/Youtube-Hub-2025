@@ -608,6 +608,7 @@ export default {
     "imageGenerated": "Thumbnail image generated!",
     "imageGenerateFailed": "Failed to generate image with AI.",
     "invalidImageFile": "Please select a valid image file.",
+    "invalidPublishDate": "Please provide a valid publish date and time.",
     "thumbnailTooLarge": "Thumbnail image is too large (max 700KB). Please use a smaller file.",
     "generateFailed": "Failed to generate content with AI.",
     "youtubeLinkRequired": "Please enter a YouTube link first.",

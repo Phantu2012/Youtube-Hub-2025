@@ -608,6 +608,7 @@ export default {
     "imageGenerated": "Đã tạo hình thu nhỏ!",
     "imageGenerateFailed": "Không thể tạo hình ảnh bằng AI.",
     "invalidImageFile": "Vui lòng chọn một tệp hình ảnh hợp lệ.",
+    "invalidPublishDate": "Vui lòng cung cấp ngày và giờ xuất bản hợp lệ.",
     "thumbnailTooLarge": "Ảnh thumbnail quá lớn (tối đa 700KB). Vui lòng dùng file nhỏ hơn.",
     "generateFailed": "Không thể tạo nội dung bằng AI.",
     "youtubeLinkRequired": "Vui lòng nhập đường dẫn YouTube trước.",

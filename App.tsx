@@ -712,6 +712,11 @@ const AppContent: React.FC = () => {
       showToast(t('toasts.thumbnailTooLarge'), 'error');
       return;
     }
+    
+    if (!projectToSave.publishDateTime || isNaN(new Date(projectToSave.publishDateTime).getTime())) {
+      showToast(t('toasts.invalidPublishDate'), 'error');
+      return;
+    }
 
     setIsSaving(true);
     
