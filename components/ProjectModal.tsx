@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel, Channel } from '../types';
 import { getStatusOptions } from '../constants';
@@ -19,7 +18,6 @@ interface ProjectModalProps {
     isSaving: boolean;
     onClose: () => void;
     onSave: (project: Project) => void;
-    onPushToCloud: (project: Project) => void;
     onDelete: (projectId: string) => Promise<void>;
     onCopy: (project: Project) => void;
     onRerun: (project: Project) => void;
@@ -60,7 +58,7 @@ const TabButton: React.FC<{
 );
 
 
-export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, apiKeys, selectedProvider, selectedModel, isSaving, onClose, onSave, onPushToCloud, onDelete, onCopy, onRerun, onMove, showToast }) => {
+export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, apiKeys, selectedProvider, selectedModel, isSaving, onClose, onSave, onDelete, onCopy, onRerun, onMove, showToast }) => {
     const { t, language } = useTranslation();
     const [activeTab, setActiveTab] = useState<ModalTab>('content');
     const [formData, setFormData] = useState<Project | Omit<Project, 'id'>>(() => {
@@ -181,7 +179,6 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
 
     const handleCopyProjectAction = () => {
         onCopy(formData as Project);
-        onClose();
     };
     
     const handleStartMove = () => {
@@ -841,21 +838,10 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                                     )}
                                 </div>
                                 <div className="flex gap-4">
-                                    {storageType === 'local' && (
-                                         <button
-                                            type="button"
-                                            onClick={() => onPushToCloud(formData as Project)}
-                                            disabled={isSaving}
-                                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:bg-opacity-70 disabled:cursor-wait"
-                                        >
-                                            <Cloud size={16} />
-                                            {t('projectModal.saveToCloud')}
-                                        </button>
-                                    )}
                                     <button type="button" onClick={onClose} disabled={isSaving} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50">{t('common.cancel')}</button>
                                     <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:bg-opacity-70 disabled:cursor-wait">
                                         {isSaving ? <Loader size={16} className="animate-spin" /> : <Save size={16} />} 
-                                        {isSaving ? t('projectModal.saving') : (storageType === 'local' ? t('projectModal.saveLocal') : t('projectModal.saveCloud'))}
+                                        {isSaving ? t('projectModal.saving') : t('projectModal.save')}
                                     </button>
                                 </div>
                             </div>

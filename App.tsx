@@ -703,31 +703,11 @@ const AppContent: React.FC = () => {
 
 
   const handleSaveProject = (projectToSave: Project) => {
-    if (!projectToSave.storage) {
-        projectToSave.storage = projectToSave.id && !projectToSave.id.startsWith('local_') ? 'cloud' : 'local';
-    }
-
-    if (projectToSave.storage === 'local') {
-        setIsSaving(true);
-        if (projectToSave.id) { // Update existing
-            setLocalProjects(prev => prev.map(p => p.id === projectToSave.id ? projectToSave : p));
-            showToast(t('toasts.projectUpdated'), 'success');
-        } else { // Create new
-            const newLocalProject = { ...projectToSave, id: `local_${Date.now()}` };
-            setLocalProjects(prev => [...prev, newLocalProject]);
-            showToast(t('toasts.projectCreated'), 'success');
-        }
-        handleCloseModal();
-        setIsSaving(false);
-        return;
-    }
-    
-    // Cloud save logic below
     if (!user) {
         showToast(t('toasts.loginRequiredToSave'), 'error');
         return;
     }
-    
+
     if (projectToSave.thumbnailData && projectToSave.thumbnailData.length > 950000) {
       showToast(t('toasts.thumbnailTooLarge'), 'error');
       return;
@@ -742,13 +722,12 @@ const AppContent: React.FC = () => {
         }
         
         const ownerId = channel.ownerId;
+        const isMigratingFromLocal = projectToSave.id && projectToSave.id.startsWith('local_');
 
         const {
-            // Large data fields for subcollection
             script, thumbnailData, description, pinnedComment, communityPost,
             facebookPost, thumbnailPrompt, voiceoverScript, promptTable,
             timecodeMap, metadata, seoMetadata, visualPrompts,
-            // Fields to exclude from the main document
             id, storage, stats,
             ...mainData
         } = projectToSave;
@@ -771,11 +750,11 @@ const AppContent: React.FC = () => {
 
         const projectDataToSave = {
             ...mainData,
-            tags: mainData.tags || [], // Ensure 'tags' is always an array
+            tags: mainData.tags || [],
             publishDateTime: firebase.firestore.Timestamp.fromDate(new Date(projectToSave.publishDateTime)),
         };
 
-        if (projectToSave.id && !projectToSave.id.startsWith('local_')) {
+        if (projectToSave.id && !isMigratingFromLocal) { // Update existing cloud project
             const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectToSave.id);
             const dataDocRef = projectDocRef.collection('data').doc('content');
             
@@ -785,7 +764,7 @@ const AppContent: React.FC = () => {
             await batch.commit();
             
             showToast(t('toasts.projectUpdated'), 'success');
-        } else {
+        } else { // Create new cloud project (or migrate from local)
             const projectCollectionRef = db.collection('users').doc(ownerId).collection('projects');
             const newProjectRef = projectCollectionRef.doc();
             const dataDocRef = newProjectRef.collection('data').doc('content');
@@ -795,7 +774,13 @@ const AppContent: React.FC = () => {
             batch.set(dataDocRef, largeData);
             await batch.commit();
             
-            showToast(t('toasts.projectCreated'), 'success');
+            if (isMigratingFromLocal) {
+                // Remove from local storage after successful cloud save
+                setLocalProjects(prev => prev.filter(p => p.id !== projectToSave.id));
+                showToast(t('toasts.projectSynced'), 'success');
+            } else {
+                showToast(t('toasts.projectCreated'), 'success');
+            }
         }
     };
 
@@ -812,24 +797,7 @@ const AppContent: React.FC = () => {
       });
   };
 
-  const handlePushProjectToCloud = (projectToPush: Project) => {
-    if (!user) {
-      showToast(t('toasts.loginRequiredToSave'), 'error');
-      return;
-    }
-    // 1. Remove from local projects state
-    setLocalProjects(prev => prev.filter(p => p.id !== projectToPush.id));
-    
-    // 2. Prepare for cloud save (remove local ID and set storage type)
-    const { id, ...cloudData } = projectToPush;
-    const projectForCloud: Project = { ...cloudData, storage: 'cloud' } as Project;
-
-    // 3. Call handleSaveProject, which will now use the cloud logic
-    handleSaveProject(projectForCloud);
-    showToast(t('toasts.projectSynced'), 'success');
-  };
-
-  const handleCopyProject = async (projectToCopy: Project) => {
+  const handleCopyProject = (projectToCopy: Project) => {
       showToast(t('toasts.copyingProject'), 'info');
       const { id, stats, ...projectData } = projectToCopy;
 
@@ -839,11 +807,12 @@ const AppContent: React.FC = () => {
           publishDateTime: new Date().toISOString().slice(0, 16),
           status: ProjectStatus.Idea,
           youtubeLink: '',
-          storage: 'local', // Copies are always local first
       };
       
-      handleSaveProject(newProject as Project);
-      showToast(t('toasts.projectCopied'), 'success');
+      handleCloseModal();
+      setTimeout(() => {
+          handleOpenModal(newProject as Project);
+      }, 100);
   };
 
   const handleDeleteProject = async (projectId: string) => {
@@ -942,7 +911,6 @@ const AppContent: React.FC = () => {
         metadata: '',
         seoMetadata: '',
         visualPrompts: '',
-        storage: 'local',
     };
     handleOpenModal(newProjectTemplate as Project);
   };
@@ -1130,7 +1098,6 @@ const AppContent: React.FC = () => {
           isSaving={isSaving}
           onClose={handleCloseModal} 
           onSave={handleSaveProject}
-          onPushToCloud={handlePushProjectToCloud}
           onDelete={handleDeleteProject}
           onCopy={handleCopyProject}
           onRerun={handleRerunAutomation}
