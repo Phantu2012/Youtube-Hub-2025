@@ -573,7 +573,15 @@ const AppContent: React.FC = () => {
         throw new Error("User not logged in");
     }
 
-    // Step 1: Prepare and add the basic channel data.
+    // Prepare a "clean" version of the default automation steps to prevent Firestore serialization issues.
+    const cleanSteps = JSON.parse(JSON.stringify(DEFAULT_AUTOMATION_STEPS));
+    const finalAutomationSteps = cleanSteps.map((step: any) => ({
+        ...step,
+        settings: step.settings || [],
+        enabled: typeof step.enabled === 'boolean' ? step.enabled : true,
+    }));
+
+    // Create the full channel payload in one go.
     const newChannelPayload = {
         ...newChannelData,
         ownerId: user.uid,
@@ -581,27 +589,12 @@ const AppContent: React.FC = () => {
         memberIds: [user.uid],
         ideas: [],
         dream100Videos: [],
-        // automationSteps are intentionally omitted from the initial creation.
+        automationSteps: finalAutomationSteps,
     };
     
     try {
-        const newChannelDoc = await db.collection('users').doc(user.uid).collection('channels').add(newChannelPayload);
-
-        // Step 2: Prepare a "clean" version of the default automation steps.
-        // This ensures the data is a simple, serializable object without any `undefined` values,
-        // which is a robust way to prevent Firestore from rejecting the payload.
-        const cleanSteps = JSON.parse(JSON.stringify(DEFAULT_AUTOMATION_STEPS));
-        const finalAutomationSteps = cleanSteps.map((step: any) => ({
-            ...step,
-            settings: step.settings || [], // Ensure settings array exists
-            enabled: typeof step.enabled === 'boolean' ? step.enabled : true, // Ensure enabled is a boolean
-        }));
-        
-        // Step 3: Update the new channel with the complex automation steps data.
-        await newChannelDoc.update({
-            automationSteps: finalAutomationSteps
-        });
-
+        // Use a single atomic `add` operation to create the channel document.
+        await db.collection('users').doc(user.uid).collection('channels').add(newChannelPayload);
         showToast(t('toasts.channelAdded'), 'success');
     } catch (error) {
         console.error("Error adding channel:", error);
@@ -1067,7 +1060,7 @@ const AppContent: React.FC = () => {
           />
         )}
         {activeView === 'admin' && user?.isAdmin && (
-            <AdminPanel showToast={showToast} />
+            <AdminPanel showToast={showToast} user={user} />
         )}
       </main>
       

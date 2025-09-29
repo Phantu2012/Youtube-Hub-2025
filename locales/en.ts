@@ -1,3 +1,4 @@
+
 export default {
   "common": {
     "cancel": "Cancel",
@@ -118,6 +119,7 @@ export default {
     "userManagementTab": "User Management",
     "promptManagementTab": "Global Prompts",
     "setupGuideTab": "Setup Guide",
+    "systemCheckTab": "System Check",
     "administrator": "Administrator",
     "loadingUsers": "Loading users...",
     "user": "User",
@@ -157,9 +159,38 @@ export default {
         "step5": "Set your 'status' to 'active' and grant yourself a long 'expiresAt' date.",
         "step6": "Reload this application. You should now see the Admin panel."
     },
-    "setupGuide": {
-        "step4Title": "Create Firestore Index for Sharing",
-        "step4Desc": "To enable channel sharing, a specific database index is required. If the app shows an error about a missing index, Firebase provides a direct link to create it automatically. Click the link, then click \"Create\" in the Firebase console. This index is for the 'channels' collection group on the 'memberIds' field."
+    "systemCheck": {
+      "title": "System Health Check",
+      "description": "This tool automatically checks for common configuration issues. All checks should be 'OK' for the app to function correctly.",
+      "firebaseConfig": {
+        "title": "Firebase Configuration",
+        "ok": "Firebase configuration is loaded correctly.",
+        "error": "Firebase configuration appears to be missing or invalid. Please check your firebaseConfig.ts file."
+      },
+      "firestore": {
+        "title": "Firestore Database Connectivity",
+        "ok": "Successfully connected to the Firestore database.",
+        "warning": "Connected, but security rules may be too restrictive. Admin actions might fail.",
+        "error": "Could not connect to Firestore. The database may not be created or is not accessible.",
+        "resolution": "Go to Firestore"
+      },
+      "adminStatus": {
+        "title": "Admin Account Status",
+        "ok": "Your account has administrator privileges.",
+        "error": "Your account does not have administrator privileges. You need to set 'isAdmin: true' on your user document in Firestore.",
+        "resolution": "Go to Your User Document"
+      },
+      "apiKeys": {
+        "title": "API Keys",
+        "ok": "YouTube API key is present in local settings.",
+        "warning": "YouTube API key is missing. Features like fetching video stats will not work until it is set in the main settings."
+      },
+      "sharingIndex": {
+        "title": "Database Index for Sharing",
+        "ok": "The required Firestore index for channel sharing is present.",
+        "error": "The Firestore index required for channel sharing is missing. Users will not be able to see channels shared with them.",
+        "resolution": "Create Index"
+      }
     }
   },
    "adminPrompts": {

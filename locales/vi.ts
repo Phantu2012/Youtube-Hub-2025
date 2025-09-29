@@ -1,3 +1,4 @@
+
 export default {
   "common": {
     "cancel": "Hủy",
@@ -118,6 +119,7 @@ export default {
     "userManagementTab": "Quản lý Người dùng",
     "promptManagementTab": "Câu lệnh Chung",
     "setupGuideTab": "Hướng dẫn Cài đặt",
+    "systemCheckTab": "Kiểm tra Hệ thống",
     "administrator": "Quản trị viên",
     "loadingUsers": "Đang tải danh sách người dùng...",
     "user": "Người dùng",
@@ -157,9 +159,38 @@ export default {
         "step5": "Đặt 'status' của bạn thành 'active' và cấp cho mình một ngày 'expiresAt' thật xa.",
         "step6": "Tải lại ứng dụng này. Bây giờ bạn sẽ thấy bảng điều khiển Admin."
     },
-    "setupGuide": {
-        "step4Title": "Tạo Index Firestore cho Chia sẻ",
-        "step4Desc": "Để bật tính năng chia sẻ kênh, cần có một chỉ mục cơ sở dữ liệu. Nếu ứng dụng báo lỗi thiếu chỉ mục, Firebase sẽ cung cấp một liên kết trực tiếp để tạo tự động. Hãy nhấp vào liên kết đó, sau đó nhấp vào \"Tạo\" trong bảng điều khiển Firebase. Chỉ mục này dành cho nhóm collection 'channels' trên trường 'memberIds'."
+    "systemCheck": {
+      "title": "Kiểm tra Tình trạng Hệ thống",
+      "description": "Công cụ này tự động kiểm tra các sự cố cấu hình phổ biến. Tất cả các mục nên ở trạng thái 'OK' để ứng dụng hoạt động chính xác.",
+      "firebaseConfig": {
+        "title": "Cấu hình Firebase",
+        "ok": "Cấu hình Firebase đã được tải chính xác.",
+        "error": "Cấu hình Firebase có vẻ bị thiếu hoặc không hợp lệ. Vui lòng kiểm tra tệp firebaseConfig.ts của bạn."
+      },
+      "firestore": {
+        "title": "Kết nối Cơ sở dữ liệu Firestore",
+        "ok": "Đã kết nối thành công đến cơ sở dữ liệu Firestore.",
+        "warning": "Đã kết nối, nhưng quy tắc bảo mật có thể quá nghiêm ngặt. Các hành động của quản trị viên có thể thất bại.",
+        "error": "Không thể kết nối đến Firestore. Cơ sở dữ liệu có thể chưa được tạo hoặc không thể truy cập.",
+        "resolution": "Đi đến Firestore"
+      },
+      "adminStatus": {
+        "title": "Trạng thái Tài khoản Admin",
+        "ok": "Tài khoản của bạn có quyền quản trị viên.",
+        "error": "Tài khoản của bạn không có quyền quản trị viên. Bạn cần đặt 'isAdmin: true' trên tài liệu người dùng của mình trong Firestore.",
+        "resolution": "Đi đến Tài liệu Người dùng"
+      },
+      "apiKeys": {
+        "title": "Khóa API",
+        "ok": "Khóa API YouTube đã có trong cài đặt cục bộ.",
+        "warning": "Thiếu khóa API YouTube. Các tính năng như lấy thống kê video sẽ không hoạt động cho đến khi được thiết lập trong cài đặt chính."
+      },
+      "sharingIndex": {
+        "title": "Chỉ mục Cơ sở dữ liệu cho Chia sẻ",
+        "ok": "Chỉ mục Firestore cần thiết cho việc chia sẻ kênh đã có.",
+        "error": "Thiếu chỉ mục Firestore cần thiết cho việc chia sẻ kênh. Người dùng sẽ không thấy được các kênh được chia sẻ với họ.",
+        "resolution": "Tạo Chỉ mục"
+      }
     }
   },
   "adminPrompts": {
