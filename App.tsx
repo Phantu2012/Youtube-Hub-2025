@@ -50,6 +50,29 @@ const DEV_DEFAULT_API_KEYS: ApiKeys = {
   youtube: 'YOUR_YOUTUBE_API_KEY_HERE',
 };
 
+// A base template for a project to ensure no fields are undefined when loaded from Firestore.
+const DEFAULT_PROJECT_DATA: Omit<Project, 'id' | 'channelId'> = {
+    projectName: '',
+    publishDateTime: new Date().toISOString().slice(0, 16),
+    status: ProjectStatus.Idea,
+    videoTitle: '',
+    thumbnailData: '',
+    description: '',
+    tags: [],
+    pinnedComment: '',
+    communityPost: '',
+    facebookPost: '',
+    youtubeLink: '',
+    script: '',
+    thumbnailPrompt: '',
+    voiceoverScript: '',
+    promptTable: '',
+    timecodeMap: '',
+    metadata: '',
+    seoMetadata: '',
+    visualPrompts: '',
+};
+
 
 const AppContent: React.FC = () => {
   const [projectsFromListeners, setProjectsFromListeners] = useState<Record<string, Project[]>>({});
@@ -187,25 +210,6 @@ const AppContent: React.FC = () => {
       }
     });
     return () => unsubscribe();
-  }, [showToast, t]);
-
-  useEffect(() => {
-    if (IS_DEV_MODE) return;
-    
-    const checkRedirectResult = async () => {
-        try {
-            await auth.getRedirectResult();
-        } catch (error: any) {
-            console.error("Google sign-in redirect error:", error);
-            if (error.code === 'auth/operation-not-allowed' || error.code === 'auth/unauthorized-domain') {
-                setSignInError({ code: error.code, domain: window.location.hostname });
-            } else {
-                showToast(t('toasts.signInError'), 'error');
-            }
-        }
-    };
-    
-    checkRedirectResult();
   }, [showToast, t]);
   
   useEffect(() => {
@@ -430,7 +434,11 @@ const AppContent: React.FC = () => {
                     console.error(`Error fetching large data for project ${doc.id}: ${e}`);
                 }
 
+                // By spreading default data first, we ensure that any missing fields
+                // from Firestore are initialized with default empty values, preventing
+                // 'undefined' from being saved and causing a 400 error.
                 return {
+                    ...DEFAULT_PROJECT_DATA,
                     id: doc.id,
                     ...data,
                     ...largeData,
@@ -896,26 +904,10 @@ const AppContent: React.FC = () => {
   
   const handleAddNewVideo = (channelId: string) => {
     const newProjectTemplate: Omit<Project, 'id'> = {
+        ...DEFAULT_PROJECT_DATA,
         channelId: channelId,
-        projectName: '',
+        // Always set a fresh timestamp for new projects
         publishDateTime: new Date().toISOString().slice(0, 16),
-        status: ProjectStatus.Idea,
-        videoTitle: '',
-        thumbnailData: '',
-        description: '',
-        tags: [],
-        pinnedComment: '',
-        communityPost: '',
-        facebookPost: '',
-        youtubeLink: '',
-        script: '',
-        thumbnailPrompt: '',
-        voiceoverScript: '',
-        promptTable: '',
-        timecodeMap: '',
-        metadata: '',
-        seoMetadata: '',
-        visualPrompts: '',
     };
     handleOpenModal(newProjectTemplate as Project);
   };
@@ -935,10 +927,13 @@ const AppContent: React.FC = () => {
       setDbConnectionError(false);
       setSignInError(null);
       await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
-      await auth.signInWithRedirect(googleProvider);
+      await auth.signInWithPopup(googleProvider);
     } catch (error: any) {
-      console.error("Google sign-in initiation error:", error);
-      showToast(t('toasts.signInError'), 'error');
+      console.error("Google sign-in popup error:", error);
+      // Don't show an error toast if the user simply closes the popup.
+      if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+        showToast(t('toasts.signInError'), 'error');
+      }
     }
   };
   
