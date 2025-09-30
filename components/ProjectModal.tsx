@@ -85,7 +85,19 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
             visualPrompts: '',
             storage: 'local' as const,
         };
-        return { ...defaultProject, ...project };
+        
+        const initialData = { ...defaultProject, ...project };
+
+        // Validate and format the publishDateTime for the datetime-local input.
+        const date = new Date(initialData.publishDateTime);
+        if (!initialData.publishDateTime || isNaN(date.getTime())) {
+            initialData.publishDateTime = new Date().toISOString().slice(0, 16);
+        } else {
+            // Ensure it's in the correct format even if it was a valid but different string format
+            initialData.publishDateTime = date.toISOString().slice(0, 16);
+        }
+
+        return initialData;
     });
     const [stats, setStats] = useState<YouTubeStats | null>(null);
     const [history, setHistory] = useState<ViewHistoryData[]>([]);
