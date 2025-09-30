@@ -73,6 +73,26 @@ const DEFAULT_PROJECT_DATA: Omit<Project, 'id' | 'channelId'> = {
     visualPrompts: '',
 };
 
+// Helper function to recursively remove undefined properties from an object.
+// Firestore throws an error if you try to save `undefined`.
+const cleanUndefined = (obj: any): any => {
+    if (obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+    
+    if (Array.isArray(obj)) {
+        return obj.map(item => cleanUndefined(item));
+    }
+
+    const newObj: { [key: string]: any } = {};
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
+            newObj[key] = cleanUndefined(obj[key]);
+        }
+    }
+    return newObj;
+};
+
 
 const AppContent: React.FC = () => {
   const [projectsFromListeners, setProjectsFromListeners] = useState<Record<string, Project[]>>({});
@@ -505,7 +525,7 @@ const AppContent: React.FC = () => {
       results.forEach(result => {
           if (result.stats) {
               const channelDocRef = db.collection('users').doc(result.ownerId).collection('channels').doc(result.channelId);
-              batch.update(channelDocRef, { stats: result.stats });
+              batch.update(channelDocRef, cleanUndefined({ stats: result.stats }));
               statsUpdated = true;
           }
       });
@@ -573,7 +593,6 @@ const AppContent: React.FC = () => {
         throw new Error("User not logged in");
     }
 
-    // Prepare a "clean" version of the default automation steps to prevent Firestore serialization issues.
     const cleanSteps = JSON.parse(JSON.stringify(DEFAULT_AUTOMATION_STEPS));
     const finalAutomationSteps = cleanSteps.map((step: any) => ({
         ...step,
@@ -581,7 +600,6 @@ const AppContent: React.FC = () => {
         enabled: typeof step.enabled === 'boolean' ? step.enabled : true,
     }));
 
-    // Create the full channel payload in one go.
     const newChannelPayload = {
         ...newChannelData,
         ownerId: user.uid,
@@ -593,8 +611,7 @@ const AppContent: React.FC = () => {
     };
     
     try {
-        // Use a single atomic `add` operation to create the channel document.
-        await db.collection('users').doc(user.uid).collection('channels').add(newChannelPayload);
+        await db.collection('users').doc(user.uid).collection('channels').add(cleanUndefined(newChannelPayload));
         showToast(t('toasts.channelAdded'), 'success');
     } catch (error) {
         console.error("Error adding channel:", error);
@@ -609,11 +626,12 @@ const AppContent: React.FC = () => {
     const ownerId = channel.ownerId || user.uid;
     try {
         const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channel.id);
-        await channelDocRef.update({
+        const payload = {
             name: channel.name,
             dna: channel.dna,
             channelUrl: channel.channelUrl,
-        });
+        };
+        await channelDocRef.update(cleanUndefined(payload));
     } catch (error) {
         console.error("Error saving channel changes:", error);
         showToast(t('toasts.channelSaveFailed'), 'error');
@@ -626,7 +644,7 @@ const AppContent: React.FC = () => {
     try {
         const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channel.id);
         const newMemberIds = Object.keys(newMembers);
-        await channelDocRef.update({ members: newMembers, memberIds: newMemberIds });
+        await channelDocRef.update(cleanUndefined({ members: newMembers, memberIds: newMemberIds }));
     } catch (error) {
         console.error("Error updating channel members:", error);
         showToast(t('toasts.updateMembersFailed'), 'error');
@@ -667,7 +685,7 @@ const AppContent: React.FC = () => {
     const ownerId = channel.ownerId || user.uid;
     try {
         const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channelId);
-        await channelDocRef.update({ dream100Videos: updatedVideos });
+        await channelDocRef.update(cleanUndefined({ dream100Videos: updatedVideos }));
     } catch (error) {
         console.error("Error updating Dream 100:", error);
         showToast(t('toasts.dream100UpdateFailed'), 'error');
@@ -681,7 +699,7 @@ const AppContent: React.FC = () => {
     const ownerId = channel.ownerId || user.uid;
     try {
         const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channelId);
-        await channelDocRef.update({ ideas: updatedIdeas });
+        await channelDocRef.update(cleanUndefined({ ideas: updatedIdeas }));
     } catch (error) {
         console.error("Error updating Idea Bank:", error);
         showToast(t('toasts.ideaBankUpdateFailed'), 'error');
@@ -695,7 +713,7 @@ const AppContent: React.FC = () => {
     const ownerId = channel.ownerId || user.uid;
     try {
         const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channelId);
-        await channelDocRef.set({ automationSteps: updatedSteps }, { merge: true });
+        await channelDocRef.set(cleanUndefined({ automationSteps: updatedSteps }), { merge: true });
     } catch (error: any) {
         console.error("Error saving automation steps:", error);
         showToast(t('toasts.automationStepsSaveFailed'), 'error');
@@ -759,14 +777,18 @@ const AppContent: React.FC = () => {
             tags: mainData.tags || [],
             publishDateTime: firebase.firestore.Timestamp.fromDate(new Date(projectToSave.publishDateTime)),
         };
+        
+        const cleanedProjectData = cleanUndefined(projectDataToSave);
+        const cleanedLargeData = cleanUndefined(largeData);
+
 
         if (projectToSave.id && !isMigratingFromLocal) { // Update existing cloud project
             const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectToSave.id);
             const dataDocRef = projectDocRef.collection('data').doc('content');
             
             const batch = db.batch();
-            batch.update(projectDocRef, projectDataToSave);
-            batch.set(dataDocRef, largeData, { merge: true });
+            batch.update(projectDocRef, cleanedProjectData);
+            batch.set(dataDocRef, cleanedLargeData, { merge: true });
             await batch.commit();
             
             showToast(t('toasts.projectUpdated'), 'success');
@@ -776,8 +798,8 @@ const AppContent: React.FC = () => {
             const dataDocRef = newProjectRef.collection('data').doc('content');
 
             const batch = db.batch();
-            batch.set(newProjectRef, projectDataToSave);
-            batch.set(dataDocRef, largeData);
+            batch.set(newProjectRef, cleanedProjectData);
+            batch.set(dataDocRef, cleanedLargeData);
             await batch.commit();
             
             if (isMigratingFromLocal) {
