@@ -24,10 +24,20 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
         return num.toLocaleString(language);
     };
     
-    const localeDate = new Date(project.publishDateTime).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
+    const getLocaleDate = () => {
+      if (!project.publishDateTime) {
+        return '—';
+      }
+      const date = new Date(project.publishDateTime);
+      if (isNaN(date.getTime())) {
+        return '—';
+      }
+      return date.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
+    };
+    const localeDate = getLocaleDate();
     
     const storageType = project.storage || (project.id.startsWith('local_') ? 'local' : 'cloud');
 
