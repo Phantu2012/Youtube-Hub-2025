@@ -537,7 +537,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                         </div>
                         <div>
                             <div className="flex justify-between items-center mb-1">
-                                <label className="font-semibold flex items-center gap-2"><FileText size={16} /> {t('projectModal.script')}</label>
+                                <label className="font-semibold flex items-center gap-2"><Wand2 size={16} /> {t('projectModal.script')}</label>
                                 <CopyButton textToCopy={formData.script} />
                             </div>
                             <textarea name="script" value={formData.script} onChange={handleInputChange} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" placeholder={t('projectModal.scriptPlaceholder')}/>

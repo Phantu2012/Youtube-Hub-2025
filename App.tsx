@@ -96,20 +96,6 @@ const cleanUndefined = (obj: any): any => {
 
 
 const AppContent: React.FC = () => {
-  // Helper function to format a Date object into 'YYYY-MM-DDTHH:mm' string for datetime-local input,
-  // respecting the user's local timezone.
-  const formatForDateTimeLocal = (date: Date): string => {
-    if (!(date instanceof Date) || isNaN(date.getTime())) {
-      // Fallback for invalid dates
-      date = new Date();
-    }
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
   const [projectsFromListeners, setProjectsFromListeners] = useState<Record<string, Project[]>>({});
   const [localProjects, setLocalProjects] = useLocalStorage<Project[]>('local-projects', []);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -456,7 +442,7 @@ const AppContent: React.FC = () => {
             const channelProjectsPromises = snapshot.docs.map(async (doc) => {
                 const data = doc.data();
                 const publishDateTime = data.publishDateTime instanceof firebase.firestore.Timestamp
-                    ? formatForDateTimeLocal(data.publishDateTime.toDate())
+                    ? data.publishDateTime.toDate().toISOString()
                     : data.publishDateTime;
                 
                 let largeData = {};
@@ -847,7 +833,7 @@ const AppContent: React.FC = () => {
       const newProject: Omit<Project, 'id'> = {
           ...projectData,
           projectName: `${projectData.projectName} (Copy)`,
-          publishDateTime: new Date().toISOString().slice(0, 16),
+          publishDateTime: new Date().toISOString(),
           status: ProjectStatus.Idea,
           youtubeLink: '',
       };
@@ -936,7 +922,7 @@ const AppContent: React.FC = () => {
     const newProjectTemplate: Omit<Project, 'id'> = {
         ...DEFAULT_PROJECT_DATA,
         channelId: channelId,
-        publishDateTime: formatForDateTimeLocal(new Date()),
+        publishDateTime: new Date().toISOString(),
     };
     handleOpenModal(newProjectTemplate as Project);
   };
@@ -944,7 +930,7 @@ const AppContent: React.FC = () => {
   const handleRerunAutomation = (project: Project) => {
     const rerunData = {
         targetTitle: project.projectName || project.videoTitle,
-        viralTranscript: project.script
+        viralTranscript: '' // Script is no longer stored in the project object
     };
     localStorage.setItem('rerun-data', JSON.stringify(rerunData));
     setActiveView('automation');

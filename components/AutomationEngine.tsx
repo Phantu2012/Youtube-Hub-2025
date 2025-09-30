@@ -527,8 +527,6 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
         const promptsMatch = creativeOutput.match(/\[THUMBNAIL_PROMPTS\]\s*([\s\S]*)/);
         const thumbnailPromptOutput = promptsMatch ? promptsMatch[1].trim().split('\n')[0].replace(/^\d+\.\s*/, '') : '';
         
-        const scriptOutput = stepOutputs[2] || '';
-        
         const distributionOutput = stepOutputs[5] || '';
         const descriptionMatch = distributionOutput.match(/\[YT_DESCRIPTION\]\s*([\s\S]*?)(?=\s*\[PINNED_COMMENT\]|$)/);
         const description = descriptionMatch ? descriptionMatch[1].trim() : t('automation.defaultDescription');
@@ -565,7 +563,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
             communityPost: communityPost,
             facebookPost: facebookPost,
             youtubeLink: '',
-            script: scriptOutput,
+            script: creativeOutput, // Repurpose script field for Step 4 analysis output
             thumbnailPrompt: thumbnailPromptOutput,
             voiceoverScript: voiceoverScriptOutput,
             visualPrompts: visualPromptsOutput,
