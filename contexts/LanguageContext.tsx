@@ -1,7 +1,7 @@
 import React, { createContext, useState, useCallback, ReactNode } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import enData from '../locales/en.ts';
-import viData from '../locales/vi.ts';
+import enData from '../locales/en';
+import viData from '../locales/vi';
 
 type Language = 'en' | 'vi';
 

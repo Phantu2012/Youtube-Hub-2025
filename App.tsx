@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -53,7 +54,7 @@ const DEV_DEFAULT_API_KEYS: ApiKeys = {
 // A base template for a project to ensure no fields are undefined when loaded from Firestore.
 const DEFAULT_PROJECT_DATA: Omit<Project, 'id' | 'channelId'> = {
     projectName: '',
-    publishDateTime: new Date().toISOString().slice(0, 16),
+    publishDateTime: '', // Will be set on creation/modal open
     status: ProjectStatus.Idea,
     videoTitle: '',
     thumbnailData: '',
@@ -95,6 +96,20 @@ const cleanUndefined = (obj: any): any => {
 
 
 const AppContent: React.FC = () => {
+  // Helper function to format a Date object into 'YYYY-MM-DDTHH:mm' string for datetime-local input,
+  // respecting the user's local timezone.
+  const formatForDateTimeLocal = (date: Date): string => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      // Fallback for invalid dates
+      date = new Date();
+    }
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
   const [projectsFromListeners, setProjectsFromListeners] = useState<Record<string, Project[]>>({});
   const [localProjects, setLocalProjects] = useLocalStorage<Project[]>('local-projects', []);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -440,8 +455,8 @@ const AppContent: React.FC = () => {
         const listener = projectsCollectionRef.onSnapshot(async (snapshot) => {
             const channelProjectsPromises = snapshot.docs.map(async (doc) => {
                 const data = doc.data();
-                const publishDateTime = data.publishDateTime instanceof firebase.firestore.Timestamp 
-                    ? data.publishDateTime.toDate().toISOString().slice(0, 16) 
+                const publishDateTime = data.publishDateTime instanceof firebase.firestore.Timestamp
+                    ? formatForDateTimeLocal(data.publishDateTime.toDate())
                     : data.publishDateTime;
                 
                 let largeData = {};
@@ -921,8 +936,7 @@ const AppContent: React.FC = () => {
     const newProjectTemplate: Omit<Project, 'id'> = {
         ...DEFAULT_PROJECT_DATA,
         channelId: channelId,
-        // Always set a fresh timestamp for new projects
-        publishDateTime: new Date().toISOString().slice(0, 16),
+        publishDateTime: formatForDateTimeLocal(new Date()),
     };
     handleOpenModal(newProjectTemplate as Project);
   };

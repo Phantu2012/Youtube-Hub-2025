@@ -32,7 +32,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
       if (isNaN(date.getTime())) {
         return '—';
       }
-      return date.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
+      // FIX: Use a more explicit and common date format for Vietnamese.
+      if (language === 'vi') {
+        return `${date.getDate()} thg ${date.getMonth() + 1}`;
+      }
+      return date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
       });
