@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { db, firebaseConfig, firebase } from '../firebase';
 import { useTranslation } from '../hooks/useTranslation';
-import { Loader, CheckCircle, XCircle, AlertTriangle, ExternalLink, User } from 'lucide-react';
+import { Loader, CheckCircle, XCircle, AlertTriangle, ExternalLink } from 'lucide-react';
+import { User } from '../types';
 
 interface SystemCheckPanelProps {
     user: User;

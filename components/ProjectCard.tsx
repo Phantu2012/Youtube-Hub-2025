@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { Project } from '../types';
 import { getStatusOptions, STATUS_COLORS } from '../constants';
@@ -25,22 +24,22 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
     };
     
     const getLocaleDateTime = () => {
-      if (!project.publishDateTime) {
-        return '—';
-      }
-      const date = new Date(project.publishDateTime);
-      if (isNaN(date.getTime())) {
+      if (!project.publishDateTime || isNaN(new Date(project.publishDateTime).getTime())) {
         return '—';
       }
       
+      const date = new Date(project.publishDateTime);
+
       if (language === 'vi') {
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const pad = (num: number) => num.toString().padStart(2, '0');
+        const day = pad(date.getDate());
+        const month = pad(date.getMonth() + 1); // getMonth() is 0-indexed
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
         return `${day}/${month} ${hours}:${minutes}`;
       }
-      // Replace comma for a cleaner look e.g. "Oct 16, 11:08 AM" -> "Oct 16 11:08 AM"
+
+      // Fallback for English
       return date.toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
