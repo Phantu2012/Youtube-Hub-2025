@@ -138,11 +138,15 @@ const AppContent: React.FC = () => {
     });
 
     projectsWithStats.sort((a: Project, b: Project) => {
-        const dateA = new Date(a.publishDateTime).getTime();
-        const dateB = new Date(b.publishDateTime).getTime();
-        if (isNaN(dateB)) return -1;
-        if (isNaN(dateA)) return 1;
-        return dateB - dateA;
+        try {
+            const dateA = new Date(a.publishDateTime).getTime();
+            const dateB = new Date(b.publishDateTime).getTime();
+            if (isNaN(dateB)) return -1;
+            if (isNaN(dateA)) return 1;
+            return dateB - dateA;
+        } catch (e) {
+            return 0;
+        }
     });
     
     return projectsWithStats as Project[];
@@ -563,11 +567,10 @@ const AppContent: React.FC = () => {
     const fetchAllStats = async () => {
         if (!apiKeys.youtube) return;
 
-        // Use the raw project sources to avoid infinite loops
         const allProjects = [...Object.values(projectsFromListeners).flat(), ...localProjects];
-        const uniqueProjectsMap = new Map((allProjects as any[]).filter(p => p && p.id).map(p => [p.id, p]));
+        const uniqueProjects = Array.from(new Map(allProjects.map(p => [p.id, p])).values());
         
-        const projectsToFetch = Array.from(uniqueProjectsMap.values()).filter(p => {
+        const projectsToFetch = uniqueProjects.filter(p => {
             if (p.status !== ProjectStatus.Published || !p.youtubeLink) return false;
             const cachedStat = projectStats[p.id];
             // Fetch if not cached, or if cache is older than 1 hour
@@ -599,12 +602,9 @@ const AppContent: React.FC = () => {
         }
     };
     
-    // Fetch stats shortly after the app loads/projects change
-    const timer = setTimeout(fetchAllStats, 2000); 
+    fetchAllStats();
 
-    return () => clearTimeout(timer);
-
-  }, [projectsFromListeners, localProjects, apiKeys.youtube, projectStats, setProjectStats]);
+  }, [projectsFromListeners, localProjects, apiKeys.youtube]);
   
   const projectsByChannel = useMemo(() => {
     return projects.reduce((acc, project) => {

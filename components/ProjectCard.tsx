@@ -22,66 +22,49 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
         return num.toLocaleString(language);
     };
     
+    // FIX: The `publishDateTime` property is a string, so the check for `instanceof Date` on an object was causing a type error.
+    // The logic has been simplified to handle only string or number types, which aligns with how data is loaded and stored in the app state.
     const getLocaleDateTime = () => {
-      const { publishDateTime } = project;
-      let date: Date;
+        const { publishDateTime, projectName } = project;
+        let date: Date | null = null;
+  
+        if (!publishDateTime) {
+            return '—';
+        }
+  
+        try {
+            if (typeof publishDateTime === 'string' || typeof publishDateTime === 'number') {
+                const d = new Date(publishDateTime);
+                if (!isNaN(d.getTime())) {
+                    date = d;
+                }
+            }
+        } catch (e) {
+            console.error("Error parsing date for project:", projectName, publishDateTime, e);
+            return '—';
+        }
 
-      if (!publishDateTime) {
-          return '—';
-      }
-
-      // FIX: Re-ordered type checks to correctly handle various data types for dates,
-      // resolving `instanceof` errors on non-object types. This also resolves a possibly
-      // related but misleading error about `publishDateTime` being null.
-      if (typeof publishDateTime === 'string') {
-          date = new Date(publishDateTime);
-      } 
-      // It might be a number (milliseconds)
-      else if (typeof publishDateTime === 'number') {
-        date = new Date(publishDateTime);
-      }
-      else if (typeof publishDateTime === 'object' && publishDateTime !== null) {
-          // It might already be a Date object
-          if (publishDateTime instanceof Date) {
-              date = publishDateTime;
-          }
-          // It might be a Firestore Timestamp-like object
-          else if ('toDate' in publishDateTime && typeof (publishDateTime as any).toDate === 'function') {
-              date = (publishDateTime as any).toDate();
-          } else {
-              console.error("Unsupported object date type for project:", project.projectName, publishDateTime);
-              return '—';
-          }
-      }
-      else {
-          console.error("Unsupported date type for project:", project.projectName, typeof publishDateTime);
-          return '—';
-      }
-
-
-      // Check for invalid date after parsing attempt
-      if (isNaN(date.getTime())) {
-          console.error("Invalid date for project:", project.projectName, publishDateTime);
-          return '—';
-      }
-      
-      if (language === 'vi') {
-        const pad = (num: number) => num.toString().padStart(2, '0');
-        const day = pad(date.getDate());
-        const month = pad(date.getMonth() + 1);
-        const hours = pad(date.getHours());
-        const minutes = pad(date.getMinutes());
-        return `${day}/${month} ${hours}:${minutes}`;
-      }
-
-      // Fallback for English
-      return date.toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      }).replace(',', '');
+        if (!date || isNaN(date.getTime())) {
+            console.error("Invalid or unparsable date for project:", projectName, "Original value:", publishDateTime);
+            return '—';
+        }
+        
+        if (language === 'vi') {
+            const pad = (num: number) => num.toString().padStart(2, '0');
+            const day = pad(date.getDate());
+            const month = pad(date.getMonth() + 1);
+            const hours = pad(date.getHours());
+            const minutes = pad(date.getMinutes());
+            return `${day}/${month} ${hours}:${minutes}`;
+        }
+  
+        return date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        }).replace(',', '');
     };
     const localeDateTime = getLocaleDateTime();
     
