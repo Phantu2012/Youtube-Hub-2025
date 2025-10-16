@@ -24,7 +24,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
         return num.toLocaleString(language);
     };
     
-    const getLocaleDate = () => {
+    const getLocaleDateTime = () => {
       if (!project.publishDateTime) {
         return '—';
       }
@@ -32,16 +32,24 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
       if (isNaN(date.getTime())) {
         return '—';
       }
-      // FIX: Use a more explicit and common date format for Vietnamese.
+      
       if (language === 'vi') {
-        return `${date.getDate()} thg ${date.getMonth() + 1}`;
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${day}/${month} ${hours}:${minutes}`;
       }
-      return date.toLocaleDateString('en-US', {
+      // Replace comma for a cleaner look e.g. "Oct 16, 11:08 AM" -> "Oct 16 11:08 AM"
+      return date.toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
-      });
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }).replace(',', '');
     };
-    const localeDate = getLocaleDate();
+    const localeDateTime = getLocaleDateTime();
     
     const storageType = project.storage || (project.id.startsWith('local_') ? 'local' : 'cloud');
 
@@ -82,7 +90,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
                 <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
                     <div className="flex items-center">
                         <Calendar size={14} className="mr-2" />
-                        <span>{localeDate}</span>
+                        <span>{localeDateTime}</span>
                     </div>
                     {project.stats && (
                         <div className="flex items-center space-x-3">
