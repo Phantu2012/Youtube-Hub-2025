@@ -32,28 +32,43 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
         let date: Date | null = null;
 
         try {
-            // Case 1: Firestore Timestamp object (e.g., { seconds: ..., nanoseconds: ... })
-            // FIX: Reordered null check to satisfy the compiler and prevent potential runtime error with 'in' operator.
-            if (publishDateTime !== null && typeof publishDateTime === 'object' && 'toDate' in publishDateTime && typeof (publishDateTime as any).toDate === 'function') {
-                date = (publishDateTime as any).toDate();
-            } 
-            // Case 2: ISO string or number (milliseconds from epoch)
-            else if (typeof publishDateTime === 'string' || typeof publishDateTime === 'number') {
-                const d = new Date(publishDateTime);
+            const value = publishDateTime as any;
+
+            // Case 1: It's already a valid Date object.
+            if (value instanceof Date && !isNaN(value.getTime())) {
+                date = value;
+            }
+            // Case 2: It's a string (ISO, etc.) or a number (epoch ms).
+            else if (typeof value === 'string' || typeof value === 'number') {
+                const d = new Date(value);
                 if (!isNaN(d.getTime())) {
                     date = d;
+                }
+            }
+            // Case 3: It's a Firestore-like Timestamp object.
+            else if (typeof value === 'object' && value !== null) {
+                // Check for v9/v8 .toDate() method
+                if (typeof value.toDate === 'function') {
+                    date = value.toDate();
+                }
+                // Check for serialized seconds properties
+                else if (typeof value.seconds === 'number') {
+                    date = new Date(value.seconds * 1000);
+                } else if (typeof value._seconds === 'number') {
+                     date = new Date(value._seconds * 1000);
                 }
             }
         } catch (e) {
             console.error(`Error parsing date for project "${projectName}":`, publishDateTime, e);
             return '—';
         }
-
+        
+        // Final validation and formatting
         if (!date || isNaN(date.getTime())) {
-            console.error(`Invalid or unparsable date for project "${projectName}":`, publishDateTime);
+            console.warn(`Could not parse date for project "${projectName}":`, publishDateTime);
             return '—';
         }
-        
+
         if (language === 'vi') {
             const pad = (num: number) => num.toString().padStart(2, '0');
             const day = pad(date.getDate());
