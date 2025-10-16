@@ -22,30 +22,35 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
         return num.toLocaleString(language);
     };
     
-    // FIX: The `publishDateTime` property is a string, so the check for `instanceof Date` on an object was causing a type error.
-    // The logic has been simplified to handle only string or number types, which aligns with how data is loaded and stored in the app state.
     const getLocaleDateTime = () => {
         const { publishDateTime, projectName } = project;
-        let date: Date | null = null;
-  
+
         if (!publishDateTime) {
             return '—';
         }
-  
+
+        let date: Date | null = null;
+
         try {
-            if (typeof publishDateTime === 'string' || typeof publishDateTime === 'number') {
+            // Case 1: Firestore Timestamp object (e.g., { seconds: ..., nanoseconds: ... })
+            // FIX: Reordered null check to satisfy the compiler and prevent potential runtime error with 'in' operator.
+            if (publishDateTime !== null && typeof publishDateTime === 'object' && 'toDate' in publishDateTime && typeof (publishDateTime as any).toDate === 'function') {
+                date = (publishDateTime as any).toDate();
+            } 
+            // Case 2: ISO string or number (milliseconds from epoch)
+            else if (typeof publishDateTime === 'string' || typeof publishDateTime === 'number') {
                 const d = new Date(publishDateTime);
                 if (!isNaN(d.getTime())) {
                     date = d;
                 }
             }
         } catch (e) {
-            console.error("Error parsing date for project:", projectName, publishDateTime, e);
+            console.error(`Error parsing date for project "${projectName}":`, publishDateTime, e);
             return '—';
         }
 
         if (!date || isNaN(date.getTime())) {
-            console.error("Invalid or unparsable date for project:", projectName, "Original value:", publishDateTime);
+            console.error(`Invalid or unparsable date for project "${projectName}":`, publishDateTime);
             return '—';
         }
         
