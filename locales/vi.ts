@@ -238,7 +238,7 @@ export default {
     "views": "lượt xem",
     "likes": "lượt thích",
     "comments": "bình luận",
-    "local": "Đã lưu cục bộ",
+    "local": "Đã lưu trên máy",
     "cloud": "Đã lưu trên đám mây"
   },
   "projectModal": {
@@ -585,8 +585,10 @@ export default {
     "actions": {
         "useAsMain": "Dùng làm Chủ đề chính",
         "useAsNext": "Dùng làm Chủ đề tiếp theo",
-        "delete": "Xóa"
+        "delete": "Xóa",
+        "editContent": "Sửa Nội dung"
     },
+    "contentPlaceholder": "Nhập nội dung chính hoặc ghi chú cho ý tưởng này...",
     "noIdeas": "Chưa có ý tưởng nào. Hãy thêm một ý tưởng ở trên để bắt đầu!",
     "deleteConfirm": "Bạn có chắc chắn muốn xóa ý tưởng này không?"
   },

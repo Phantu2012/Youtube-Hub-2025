@@ -263,6 +263,31 @@
     "searchPlaceholder": "Search by title...",
     "noVideos": "No Dream 100 videos found for this channel."
   },
+  "ideaBankModal": {
+    "title": "Idea Bank",
+    "addNewIdea": "Add New Idea(s)",
+    "addNewIdeaPlaceholder": "Enter one idea per line...",
+    "add": "Add",
+    "table": {
+      "title": "Title",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "notStarted": "Not Started",
+      "done": "Done",
+      "redo": "Redo"
+    },
+    "actions": {
+      "useAsMain": "Use as Main Topic",
+      "useAsNext": "Use as Next Topic",
+      "delete": "Delete",
+      "editContent": "Edit Content"
+    },
+    "contentPlaceholder": "Enter main content or notes for this idea...",
+    "noIdeas": "No ideas yet. Add one above to get started!",
+    "deleteConfirm": "Are you sure you want to delete this idea?"
+  },
   "toasts": {
     "fetchProjectsError": "Could not fetch projects.",
     "settingsSaved": "Settings saved successfully!",
@@ -307,6 +332,9 @@
     "projectExported": "Project data copied to clipboard!",
     "exportFailed": "Could not copy data to clipboard.",
     "dream100VideoSelected": "Viral video link and description have been populated.",
+    "ideaAdded": "Idea(s) added successfully!",
+    "ideaUpdated": "Idea status updated.",
+    "ideaDeleted": "Idea deleted.",
     "generated": {
       "videoTitle": "Video title generated!",
       "description": "Description generated!",

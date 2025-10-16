@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Idea, IdeaStatus, ToastMessage } from '../types';
-import { X, Plus, Trash2, Send, CornerDownLeft } from 'lucide-react';
+import { X, Plus, Trash2, Send, CornerDownLeft, FileText } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { getIdeaStatusOptions, IDEA_STATUS_COLORS } from '../constants';
 
@@ -20,16 +20,30 @@ export const IdeaBankModal: React.FC<IdeaBankModalProps> = ({ isOpen, onClose, i
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const confirmTimerRef = useRef<number | null>(null);
     const statusOptions = getIdeaStatusOptions(t);
+    const [localIdeas, setLocalIdeas] = useState(ideas);
+    const [editingContentId, setEditingContentId] = useState<string | null>(null);
+    const debounceTimeout = useRef<number | null>(null);
 
     useEffect(() => {
-        // Clear timeout on unmount
+        setLocalIdeas(ideas);
+    }, [ideas]);
+
+    useEffect(() => {
         return () => {
-            if (confirmTimerRef.current) {
-                clearTimeout(confirmTimerRef.current);
-            }
+            if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+            if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
         };
     }, []);
-
+    
+    const debouncedUpdate = (updatedIdeas: Idea[]) => {
+        if (debounceTimeout.current) {
+            clearTimeout(debounceTimeout.current);
+        }
+        debounceTimeout.current = window.setTimeout(() => {
+            onUpdateIdeas(updatedIdeas);
+            showToast(t('toasts.ideaUpdated'), 'info');
+        }, 1000);
+    };
 
     const handleAddIdeas = () => {
         const titles = newIdeaInput.split('\n').map(t => t.trim()).filter(Boolean);
@@ -41,19 +55,28 @@ export const IdeaBankModal: React.FC<IdeaBankModalProps> = ({ isOpen, onClose, i
             status: IdeaStatus.NotStarted
         }));
 
-        const updatedIdeas = [...ideas, ...newIdeas];
+        const updatedIdeas = [...localIdeas, ...newIdeas];
+        setLocalIdeas(updatedIdeas);
         onUpdateIdeas(updatedIdeas);
         setNewIdeaInput('');
         showToast(t('toasts.ideaAdded'), 'success');
     };
 
     const handleStatusChange = (ideaId: string, newStatus: IdeaStatus) => {
-        const updatedIdeas = ideas.map(idea =>
+        const updatedIdeas = localIdeas.map(idea =>
             idea.id === ideaId ? { ...idea, status: newStatus } : idea
         );
-        onUpdateIdeas(updatedIdeas);
-        showToast(t('toasts.ideaUpdated'), 'info');
+        setLocalIdeas(updatedIdeas);
+        debouncedUpdate(updatedIdeas);
     };
+    
+    const handleContentChange = (ideaId: string, content: string) => {
+        const updatedIdeas = localIdeas.map(idea =>
+            idea.id === ideaId ? { ...idea, content: content } : idea
+        );
+        setLocalIdeas(updatedIdeas);
+        debouncedUpdate(updatedIdeas);
+    }
     
     const handleDeleteClick = (ideaId: string) => {
         if (confirmTimerRef.current) {
@@ -61,17 +84,16 @@ export const IdeaBankModal: React.FC<IdeaBankModalProps> = ({ isOpen, onClose, i
         }
 
         if (confirmDeleteId === ideaId) {
-            // Confirmed deletion on second click
-            const updatedIdeas = ideas.filter(idea => idea.id !== ideaId);
+            const updatedIdeas = localIdeas.filter(idea => idea.id !== ideaId);
+            setLocalIdeas(updatedIdeas);
             onUpdateIdeas(updatedIdeas);
             showToast(t('toasts.ideaDeleted'), 'info');
             setConfirmDeleteId(null);
         } else {
-            // First click, ask for confirmation
             setConfirmDeleteId(ideaId);
             confirmTimerRef.current = window.setTimeout(() => {
                 setConfirmDeleteId(null);
-            }, 4000); // Reset after 4 seconds
+            }, 4000);
         }
     };
 
@@ -108,39 +130,59 @@ export const IdeaBankModal: React.FC<IdeaBankModalProps> = ({ isOpen, onClose, i
                 </div>
 
                 <div className="flex-grow overflow-y-auto">
-                    {ideas.length === 0 ? (
+                    {localIdeas.length === 0 ? (
                         <div className="text-center p-12">
                             <p className="font-semibold text-lg">{t('ideaBankModal.noIdeas')}</p>
                         </div>
                     ) : (
                         <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {ideas.map(idea => (
-                                <div key={idea.id} className="p-4 flex items-center justify-between hover:bg-light-bg/50 dark:hover:bg-dark-bg/50">
-                                    <div className="flex-1 font-medium mr-4">{idea.title}</div>
-                                    <div className="flex items-center gap-4">
-                                        <select
-                                            value={idea.status}
-                                            onChange={(e) => handleStatusChange(idea.id, e.target.value as IdeaStatus)}
-                                            className={`text-xs p-1.5 rounded-md text-white border-none ${IDEA_STATUS_COLORS[idea.status]}`}
-                                        >
-                                            {statusOptions.map(opt => (
-                                                <option key={opt.value} value={opt.value} className="bg-light-card dark:bg-dark-card text-light-text dark:text-dark-text">{opt.label}</option>
-                                            ))}
-                                        </select>
-                                        <button onClick={() => onSelectAsMain(idea.title)} title={t('ideaBankModal.actions.useAsMain')} className="p-2 text-gray-500 hover:text-green-500"><Send size={16} /></button>
-                                        <button onClick={() => onSelectAsNext(idea.title)} title={t('ideaBankModal.actions.useAsNext')} className="p-2 text-gray-500 hover:text-blue-500"><CornerDownLeft size={16} /></button>
-                                        <button 
-                                            onClick={() => handleDeleteClick(idea.id)} 
-                                            title={confirmDeleteId === idea.id ? t('ideaBankModal.deleteConfirm') : t('ideaBankModal.actions.delete')} 
-                                            className={`p-2 rounded-md transition-colors ${
-                                                confirmDeleteId === idea.id 
-                                                ? 'bg-red-500 text-white' 
-                                                : 'text-gray-500 hover:text-red-500 hover:bg-red-500/10'
-                                            }`}>
-                                            <Trash2 size={16} />
-                                        </button>
+                            {localIdeas.map(idea => (
+                                <React.Fragment key={idea.id}>
+                                    <div className="p-4 flex items-center justify-between hover:bg-light-bg/50 dark:hover:bg-dark-bg/50">
+                                        <div className="flex-1 font-medium mr-4">{idea.title}</div>
+                                        <div className="flex items-center gap-2 md:gap-4">
+                                            <button 
+                                                onClick={() => setEditingContentId(editingContentId === idea.id ? null : idea.id)} 
+                                                title={t('ideaBankModal.actions.editContent')} 
+                                                className={`p-2 rounded-md transition-colors ${editingContentId === idea.id ? 'bg-blue-500/10 text-blue-500' : 'text-gray-500 hover:text-blue-500'}`}
+                                            >
+                                                <FileText size={16} />
+                                            </button>
+                                            <select
+                                                value={idea.status}
+                                                onChange={(e) => handleStatusChange(idea.id, e.target.value as IdeaStatus)}
+                                                className={`text-xs p-1.5 rounded-md text-white border-none ${IDEA_STATUS_COLORS[idea.status]}`}
+                                            >
+                                                {statusOptions.map(opt => (
+                                                    <option key={opt.value} value={opt.value} className="bg-light-card dark:bg-dark-card text-light-text dark:text-dark-text">{opt.label}</option>
+                                                ))}
+                                            </select>
+                                            <button onClick={() => onSelectAsMain(idea.title)} title={t('ideaBankModal.actions.useAsMain')} className="p-2 text-gray-500 hover:text-green-500"><Send size={16} /></button>
+                                            <button onClick={() => onSelectAsNext(idea.title)} title={t('ideaBankModal.actions.useAsNext')} className="p-2 text-gray-500 hover:text-blue-500"><CornerDownLeft size={16} /></button>
+                                            <button 
+                                                onClick={() => handleDeleteClick(idea.id)} 
+                                                title={confirmDeleteId === idea.id ? t('ideaBankModal.deleteConfirm') : t('ideaBankModal.actions.delete')} 
+                                                className={`p-2 rounded-md transition-colors ${
+                                                    confirmDeleteId === idea.id 
+                                                    ? 'bg-red-500 text-white' 
+                                                    : 'text-gray-500 hover:text-red-500 hover:bg-red-500/10'
+                                                }`}>
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
+                                     {editingContentId === idea.id && (
+                                        <div className="px-4 pb-4 bg-light-bg/50 dark:bg-dark-bg/50">
+                                            <textarea
+                                                value={idea.content || ''}
+                                                onChange={(e) => handleContentChange(idea.id, e.target.value)}
+                                                placeholder={t('ideaBankModal.contentPlaceholder')}
+                                                rows={5}
+                                                className="w-full p-2 text-sm bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary focus:border-primary"
+                                            />
+                                        </div>
+                                    )}
+                                </React.Fragment>
                             ))}
                         </div>
                     )}

@@ -585,8 +585,10 @@ export default {
     "actions": {
         "useAsMain": "Use as Main Topic",
         "useAsNext": "Use as Next Topic",
-        "delete": "Delete"
+        "delete": "Delete",
+        "editContent": "Edit Content"
     },
+    "contentPlaceholder": "Enter main content or notes for this idea...",
     "noIdeas": "No ideas yet. Add one above to get started!",
     "deleteConfirm": "Are you sure you want to delete this idea?"
   },

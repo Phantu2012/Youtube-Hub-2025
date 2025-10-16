@@ -61,23 +61,14 @@ const TabButton: React.FC<{
 
 export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, apiKeys, selectedProvider, selectedModel, isSaving, onClose, onSave, onDelete, onCopy, onRerun, onMove, showToast }) => {
     const { t, language } = useTranslation();
-    const [activeTab, setActiveTab] = useState<ModalTab>('content');
+    const [activeTab, setActiveTab] = useState<ModalTab>('publishing');
     
-    // Helper to format a Date object into 'YYYY-MM-DDTHH:mm' for datetime-local input
-    const formatForDateTimeLocal = (date: Date): string => {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
-
-    const [formData, setFormData] = useState<Project | Omit<Project, 'id'>>(() => {
-        const defaultProject = {
+    const [formData, setFormData] = useState<Project>(() => {
+        const initialData = {
+            id: `local_${Date.now()}`,
             channelId: '',
             projectName: '',
-            publishDateTime: formatForDateTimeLocal(new Date()),
+            publishDateTime: new Date().toISOString(),
             status: ProjectStatus.Idea,
             videoTitle: '',
             thumbnailData: '',
@@ -96,23 +87,17 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
             seoMetadata: '',
             visualPrompts: '',
             storage: 'local' as const,
+            ...project,
         };
         
-        const initialData = { ...defaultProject, ...project };
-
-        // FIX: Use a robust formatting function that respects local time.
-        // The previous logic using toISOString() could lead to timezone errors.
         const date = new Date(initialData.publishDateTime);
-        if (!initialData.publishDateTime || isNaN(date.getTime())) {
-            // If the date is invalid, default to the current local date and time.
-            initialData.publishDateTime = formatForDateTimeLocal(new Date());
-        } else {
-            // If the date is valid, ensure it is formatted correctly for the input.
-            initialData.publishDateTime = formatForDateTimeLocal(date);
+         if (isNaN(date.getTime())) {
+            initialData.publishDateTime = new Date().toISOString();
         }
 
         return initialData;
     });
+
     const [stats, setStats] = useState<YouTubeStats | null>(null);
     const [history, setHistory] = useState<ViewHistoryData[]>([]);
     const [isLoadingStats, setIsLoadingStats] = useState(false);
@@ -470,9 +455,17 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
         }
     };
 
+    const formatForDateTimeLocal = (isoString: string) => {
+        if (!isoString || isNaN(new Date(isoString).getTime())) {
+            return '';
+        }
+        const date = new Date(isoString);
+        return new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    };
+
     if (!project) return null;
     
-    const isNewProject = !('id' in project) || !project.id;
+    const isNewProject = !('id' in project) || !project.id.startsWith('local_');
     const storageType = formData.storage || (project.id && !project.id.startsWith('local_') ? 'cloud' : 'local');
 
     const GenerateButton = ({ field }: { field: 'videoTitle' | 'description' | 'tags' | 'thumbnailPrompt' }) => (
@@ -584,7 +577,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                     <div className="space-y-4">
                         <div>
                             <label className="font-semibold flex items-center gap-2">{t('projectModal.publishDate')}</label>
-                            <input type="datetime-local" name="publishDateTime" value={formData.publishDateTime} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" required />
+                            <input type="datetime-local" name="publishDateTime" value={formatForDateTimeLocal(formData.publishDateTime)} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" required />
                         </div>
                         <div>
                             <label className="font-semibold">{t('projectModal.status')}</label>
@@ -866,8 +859,14 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                                 <div className="flex gap-4">
                                     <button type="button" onClick={onClose} disabled={isSaving} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50">{t('common.cancel')}</button>
                                     <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:bg-opacity-70 disabled:cursor-wait">
-                                        {isSaving ? <Loader size={16} className="animate-spin" /> : <Save size={16} />} 
-                                        {isSaving ? t('projectModal.saving') : t('projectModal.save')}
+                                        {isSaving 
+                                            ? <Loader size={16} className="animate-spin" /> 
+                                            : storageType === 'local' ? <UploadCloud size={16} /> : <Save size={16} />
+                                        } 
+                                        {isSaving 
+                                            ? t('projectModal.saving') 
+                                            : storageType === 'local' ? t('projectModal.saveToCloud') : t('projectModal.save')
+                                        }
                                     </button>
                                 </div>
                             </div>

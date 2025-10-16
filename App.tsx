@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -723,8 +724,30 @@ const AppContent: React.FC = () => {
 
 
   const handleSaveProject = (projectToSave: Project) => {
+    // If it's a local project without a channel, just save locally.
+    if (projectToSave.storage === 'local' && !projectToSave.channelId) {
+        const index = localProjects.findIndex(p => p.id === projectToSave.id);
+        if (index > -1) {
+            setLocalProjects(prev => {
+                const newProjects = [...prev];
+                newProjects[index] = projectToSave;
+                return newProjects;
+            });
+        } else {
+            setLocalProjects(prev => [...prev, { ...projectToSave, id: `local_${Date.now()}` }]);
+        }
+        showToast(t('toasts.projectUpdated'), 'success');
+        handleCloseModal();
+        return;
+    }
+
     if (!user) {
         showToast(t('toasts.loginRequiredToSave'), 'error');
+        return;
+    }
+    
+    if (!projectToSave.channelId) {
+        showToast(t('toasts.channelRequired'), 'error');
         return;
     }
 
@@ -747,7 +770,7 @@ const AppContent: React.FC = () => {
         }
         
         const ownerId = channel.ownerId;
-        const isMigratingFromLocal = projectToSave.id && projectToSave.id.startsWith('local_');
+        const isMigratingFromLocal = projectToSave.storage === 'local' || (projectToSave.id && projectToSave.id.startsWith('local_'));
 
         const {
             script, thumbnailData, description, pinnedComment, communityPost,
@@ -836,6 +859,7 @@ const AppContent: React.FC = () => {
           publishDateTime: new Date().toISOString(),
           status: ProjectStatus.Idea,
           youtubeLink: '',
+          storage: 'local', // Copies are always created locally first
       };
       
       handleCloseModal();
@@ -848,7 +872,7 @@ const AppContent: React.FC = () => {
     const projectToDelete = projects.find(p => p.id === projectId);
     if (!projectToDelete) return;
 
-    if (projectToDelete.storage === 'local') {
+    if (projectToDelete.storage === 'local' || projectToDelete.id.startsWith('local_')) {
         setLocalProjects(prev => prev.filter(p => p.id !== projectId));
         showToast(t('toasts.projectDeleted'), 'info');
         handleCloseModal();
@@ -919,12 +943,15 @@ const AppContent: React.FC = () => {
   };
   
   const handleAddNewVideo = (channelId: string) => {
-    const newProjectTemplate: Omit<Project, 'id'> = {
+    const newProject: Project = {
+        id: `local_${Date.now()}`,
         ...DEFAULT_PROJECT_DATA,
         channelId: channelId,
         publishDateTime: new Date().toISOString(),
+        storage: 'local',
     };
-    handleOpenModal(newProjectTemplate as Project);
+    setLocalProjects(prev => [...prev, newProject]);
+    handleOpenModal(newProject);
   };
   
   const handleRerunAutomation = (project: Project) => {
@@ -1103,7 +1130,7 @@ const AppContent: React.FC = () => {
         />
       )}
 
-      {isModalOpen && user && (
+      {isModalOpen && (
         <ProjectModal 
           project={selectedProject} 
           channels={channels}

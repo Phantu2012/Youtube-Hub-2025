@@ -553,7 +553,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
         const newProject: Omit<Project, 'id'> = {
             channelId: selectedChannelId,
             projectName: automationInput.targetVideo.title,
-            publishDateTime: new Date().toISOString().slice(0, 16),
+            publishDateTime: new Date().toISOString(),
             status: ProjectStatus.Idea,
             videoTitle: titleOutput,
             thumbnailData: '',

@@ -24,6 +24,7 @@ export interface Idea {
     id: string;
     title: string;
     status: IdeaStatus;
+    content?: string;
 }
 
 export interface Dream100Video {

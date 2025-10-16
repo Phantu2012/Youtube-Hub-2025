@@ -263,6 +263,31 @@
     "searchPlaceholder": "Tìm theo tiêu đề...",
     "noVideos": "Không tìm thấy video Dream 100 nào cho kênh này."
   },
+  "ideaBankModal": {
+    "title": "Ngân hàng Ý tưởng",
+    "addNewIdea": "Thêm Ý tưởng Mới",
+    "addNewIdeaPlaceholder": "Nhập mỗi ý tưởng trên một dòng...",
+    "add": "Thêm",
+    "table": {
+      "title": "Tiêu đề",
+      "status": "Trạng thái",
+      "actions": "Hành động"
+    },
+    "status": {
+      "notStarted": "Chưa bắt đầu",
+      "done": "Hoàn thành",
+      "redo": "Làm lại"
+    },
+    "actions": {
+      "useAsMain": "Dùng làm Chủ đề chính",
+      "useAsNext": "Dùng làm Chủ đề tiếp theo",
+      "delete": "Xóa",
+      "editContent": "Sửa Nội dung"
+    },
+    "contentPlaceholder": "Nhập nội dung chính hoặc ghi chú cho ý tưởng này...",
+    "noIdeas": "Chưa có ý tưởng nào. Hãy thêm một ý tưởng ở trên để bắt đầu!",
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa ý tưởng này không?"
+  },
   "toasts": {
     "fetchProjectsError": "Không thể tải các dự án.",
     "settingsSaved": "Đã lưu cài đặt thành công!",
@@ -307,6 +332,9 @@
     "projectExported": "Đã sao chép dữ liệu dự án!",
     "exportFailed": "Không thể sao chép dữ liệu.",
     "dream100VideoSelected": "Đã điền link và mô tả video viral.",
+    "ideaAdded": "Đã thêm (các) ý tưởng thành công!",
+    "ideaUpdated": "Đã cập nhật trạng thái ý tưởng.",
+    "ideaDeleted": "Đã xóa ý tưởng.",
     "generated": {
       "videoTitle": "Đã tạo tiêu đề video!",
       "description": "Đã tạo mô tả!",
