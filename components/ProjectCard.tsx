@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Project } from '../types';
 import { getStatusOptions, STATUS_COLORS } from '../constants';
@@ -24,16 +23,52 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
     };
     
     const getLocaleDateTime = () => {
-      if (!project.publishDateTime || isNaN(new Date(project.publishDateTime).getTime())) {
-        return '—';
+      const { publishDateTime } = project;
+      let date: Date;
+
+      if (!publishDateTime) {
+          return '—';
+      }
+
+      // FIX: Re-ordered type checks to correctly handle various data types for dates,
+      // resolving `instanceof` errors on non-object types. This also resolves a possibly
+      // related but misleading error about `publishDateTime` being null.
+      if (typeof publishDateTime === 'string') {
+          date = new Date(publishDateTime);
+      } 
+      // It might be a number (milliseconds)
+      else if (typeof publishDateTime === 'number') {
+        date = new Date(publishDateTime);
+      }
+      else if (typeof publishDateTime === 'object' && publishDateTime !== null) {
+          // It might already be a Date object
+          if (publishDateTime instanceof Date) {
+              date = publishDateTime;
+          }
+          // It might be a Firestore Timestamp-like object
+          else if ('toDate' in publishDateTime && typeof (publishDateTime as any).toDate === 'function') {
+              date = (publishDateTime as any).toDate();
+          } else {
+              console.error("Unsupported object date type for project:", project.projectName, publishDateTime);
+              return '—';
+          }
+      }
+      else {
+          console.error("Unsupported date type for project:", project.projectName, typeof publishDateTime);
+          return '—';
+      }
+
+
+      // Check for invalid date after parsing attempt
+      if (isNaN(date.getTime())) {
+          console.error("Invalid date for project:", project.projectName, publishDateTime);
+          return '—';
       }
       
-      const date = new Date(project.publishDateTime);
-
       if (language === 'vi') {
         const pad = (num: number) => num.toString().padStart(2, '0');
         const day = pad(date.getDate());
-        const month = pad(date.getMonth() + 1); // getMonth() is 0-indexed
+        const month = pad(date.getMonth() + 1);
         const hours = pad(date.getHours());
         const minutes = pad(date.getMinutes());
         return `${day}/${month} ${hours}:${minutes}`;

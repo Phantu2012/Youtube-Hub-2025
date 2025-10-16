@@ -1,8 +1,5 @@
-
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep } from './types';
+import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep, YouTubeStats } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Header } from './components/Header';
 import { ProjectList } from './components/ProjectList';
@@ -22,7 +19,7 @@ import { AuthConfigurationErrorScreen } from './components/AuthConfigurationErro
 import { Loader } from 'lucide-react';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { useTranslation } from './hooks/useTranslation';
-import { fetchChannelStats } from './services/youtubeService';
+import { fetchChannelStats, fetchVideoStats } from './services/youtubeService';
 import { auth, db, googleProvider, firebase } from './firebase';
 import { DEFAULT_AUTOMATION_STEPS } from './constants';
 
@@ -34,7 +31,7 @@ type FirebaseUser = {
 };
 
 
-const IS_DEV_MODE = false;
+const IS_DEV_MODE =false;
 
 const MOCK_USER: User = {
   uid: 'dev-user-01',
@@ -125,15 +122,31 @@ const AppContent: React.FC = () => {
   const [globalAutomationSteps, setGlobalAutomationSteps] = useState<AutomationStep[]>(DEFAULT_AUTOMATION_STEPS);
   const [channelMembers, setChannelMembers] = useState<Record<string, User>>({});
   const [missingIndexError, setMissingIndexError] = useState<{ message: string, url: string | null } | null>(null);
+  const [projectStats, setProjectStats] = useLocalStorage<Record<string, { stats: YouTubeStats, fetchedAt: number }>>('project-stats', {});
   
   const projects = useMemo(() => {
     const cloudProjects = Object.values(projectsFromListeners).flat();
     const allProjects = [...cloudProjects, ...localProjects];
-    // FIX: Add explicit typing to handle potentially malformed project data from different sources, resolving the 'unknown' type error.
-    const uniqueProjects = Array.from(new Map((allProjects as any[]).filter(p => p && p.id).map(p => [p.id, p])).values());
-    uniqueProjects.sort((a: Project, b: Project) => new Date(b.publishDateTime).getTime() - new Date(a.publishDateTime).getTime());
-    return uniqueProjects as Project[];
-  }, [projectsFromListeners, localProjects]);
+    const uniqueProjectsMap = new Map((allProjects as any[]).filter(p => p && p.id).map(p => [p.id, p]));
+    
+    const projectsWithStats = Array.from(uniqueProjectsMap.values()).map(p => {
+        const cachedStat = projectStats[p.id];
+        return {
+            ...p,
+            stats: cachedStat ? cachedStat.stats : undefined,
+        };
+    });
+
+    projectsWithStats.sort((a: Project, b: Project) => {
+        const dateA = new Date(a.publishDateTime).getTime();
+        const dateB = new Date(b.publishDateTime).getTime();
+        if (isNaN(dateB)) return -1;
+        if (isNaN(dateA)) return 1;
+        return dateB - dateA;
+    });
+    
+    return projectsWithStats as Project[];
+  }, [projectsFromListeners, localProjects, projectStats]);
 
   const channels = useMemo(() => {
     const combined = new Map<string, Channel>();
@@ -503,6 +516,7 @@ const AppContent: React.FC = () => {
     };
   }, [user, channels]);
   
+  // Fetch channel stats (subscriber count etc.)
   useEffect(() => {
     const fetchStatsForChannels = async () => {
       if (!apiKeys.youtube || !user || IS_DEV_MODE) return;
@@ -543,6 +557,54 @@ const AppContent: React.FC = () => {
 
     fetchStatsForChannels();
   }, [channels, apiKeys.youtube, user]);
+
+  // Fetch video stats (views, likes etc) for published videos
+  useEffect(() => {
+    const fetchAllStats = async () => {
+        if (!apiKeys.youtube) return;
+
+        // Use the raw project sources to avoid infinite loops
+        const allProjects = [...Object.values(projectsFromListeners).flat(), ...localProjects];
+        const uniqueProjectsMap = new Map((allProjects as any[]).filter(p => p && p.id).map(p => [p.id, p]));
+        
+        const projectsToFetch = Array.from(uniqueProjectsMap.values()).filter(p => {
+            if (p.status !== ProjectStatus.Published || !p.youtubeLink) return false;
+            const cachedStat = projectStats[p.id];
+            // Fetch if not cached, or if cache is older than 1 hour
+            return !cachedStat || (Date.now() - (cachedStat.fetchedAt || 0) > 3600 * 1000);
+        });
+        
+        if (projectsToFetch.length === 0) return;
+
+        const statsPromises = projectsToFetch.map(project =>
+            fetchVideoStats(project.youtubeLink!, apiKeys.youtube)
+                .then(result => ({ projectId: project.id, stats: result?.stats }))
+                .catch(err => {
+                    console.warn(`Could not fetch stats for "${project.projectName}":`, err.message);
+                    return { projectId: project.id, stats: null };
+                })
+        );
+        
+        const results = await Promise.all(statsPromises);
+        
+        const newStats: Record<string, { stats: YouTubeStats, fetchedAt: number }> = {};
+        results.forEach(result => {
+            if (result.stats) {
+                newStats[result.projectId] = { stats: result.stats, fetchedAt: Date.now() };
+            }
+        });
+
+        if (Object.keys(newStats).length > 0) {
+            setProjectStats(prev => ({ ...prev, ...newStats }));
+        }
+    };
+    
+    // Fetch stats shortly after the app loads/projects change
+    const timer = setTimeout(fetchAllStats, 2000); 
+
+    return () => clearTimeout(timer);
+
+  }, [projectsFromListeners, localProjects, apiKeys.youtube, projectStats, setProjectStats]);
   
   const projectsByChannel = useMemo(() => {
     return projects.reduce((acc, project) => {
