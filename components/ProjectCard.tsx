@@ -1,5 +1,5 @@
 import React from 'react';
-import { Project } from '../types';
+import { Project, User } from '../types';
 import { getStatusOptions, STATUS_COLORS } from '../constants';
 import { Calendar, Eye, Image as ImageIcon, ThumbsUp, MessageSquare, Cloud, Laptop } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
@@ -7,13 +7,15 @@ import { useTranslation } from '../hooks/useTranslation';
 interface ProjectCardProps {
     project: Project;
     onSelect: () => void;
+    channelMembers: Record<string, User>;
 }
 
-export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
+export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect, channelMembers }) => {
     const { t, language } = useTranslation();
     const statusOptions = getStatusOptions(t);
     const statusLabel = statusOptions.find(opt => opt.value === project.status)?.label || project.status;
     const statusColor = STATUS_COLORS[project.status];
+    const assignedUser = project.assignedTo ? channelMembers[project.assignedTo] : null;
     
     // Helper to format numbers into K (thousands) or M (millions)
     const formatStat = (num: number): string => {
@@ -93,7 +95,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
     return (
         <div
             onClick={onSelect}
-            className="bg-light-card dark:bg-dark-card rounded-lg shadow-lg overflow-hidden cursor-pointer transform hover:-translate-y-1 transition-transform duration-300 ease-in-out group"
+            className="bg-light-card dark:bg-dark-card rounded-lg shadow-lg overflow-hidden cursor-pointer transform hover:-translate-y-1 transition-transform duration-300 ease-in-out group flex flex-col"
         >
             <div className="relative">
                 {project.thumbnailData ? (
@@ -120,32 +122,40 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) =
                     )}
                 </div>
             </div>
-            <div className="p-4">
-                <h3 className="text-lg font-bold truncate text-light-text dark:text-dark-text group-hover:text-primary transition-colors" title={project.videoTitle || project.projectName}>
-                    {project.videoTitle || project.projectName}
-                </h3>
-                <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    <div className="flex items-center">
-                        <Calendar size={14} className="mr-2" />
-                        <span>{localeDateTime}</span>
-                    </div>
-                    {project.stats && (
-                        <div className="flex items-center space-x-3">
-                            <div className="flex items-center" title={`${project.stats.views.toLocaleString(language)} ${t('projectCard.views')}`}>
-                                <Eye size={14} className="mr-1" />
-                                <span>{formatStat(project.stats.views)}</span>
-                            </div>
-                            <div className="flex items-center" title={`${project.stats.likes.toLocaleString(language)} ${t('projectCard.likes')}`}>
-                                <ThumbsUp size={14} className="mr-1" />
-                                <span>{formatStat(project.stats.likes)}</span>
-                            </div>
-                            <div className="flex items-center" title={`${project.stats.comments.toLocaleString(language)} ${t('projectCard.comments')}`}>
-                                <MessageSquare size={14} className="mr-1" />
-                                <span>{formatStat(project.stats.comments)}</span>
-                            </div>
+            <div className="p-4 flex-grow flex flex-col justify-between">
+                <div>
+                    <h3 className="text-lg font-bold truncate text-light-text dark:text-dark-text group-hover:text-primary transition-colors" title={project.videoTitle || project.projectName}>
+                        {project.videoTitle || project.projectName}
+                    </h3>
+                    <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        <div className="flex items-center">
+                            <Calendar size={14} className="mr-2" />
+                            <span>{localeDateTime}</span>
                         </div>
-                    )}
+                        {project.stats && (
+                            <div className="flex items-center space-x-3">
+                                <div className="flex items-center" title={`${project.stats.views.toLocaleString(language)} ${t('projectCard.views')}`}>
+                                    <Eye size={14} className="mr-1" />
+                                    <span>{formatStat(project.stats.views)}</span>
+                                </div>
+                                <div className="flex items-center" title={`${project.stats.likes.toLocaleString(language)} ${t('projectCard.likes')}`}>
+                                    <ThumbsUp size={14} className="mr-1" />
+                                    <span>{formatStat(project.stats.likes)}</span>
+                                </div>
+                                <div className="flex items-center" title={`${project.stats.comments.toLocaleString(language)} ${t('projectCard.comments')}`}>
+                                    <MessageSquare size={14} className="mr-1" />
+                                    <span>{formatStat(project.stats.comments)}</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
+                 {assignedUser && (
+                    <div className="mt-3 flex items-center gap-2 pt-3 border-t border-gray-200 dark:border-gray-700" title={`${t('projectCard.assignedTo')} ${assignedUser.name}`}>
+                        <img src={assignedUser.avatar} alt={assignedUser.name} className="w-6 h-6 rounded-full" />
+                        <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{assignedUser.name}</span>
+                    </div>
+                )}
             </div>
         </div>
     );

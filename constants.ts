@@ -4,16 +4,22 @@ import { ProjectStatus, AutomationStep, Dream100VideoStatus, IdeaStatus } from '
 export const getStatusOptions = (t: (key: string) => string) => [
     { value: ProjectStatus.Idea, label: t('status.idea') },
     { value: ProjectStatus.Production, label: t('status.production') },
+    { value: ProjectStatus.CreatingVoiceover, label: t('status.creatingVoiceover') },
+    { value: ProjectStatus.CreatingThumbnail, label: t('status.creatingThumbnail') },
     { value: ProjectStatus.Optimization, label: t('status.optimization') },
     { value: ProjectStatus.Completed, label: t('status.completed') },
+    { value: ProjectStatus.Scheduled, label: t('status.scheduled') },
     { value: ProjectStatus.Published, label: t('status.published') },
 ];
 
 export const STATUS_COLORS: { [key in ProjectStatus]: string } = {
     [ProjectStatus.Idea]: 'bg-blue-500',
     [ProjectStatus.Production]: 'bg-purple-500',
+    [ProjectStatus.CreatingVoiceover]: 'bg-teal-500',
+    [ProjectStatus.CreatingThumbnail]: 'bg-orange-500',
     [ProjectStatus.Optimization]: 'bg-yellow-500',
     [ProjectStatus.Completed]: 'bg-green-500',
+    [ProjectStatus.Scheduled]: 'bg-slate-500',
     [ProjectStatus.Published]: 'bg-red-500',
 };
 

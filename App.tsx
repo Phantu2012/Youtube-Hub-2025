@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep, YouTubeStats } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -54,6 +55,7 @@ const DEFAULT_PROJECT_DATA: Omit<Project, 'id' | 'channelId'> = {
     projectName: '',
     publishDateTime: '', // Will be set on creation/modal open
     status: ProjectStatus.Idea,
+    assignedTo: undefined,
     videoTitle: '',
     thumbnailData: '',
     description: '',
@@ -568,7 +570,8 @@ const AppContent: React.FC = () => {
         if (!apiKeys.youtube) return;
 
         const allProjects = [...Object.values(projectsFromListeners).flat(), ...localProjects];
-        const uniqueProjects = Array.from(new Map(allProjects.map(p => [p.id, p])).values());
+        // FIX: Explicitly type 'p' as Project to resolve type errors in this and subsequent maps/filters.
+        const uniqueProjects = Array.from(new Map(allProjects.map((p: Project) => [p.id, p])).values());
         
         const projectsToFetch = uniqueProjects.filter(p => {
             if (p.status !== ProjectStatus.Published || !p.youtubeLink) return false;
@@ -1200,6 +1203,7 @@ const AppContent: React.FC = () => {
           selectedProvider={selectedProvider}
           selectedModel={selectedModel}
           isSaving={isSaving}
+          channelMembers={channelMembers}
           onClose={handleCloseModal} 
           onSave={handleSaveProject}
           onDelete={handleDeleteProject}

@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { Project, Channel, User } from '../types';
 import { ProjectCard } from './ProjectCard';
@@ -149,7 +150,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
                             {channelProjects.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                     {channelProjects.map(project => (
-                                        <ProjectCard key={project.id} project={project} onSelect={() => onSelectProject(project)} />
+                                        <ProjectCard key={project.id} project={project} onSelect={() => onSelectProject(project)} channelMembers={channelMembers} />
                                     ))}
                                 </div>
                             ) : (

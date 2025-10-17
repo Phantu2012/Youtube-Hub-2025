@@ -239,7 +239,8 @@ export default {
     "likes": "lượt thích",
     "comments": "bình luận",
     "local": "Đã lưu trên máy",
-    "cloud": "Đã lưu trên đám mây"
+    "cloud": "Đã lưu trên đám mây",
+    "assignedTo": "Phụ trách bởi"
   },
   "projectModal": {
     "createTitle": "Tạo dự án mới",
@@ -272,6 +273,8 @@ export default {
     "addTagPlaceholder": "Thêm thẻ...",
     "publishDate": "Ngày & Giờ xuất bản",
     "status": "Trạng thái",
+    "assignedTo": "Người phụ trách",
+    "unassigned": "Chưa giao",
     "thumbnail": "Hình thu nhỏ (Thumbnail)",
     "thumbnailPreview": "Xem trước hình thu nhỏ",
     "uploadOrPaste": "Nhấp để tải lên hoặc dán hình ảnh",
@@ -462,8 +465,11 @@ export default {
   "status": {
     "idea": "💡 Ý tưởng",
     "production": "🎬 Sản xuất",
+    "creatingVoiceover": "🎤 Tạo Voice",
+    "creatingThumbnail": "🖼️ Tạo Ảnh",
     "optimization": "🔍 Tối ưu hóa",
     "completed": "✅ Hoàn thành",
+    "scheduled": "🕒 Chờ Đăng",
     "published": "🚀 Đã xuất bản"
   },
   "automation": {
@@ -682,7 +688,7 @@ export default {
       "tags": "Đã tạo thẻ!",
       "thumbnailPrompt": "Đã tạo prompt hình thu nhỏ!"
     },
-    "deleteConfirm": "Xác nhận",
-    "clearConfirm": "Xác nhận"
+    "deleteConfirm": "Xác nhận Xóa",
+    "clearConfirm": "Xác nhận Xóa Form"
   }
 }

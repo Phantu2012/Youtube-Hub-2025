@@ -239,7 +239,8 @@ export default {
     "likes": "likes",
     "comments": "comments",
     "local": "Saved locally",
-    "cloud": "Saved to cloud"
+    "cloud": "Saved to cloud",
+    "assignedTo": "Assigned to"
   },
   "projectModal": {
     "createTitle": "Create New Project",
@@ -272,6 +273,8 @@ export default {
     "addTagPlaceholder": "Add a tag...",
     "publishDate": "Publish Date & Time",
     "status": "Status",
+    "assignedTo": "Assigned To",
+    "unassigned": "Unassigned",
     "thumbnail": "Thumbnail",
     "thumbnailPreview": "Thumbnail Preview",
     "uploadOrPaste": "Click to upload or paste image",
@@ -462,8 +465,11 @@ export default {
   "status": {
     "idea": "💡 Idea",
     "production": "🎬 Production",
+    "creatingVoiceover": "🎤 Creating Voice",
+    "creatingThumbnail": "🖼️ Creating Image",
     "optimization": "🔍 Optimization",
     "completed": "✅ Completed",
+    "scheduled": "🕒 Scheduled",
     "published": "🚀 Published"
   },
   "automation": {

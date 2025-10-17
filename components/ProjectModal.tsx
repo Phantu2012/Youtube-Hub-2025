@@ -1,7 +1,8 @@
 
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel, Channel } from '../types';
+import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel, Channel, User } from '../types';
 import { getStatusOptions } from '../constants';
 import { fetchVideoStats } from '../services/youtubeService';
 import { StatsChart } from './StatsChart';
@@ -17,6 +18,7 @@ interface ProjectModalProps {
     selectedProvider: AIProvider;
     selectedModel: AIModel;
     isSaving: boolean;
+    channelMembers: Record<string, User>;
     onClose: () => void;
     onSave: (project: Project) => void;
     onDelete: (projectId: string) => Promise<void>;
@@ -59,7 +61,7 @@ const TabButton: React.FC<{
 );
 
 
-export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, apiKeys, selectedProvider, selectedModel, isSaving, onClose, onSave, onDelete, onCopy, onRerun, onMove, showToast }) => {
+export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, apiKeys, selectedProvider, selectedModel, isSaving, channelMembers, onClose, onSave, onDelete, onCopy, onRerun, onMove, showToast }) => {
     const { t, language } = useTranslation();
     const [activeTab, setActiveTab] = useState<ModalTab>('publishing');
     
@@ -112,6 +114,9 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
     const [destinationChannelId, setDestinationChannelId] = useState('');
 
     const movableChannels = channels.filter(c => c.id !== (formData as Project).channelId);
+    
+    const currentChannel = channels.find(c => c.id === (formData as Project).channelId);
+    const currentChannelMembers = currentChannel?.memberIds?.map(id => channelMembers[id]).filter(Boolean) || [];
 
     useEffect(() => {
         return () => {
@@ -583,6 +588,15 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                             <label className="font-semibold">{t('projectModal.status')}</label>
                             <select name="status" value={formData.status} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md">
                                 {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="font-semibold">{t('projectModal.assignedTo')}</label>
+                            <select name="assignedTo" value={(formData as Project).assignedTo || ''} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md">
+                                <option value="">{t('projectModal.unassigned')}</option>
+                                {currentChannelMembers.map(member => (
+                                    <option key={member.uid} value={member.uid}>{member.name}</option>
+                                ))}
                             </select>
                         </div>
                          <div>

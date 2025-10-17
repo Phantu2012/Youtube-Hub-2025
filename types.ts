@@ -1,10 +1,14 @@
 
 
+
 export enum ProjectStatus {
     Idea = 'Idea',
     Production = 'Production',
+    CreatingVoiceover = 'CreatingVoiceover',
+    CreatingThumbnail = 'CreatingThumbnail',
     Optimization = 'Optimization',
     Completed = 'Completed',
+    Scheduled = 'Scheduled',
     Published = 'Published',
 }
 
@@ -68,6 +72,7 @@ export interface Project {
     projectName: string;
     publishDateTime: string; // Changed from publishDate to include time
     status: ProjectStatus;
+    assignedTo?: string; // UID of the assigned user
     videoTitle: string;
     thumbnailData: string;
     description: string;
