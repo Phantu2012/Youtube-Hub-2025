@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel, Channel, User } from '../types';
 import { getStatusOptions } from '../constants';
@@ -470,7 +468,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
 
     if (!project) return null;
     
-    const isNewProject = !('id' in project) || !project.id.startsWith('local_');
+    const isNewProject = !('id' in project);
     const storageType = formData.storage || (project.id && !project.id.startsWith('local_') ? 'cloud' : 'local');
 
     const GenerateButton = ({ field }: { field: 'videoTitle' | 'description' | 'tags' | 'thumbnailPrompt' }) => (

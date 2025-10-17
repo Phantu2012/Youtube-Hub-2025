@@ -521,6 +521,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
             return;
         }
         
+        const step1Output = stepOutputs[1] || '';
         const creativeOutput = stepOutputs[4] || '';
         const titlesMatch = creativeOutput.match(/\[TITLES\]\s*([\s\S]*?)(?=\[THUMBNAIL_PROMPTS\]|$)/);
         const titleOutput = titlesMatch ? titlesMatch[1].trim().split('\n')[0].replace(/^\d+\.\s*/, '') : '';
@@ -563,7 +564,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
             communityPost: communityPost,
             facebookPost: facebookPost,
             youtubeLink: '',
-            script: creativeOutput, // Repurpose script field for Step 4 analysis output
+            script: step1Output, // Store Step 1 (Outline) output
             thumbnailPrompt: thumbnailPromptOutput,
             voiceoverScript: voiceoverScriptOutput,
             visualPrompts: visualPromptsOutput,
