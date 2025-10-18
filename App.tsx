@@ -863,7 +863,7 @@ const AppContent: React.FC = () => {
 
         const projectDataToSave = {
             ...mainData,
-            tags: tags || [],
+            tags: projectToSave.tags || [],
             publishDateTime: firebase.firestore.Timestamp.fromDate(new Date(projectToSave.publishDateTime)),
         };
         
