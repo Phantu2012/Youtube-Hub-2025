@@ -841,7 +841,7 @@ const AppContent: React.FC = () => {
             script, thumbnailData, description, pinnedComment, communityPost,
             facebookPost, thumbnailPrompt, voiceoverScript, promptTable,
             timecodeMap, metadata, seoMetadata, visualPrompts,
-            id, storage, stats,
+            id, storage, stats, tags,
             ...mainData
         } = projectToSave;
 
@@ -863,7 +863,7 @@ const AppContent: React.FC = () => {
 
         const projectDataToSave = {
             ...mainData,
-            tags: mainData.tags || [],
+            tags: tags || [],
             publishDateTime: firebase.firestore.Timestamp.fromDate(new Date(projectToSave.publishDateTime)),
         };
         
