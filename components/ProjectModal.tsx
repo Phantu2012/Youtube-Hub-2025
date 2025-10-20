@@ -144,18 +144,45 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+    
+    const addTagsFromString = (tagString: string) => {
+        const newTags = tagString.split(',').map(t => t.trim()).filter(Boolean);
+        if (newTags.length > 0) {
+            setFormData(prev => {
+                const projectData = prev as Project;
+                const currentTags = projectData.tags || [];
+                const uniqueNewTags = newTags.filter(t => !currentTags.includes(t));
+                if (uniqueNewTags.length > 0) {
+                    return { ...prev, tags: [...currentTags, ...uniqueNewTags] };
+                }
+                return prev;
+            });
+        }
+    };
 
     const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' || e.key === ',') {
             e.preventDefault();
-            const newTag = tagInput.trim();
-            if (newTag && !(formData as Project).tags.includes(newTag)) {
-                setFormData(prev => ({...prev, tags: [...(prev as Project).tags, newTag]}));
-            }
+            addTagsFromString(tagInput);
             setTagInput('');
         }
     };
-    
+
+    const handleTagPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        const pastedText = e.clipboardData.getData('text');
+        if (pastedText.includes(',')) {
+            e.preventDefault();
+            addTagsFromString(pastedText);
+        }
+    };
+
+    const handleTagInputBlur = () => {
+        if (tagInput.trim()) {
+            addTagsFromString(tagInput);
+            setTagInput('');
+        }
+    };
+
     const removeTag = (tagToRemove: string) => {
         setFormData(prev => ({...prev, tags: (prev as Project).tags.filter(tag => tag !== tagToRemove)}));
     };
@@ -568,6 +595,8 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                                     value={tagInput}
                                     onChange={(e) => setTagInput(e.target.value)}
                                     onKeyDown={handleTagKeyDown}
+                                    onPaste={handleTagPaste}
+                                    onBlur={handleTagInputBlur}
                                     placeholder={t('projectModal.addTagPlaceholder')}
                                     className="bg-transparent outline-none flex-grow"
                                 />
