@@ -61,7 +61,7 @@ const TabButton: React.FC<{
 
 export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, apiKeys, selectedProvider, selectedModel, isSaving, channelMembers, onClose, onSave, onDelete, onCopy, onRerun, onMove, showToast }) => {
     const { t, language } = useTranslation();
-    const [activeTab, setActiveTab] = useState<ModalTab>('publishing');
+    const [activeTab, setActiveTab] = useState<ModalTab>('content');
     
     const [formData, setFormData] = useState<Project>(() => {
         const initialData = {
@@ -189,7 +189,20 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData as Project);
+        
+        const projectToSave = { ...formData } as Project;
+        const pendingTagsString = tagInput.trim();
+
+        if (pendingTagsString) {
+            const newTags = pendingTagsString.split(',').map(t => t.trim()).filter(Boolean);
+            const currentTags = projectToSave.tags || [];
+            const uniqueNewTags = newTags.filter(t => !currentTags.includes(t));
+            if (uniqueNewTags.length > 0) {
+                projectToSave.tags = [...currentTags, ...uniqueNewTags];
+            }
+        }
+
+        onSave(projectToSave);
     };
 
     const handleClearFormAction = () => {
@@ -803,6 +816,12 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                             </h2>
                             <button type="button" onClick={onClose} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"><X /></button>
                         </div>
+                        <div className="mt-2">
+                             <select name="channelId" value={(formData as Project).channelId} onChange={handleInputChange} className="w-full md:w-1/2 p-2 text-sm bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md">
+                                <option value="">-- {t('automation.selectChannelPlaceholder')} --</option>
+                                {channels.map(channel => <option key={channel.id} value={channel.id}>{channel.name}</option>)}
+                            </select>
+                        </div>
                     </div>
                     
                     {/* Tabs */}
@@ -817,103 +836,96 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                     </div>
 
                     {/* Content */}
-                    <div className="p-6 flex-grow overflow-y-auto">
+                    <div className="p-6 overflow-y-auto flex-grow">
                         {renderContent()}
                     </div>
 
                     {/* Footer */}
-                    <div className="p-4 bg-light-bg dark:bg-dark-bg/50 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-                         {isMoving ? (
-                            <div className="w-full flex justify-between items-center">
-                                <div className="flex items-center gap-3">
-                                    <label htmlFor="move-channel-select" className="font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">{t('projectModal.moveToChannel')}</label>
-                                    <select
-                                        id="move-channel-select"
-                                        value={destinationChannelId}
-                                        onChange={(e) => setDestinationChannelId(e.target.value)}
-                                        className="p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md"
-                                    >
-                                        {movableChannels.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                    </select>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                     <button type="button" onClick={() => setIsMoving(false)} disabled={isSaving} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50">{t('common.cancel')}</button>
-                                     <button type="button" onClick={handleConfirmMove} disabled={isSaving} className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg">
-                                        {t('projectModal.confirmMove')}
-                                     </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="w-full flex justify-between items-center">
-                                <div className="flex gap-2 flex-wrap">
-                                    {!isNewProject && (
-                                    <>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleConfirmClick('delete')}
-                                            disabled={isSaving}
-                                            className={`flex items-center gap-2 font-semibold py-2 px-3 rounded-lg text-sm transition-colors duration-200 disabled:opacity-50 ${
-                                                confirmAction === 'delete' 
-                                                ? 'bg-red-500 text-white' 
-                                                : 'text-red-500 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10'
-                                            }`}
-                                        >
-                                            <Trash2 size={16} /> 
-                                            {confirmAction === 'delete' ? t('toasts.deleteConfirm') : t('projectModal.delete')}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleStartMove}
-                                            disabled={isSaving || storageType === 'local'}
-                                            className="flex items-center gap-2 text-cyan-600 hover:text-cyan-800 dark:hover:text-cyan-400 font-semibold py-2 px-3 rounded-lg text-sm hover:bg-cyan-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            title={storageType === 'local' ? t('projectModal.moveDisabledLocal') : t('projectModal.move')}
-                                        >
-                                            <Move size={16} /> {t('projectModal.move')}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleCopyProjectAction}
-                                            disabled={isSaving}
-                                            className="flex items-center gap-2 text-purple-600 hover:text-purple-800 dark:hover:text-purple-400 font-semibold py-2 px-3 rounded-lg text-sm hover:bg-purple-500/10"
-                                        >
-                                            <Copy size={16} /> {t('projectModal.copy')}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleRerun}
-                                            disabled={isSaving}
-                                            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 font-semibold py-2 px-3 rounded-lg text-sm hover:bg-blue-500/10"
-                                        >
-                                            <Repeat size={16} /> {t('projectModal.rerunAutomation')}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleExportToSheet}
-                                            disabled={isSaving}
-                                            className="flex items-center gap-2 text-green-600 hover:text-green-800 dark:hover:text-green-400 font-semibold py-2 px-3 rounded-lg text-sm hover:bg-green-500/10"
-                                        >
-                                            <Sheet size={16} /> {t('projectModal.exportToSheet')}
-                                        </button>
-                                    </>
-                                    )}
-                                </div>
-                                <div className="flex gap-4">
-                                    <button type="button" onClick={onClose} disabled={isSaving} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50">{t('common.cancel')}</button>
-                                    <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:bg-opacity-70 disabled:cursor-wait">
-                                        {isSaving 
-                                            ? <Loader size={16} className="animate-spin" /> 
-                                            : storageType === 'local' ? <UploadCloud size={16} /> : <Save size={16} />
-                                        } 
-                                        {isSaving 
-                                            ? t('projectModal.saving') 
-                                            : storageType === 'local' ? t('projectModal.saveToCloud') : t('projectModal.save')
-                                        }
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                    <div className="p-4 bg-light-bg dark:bg-dark-bg/50 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3 flex-shrink-0">
+                         <div className="flex flex-wrap items-center gap-2">
+                           {!isNewProject && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleConfirmClick('delete')}
+                                    disabled={isSaving}
+                                    className={`flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg transition-colors ${
+                                        confirmAction === 'delete'
+                                        ? 'bg-red-500 text-white'
+                                        : 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
+                                    }`}
+                                >
+                                    <Trash2 size={16} /> {confirmAction === 'delete' ? t('toasts.deleteConfirm') : t('projectModal.delete')}
+                                </button>
+                           )}
+                           <button
+                                type="button"
+                                onClick={handleCopyProjectAction}
+                                disabled={isSaving}
+                                className="flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400 py-2 px-3 rounded-lg hover:bg-blue-500/10"
+                            >
+                                <Copy size={16} /> {t('projectModal.copy')}
+                            </button>
+                           {!isNewProject && (
+                                <button
+                                    type="button"
+                                    onClick={handleRerun}
+                                    disabled={isSaving}
+                                    className="flex items-center gap-2 text-sm font-semibold text-purple-600 dark:text-purple-400 py-2 px-3 rounded-lg hover:bg-purple-500/10"
+                                >
+                                    <Repeat size={16} /> {t('projectModal.rerunAutomation')}
+                                </button>
+                           )}
+                           <button
+                                type="button"
+                                onClick={handleExportToSheet}
+                                disabled={isSaving}
+                                className="flex items-center gap-2 text-sm font-semibold text-green-600 dark:text-green-400 py-2 px-3 rounded-lg hover:bg-green-500/10"
+                            >
+                                <Sheet size={16} /> {t('projectModal.exportToSheet')}
+                            </button>
+                            {!isNewProject && storageType === 'cloud' && (
+                                <button
+                                    type="button"
+                                    onClick={handleStartMove}
+                                    disabled={isSaving}
+                                    className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-400 py-2 px-3 rounded-lg hover:bg-gray-500/10"
+                                >
+                                    <Move size={16} /> {t('projectModal.move')}
+                                </button>
+                            )}
+                         </div>
+
+                        <div className="flex items-center gap-4">
+                            <button type="button" onClick={onClose} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">{t('common.cancel')}</button>
+                            <button
+                                type="submit"
+                                disabled={isSaving}
+                                className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:opacity-70 disabled:cursor-wait"
+                            >
+                                {isSaving ? <Loader size={16} className="animate-spin" /> : <Save size={16} />}
+                                {isSaving ? t('projectModal.saving') : t('projectModal.save')}
+                            </button>
+                        </div>
                     </div>
                 </form>
+                 {isMoving && (
+                     <div className="absolute inset-0 bg-black/50 flex justify-center items-center">
+                        <div className="bg-light-card dark:bg-dark-card p-6 rounded-lg shadow-xl">
+                            <h3 className="font-bold text-lg mb-4">{t('projectModal.move')}</h3>
+                            <select
+                                value={destinationChannelId}
+                                onChange={(e) => setDestinationChannelId(e.target.value)}
+                                className="w-full p-2 mb-4 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md"
+                            >
+                                {movableChannels.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </select>
+                            <div className="flex justify-end gap-3">
+                                <button onClick={() => setIsMoving(false)} className="py-2 px-4 rounded-lg font-semibold bg-gray-200 dark:bg-gray-600">{t('common.cancel')}</button>
+                                <button onClick={handleConfirmMove} className="py-2 px-4 rounded-lg font-semibold bg-primary text-white">{t('projectModal.confirmMove')}</button>
+                            </div>
+                        </div>
+                     </div>
+                 )}
             </div>
         </div>
     );
