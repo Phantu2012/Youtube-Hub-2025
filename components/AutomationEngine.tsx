@@ -634,7 +634,7 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
         handleFetchVideoDetails(video.youtubeLink);
     };
 
-    const canCreateProject = stepStatus[8] === AutomationStepStatus.Completed;
+    const canCreateProject = Object.values(stepStatus).some(s => s === AutomationStepStatus.Completed);
     const details = automationInput.viralVideo.details;
     const sortedChannels = [...channels].sort((a, b) => a.name.localeCompare(b.name));
 
