@@ -1,6 +1,7 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep, YouTubeStats } from './types';
+import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep, YouTubeStats, Permission, Role } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Header } from './components/Header';
 import { ProjectList } from './components/ProjectList';
@@ -22,7 +23,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { useTranslation } from './hooks/useTranslation';
 import { fetchChannelStats, fetchVideoStats } from './services/youtubeService';
 import { auth, db, googleProvider, firebase } from './firebase';
-import { DEFAULT_AUTOMATION_STEPS } from './constants';
+import { DEFAULT_AUTOMATION_STEPS, getDefaultRoles, ALL_PERMISSION_IDS } from './constants';
 
 type FirebaseUser = {
   uid: string;
@@ -126,6 +127,7 @@ const AppContent: React.FC = () => {
   const [channelMembers, setChannelMembers] = useState<Record<string, User>>({});
   const [missingIndexError, setMissingIndexError] = useState<{ message: string, url: string | null } | null>(null);
   const [projectStats, setProjectStats] = useLocalStorage<Record<string, { stats: YouTubeStats, fetchedAt: number }>>('project-stats', {});
+  const [userPermissions, setUserPermissions] = useState<Permission[]>([]);
   
   const projects = useMemo(() => {
     const cloudProjects = Object.values(projectsFromListeners).flat();
@@ -627,6 +629,28 @@ const AppContent: React.FC = () => {
   };
 
   const handleOpenModal = (project: Project | null) => {
+    let permissions: Permission[] = [];
+    if (user) {
+        if (project && project.channelId) {
+            const channel = channels.find(c => c.id === project.channelId);
+            if (channel) {
+                const roles = channel.roles || getDefaultRoles(t);
+                const userRoleId = channel.members[user.uid];
+                const userRole = roles.find(r => r.id === userRoleId);
+                permissions = userRole ? userRole.permissions : [];
+            } else {
+                permissions = [];
+            }
+        } else {
+            permissions = ALL_PERMISSION_IDS;
+        }
+    }
+
+    if (user?.isAdmin) {
+        permissions = ALL_PERMISSION_IDS;
+    }
+
+    setUserPermissions(permissions);
     setSelectedProject(project);
     setIsModalOpen(true);
   };
@@ -655,11 +679,13 @@ const AppContent: React.FC = () => {
     showToast(t('toasts.settingsSaved'), 'success');
   };
   
-  const handleAddChannel = async (newChannelData: Omit<Channel, 'id' | 'ownerId' | 'members'>): Promise<void> => {
+  const handleAddChannel = async (newChannelData: Omit<Channel, 'id' | 'ownerId' | 'members' | 'roles'>): Promise<void> => {
     if (!user) {
         showToast(t('toasts.loginRequiredToSave'), 'error');
         throw new Error("User not logged in");
     }
+    
+    const defaultRoles = getDefaultRoles(t);
 
     const cleanSteps = JSON.parse(JSON.stringify(DEFAULT_AUTOMATION_STEPS));
     const finalAutomationSteps = cleanSteps.map((step: any) => ({
@@ -671,11 +697,12 @@ const AppContent: React.FC = () => {
     const newChannelPayload = {
         ...newChannelData,
         ownerId: user.uid,
-        members: { [user.uid]: 'owner' as const },
+        members: { [user.uid]: 'owner' },
         memberIds: [user.uid],
         ideas: [],
         dream100Videos: [],
         automationSteps: finalAutomationSteps,
+        roles: defaultRoles,
     };
     
     try {
@@ -706,6 +733,21 @@ const AppContent: React.FC = () => {
     }
   };
   
+  const handleUpdateChannelRoles = async (channelId: string, updatedRoles: Role[]) => {
+    if (!user) return;
+    const channel = channels.find(c => c.id === channelId);
+    if (!channel || !channel.ownerId) return;
+
+    try {
+      const channelDocRef = db.collection('users').doc(channel.ownerId).collection('channels').doc(channelId);
+      await channelDocRef.update({ roles: updatedRoles });
+      showToast(t('toasts.rolesUpdated'), 'success');
+    } catch (error) {
+      console.error('Error updating roles:', error);
+      showToast(t('toasts.rolesUpdateFailed'), 'error');
+    }
+  };
+
   const handleUpdateChannelMembers = async (channel: Channel, newMembers: Channel['members']) => {
     if (!user) return;
     const ownerId = channel.ownerId || user.uid;
@@ -713,6 +755,7 @@ const AppContent: React.FC = () => {
         const channelDocRef = db.collection('users').doc(ownerId).collection('channels').doc(channel.id);
         const newMemberIds = Object.keys(newMembers);
         await channelDocRef.update(cleanUndefined({ members: newMembers, memberIds: newMemberIds }));
+        showToast(t('toasts.membersUpdated'), 'success');
     } catch (error) {
         console.error("Error updating channel members:", error);
         showToast(t('toasts.updateMembersFailed'), 'error');
@@ -1016,7 +1059,6 @@ const AppContent: React.FC = () => {
         publishDateTime: new Date().toISOString(),
         storage: 'local',
     };
-    setLocalProjects(prev => [...prev, newProject]);
     handleOpenModal(newProject);
   };
   
@@ -1193,6 +1235,9 @@ const AppContent: React.FC = () => {
           onUpdateChannel={handleSaveChannelChanges}
           onDeleteChannel={handleDeleteChannel}
           onShareChannel={handleOpenShareModal}
+          // FIX: Pass the showToast function to SettingsModal.
+          showToast={showToast}
+          onUpdateChannelRoles={handleUpdateChannelRoles}
         />
       )}
 
@@ -1212,6 +1257,7 @@ const AppContent: React.FC = () => {
           onRerun={handleRerunAutomation}
           onMove={handleMoveProject}
           showToast={showToast}
+          userPermissions={userPermissions}
         />
       )}
       

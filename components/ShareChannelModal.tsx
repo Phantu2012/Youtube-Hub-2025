@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Channel, User } from '../types';
-import { X, Send, Loader, Trash2, User as UserIcon, Crown, Edit } from 'lucide-react';
+import { Channel, User, Role } from '../types';
+import { X, Send, Loader, Trash2, Crown, Edit } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { db, firebase } from '../firebase';
+import { getDefaultRoles } from '../constants';
 
 interface ShareChannelModalProps {
     isOpen: boolean;
@@ -20,6 +21,7 @@ export const ShareChannelModal: React.FC<ShareChannelModalProps> = ({ isOpen, on
     const [members, setMembers] = useState<User[]>([]);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const confirmTimerRef = useRef<number | null>(null);
+    const channelRoles = channel.roles || getDefaultRoles(t);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -57,7 +59,7 @@ export const ShareChannelModal: React.FC<ShareChannelModalProps> = ({ isOpen, on
                 return;
             }
             
-            const newMembers = { ...channel.members, [invitedUserId]: 'editor' as const };
+            const newMembers = { ...channel.members, [invitedUserId]: 'editor' };
             onUpdateMembers(channel, newMembers);
             showToast(t('toasts.userAdded'), 'success');
             setInviteEmail('');
@@ -68,6 +70,11 @@ export const ShareChannelModal: React.FC<ShareChannelModalProps> = ({ isOpen, on
         } finally {
             setIsInviting(false);
         }
+    };
+    
+    const handleRoleChange = (memberUid: string, newRoleId: string) => {
+        const newMembers = { ...channel.members, [memberUid]: newRoleId };
+        onUpdateMembers(channel, newMembers);
     };
 
     const handleRemove = (memberUid: string) => {
@@ -88,6 +95,7 @@ export const ShareChannelModal: React.FC<ShareChannelModalProps> = ({ isOpen, on
     if (!isOpen) return null;
 
     const isOwner = currentUser.uid === channel.ownerId;
+    const availableRoles = channelRoles.filter(r => r.id !== 'owner');
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] p-4" onClick={onClose}>
@@ -99,33 +107,36 @@ export const ShareChannelModal: React.FC<ShareChannelModalProps> = ({ isOpen, on
                     </div>
                 </div>
                 
-                <div className="p-6 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
-                    <label className="font-semibold text-sm mb-2 block">{t('shareModal.invite')}</label>
-                    <div className="flex gap-2">
-                        <input
-                            type="email"
-                            value={inviteEmail}
-                            onChange={(e) => setInviteEmail(e.target.value)}
-                            placeholder={t('shareModal.invitePlaceholder')}
-                            className="flex-grow p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md"
-                            disabled={isInviting || !isOwner}
-                        />
-                        <button
-                            onClick={handleInvite}
-                            disabled={isInviting || !isOwner}
-                            className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:bg-opacity-70"
-                        >
-                            {isInviting ? <Loader size={16} className="animate-spin" /> : <Send size={16} />}
-                            {isInviting ? t('shareModal.inviting') : t('shareModal.invite')}
-                        </button>
+                {isOwner && (
+                    <div className="p-6 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
+                        <label className="font-semibold text-sm mb-2 block">{t('shareModal.invite')}</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="email"
+                                value={inviteEmail}
+                                onChange={(e) => setInviteEmail(e.target.value)}
+                                placeholder={t('shareModal.invitePlaceholder')}
+                                className="flex-grow p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md"
+                                disabled={isInviting}
+                            />
+                            <button
+                                onClick={handleInvite}
+                                disabled={isInviting}
+                                className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow-lg disabled:bg-opacity-70"
+                            >
+                                {isInviting ? <Loader size={16} className="animate-spin" /> : <Send size={16} />}
+                                {isInviting ? t('shareModal.inviting') : t('shareModal.invite')}
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <div className="flex-grow overflow-y-auto p-6">
                      <h3 className="font-semibold text-sm mb-4">{t('shareModal.members')}</h3>
                      <div className="space-y-3">
                         {members.map(member => {
-                            const role = channel.members[member.uid];
+                            const roleId = channel.members[member.uid];
+                            const role = channelRoles.find(r => r.id === roleId);
                             const isCurrentUser = member.uid === currentUser.uid;
                             const isMemberOwner = member.uid === channel.ownerId;
 
@@ -139,10 +150,21 @@ export const ShareChannelModal: React.FC<ShareChannelModalProps> = ({ isOpen, on
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <span className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${role === 'owner' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}>
-                                            {role === 'owner' ? <Crown size={12}/> : <Edit size={12}/>}
-                                            {role === 'owner' ? t('shareModal.owner') : t('shareModal.editor')}
-                                        </span>
+                                        {isMemberOwner ? (
+                                            <span className="flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                                <Crown size={12}/>
+                                                {role?.name || t('roles.owner')}
+                                            </span>
+                                        ) : (
+                                            <select
+                                                value={roleId}
+                                                onChange={(e) => handleRoleChange(member.uid, e.target.value)}
+                                                disabled={!isOwner}
+                                                className="text-xs p-1.5 rounded-md border-gray-300 dark:border-gray-600 bg-light-card dark:bg-dark-card focus:ring-primary focus:border-primary disabled:opacity-70"
+                                            >
+                                                {availableRoles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                            </select>
+                                        )}
                                         {isOwner && !isMemberOwner && (
                                             <button 
                                                 onClick={() => handleRemove(member.uid)}

@@ -52,11 +52,57 @@ export interface ChannelStats {
     videoCount: number;
 }
 
+export type Permission =
+  // Project Fields
+  | 'view_project_name' | 'edit_project_name'
+  | 'view_video_title' | 'edit_video_title'
+  | 'view_script' | 'edit_script'
+  | 'view_description' | 'edit_description'
+  | 'view_tags' | 'edit_tags'
+  | 'view_publish_date' | 'edit_publish_date'
+  | 'view_status' | 'edit_status'
+  | 'view_assigned_to' | 'edit_assigned_to'
+  | 'view_youtube_link' | 'edit_youtube_link'
+  | 'view_pinned_comment' | 'edit_pinned_comment'
+  | 'view_community_post' | 'edit_community_post'
+  | 'view_facebook_post' | 'edit_facebook_post'
+  | 'view_tasks' | 'edit_tasks'
+  // Thumbnail Tab
+  | 'view_thumbnail' | 'edit_thumbnail'
+  | 'view_thumbnail_prompt' | 'edit_thumbnail_prompt'
+  // AI Assets Tab
+  | 'view_voiceover_script' | 'edit_voiceover_script'
+  | 'view_visual_prompts' | 'edit_visual_prompts'
+  | 'view_prompt_table' | 'edit_prompt_table'
+  | 'view_timecode_map' | 'edit_timecode_map'
+  | 'view_seo_metadata' | 'edit_seo_metadata'
+  | 'view_metadata' | 'edit_metadata'
+  // AI Actions
+  | 'action_generate_ai_content' // for title, desc, tags
+  | 'action_generate_thumbnail_image'
+  // Project Actions
+  | 'action_delete_project'
+  | 'action_copy_project'
+  | 'action_rerun_automation'
+  | 'action_move_project'
+  // Channel Management (for settings)
+  | 'manage_channel_settings' // Edit name, DNA, URL
+  | 'manage_channel_members' // Invite, remove, change roles
+  | 'manage_channel_roles'   // Create, edit, delete roles
+  | 'delete_channel';
+
+export interface Role {
+    id: string; // e.g., 'owner', 'editor', 'voice_actor', or a UUID
+    name: string; // e.g., "Owner", "Editor", "Voice Actor"
+    permissions: Permission[];
+    isDefault?: boolean; // To prevent deletion of 'owner'
+}
+
 export interface Channel {
     id: string;
     name: string;
     ownerId: string;
-    members: Record<string, 'owner' | 'editor'>;
+    members: Record<string, string>; // maps userId to roleId
     memberIds?: string[];
     dna: string;
     channelUrl?: string;
@@ -64,6 +110,7 @@ export interface Channel {
     dream100Videos?: Dream100Video[];
     ideas?: Idea[];
     automationSteps?: AutomationStep[];
+    roles?: Role[];
 }
 
 export interface Project {

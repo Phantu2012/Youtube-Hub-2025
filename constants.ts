@@ -1,4 +1,4 @@
-import { ProjectStatus, AutomationStep, Dream100VideoStatus, IdeaStatus } from './types';
+import { ProjectStatus, AutomationStep, Dream100VideoStatus, IdeaStatus, Permission, Role } from './types';
 
 // The 't' function will be provided by the useTranslation hook in the component
 export const getStatusOptions = (t: (key: string) => string) => [
@@ -52,6 +52,99 @@ export const PROJECT_TASKS = [
     { id: 'create_voice', labelKey: 'projectTasks.createVoice' },
     { id: 'create_image', labelKey: 'projectTasks.createImage' },
 ];
+
+export const ALL_PERMISSIONS: { id: Permission; labelKey: string; group: string; }[] = [
+    // Group: Project Details
+    { id: 'view_project_name', labelKey: 'permissions.view_project_name', group: 'project' },
+    { id: 'edit_project_name', labelKey: 'permissions.edit_project_name', group: 'project' },
+    { id: 'view_video_title', labelKey: 'permissions.view_video_title', group: 'project' },
+    { id: 'edit_video_title', labelKey: 'permissions.edit_video_title', group: 'project' },
+    { id: 'view_script', labelKey: 'permissions.view_script', group: 'project' },
+    { id: 'edit_script', labelKey: 'permissions.edit_script', group: 'project' },
+    { id: 'view_description', labelKey: 'permissions.view_description', group: 'project' },
+    { id: 'edit_description', labelKey: 'permissions.edit_description', group: 'project' },
+    { id: 'view_tags', labelKey: 'permissions.view_tags', group: 'project' },
+    { id: 'edit_tags', labelKey: 'permissions.edit_tags', group: 'project' },
+    { id: 'view_publish_date', labelKey: 'permissions.view_publish_date', group: 'project' },
+    { id: 'edit_publish_date', labelKey: 'permissions.edit_publish_date', group: 'project' },
+    { id: 'view_status', labelKey: 'permissions.view_status', group: 'project' },
+    { id: 'edit_status', labelKey: 'permissions.edit_status', group: 'project' },
+    { id: 'view_assigned_to', labelKey: 'permissions.view_assigned_to', group: 'project' },
+    { id: 'edit_assigned_to', labelKey: 'permissions.edit_assigned_to', group: 'project' },
+    { id: 'view_youtube_link', labelKey: 'permissions.view_youtube_link', group: 'project' },
+    { id: 'edit_youtube_link', labelKey: 'permissions.edit_youtube_link', group: 'project' },
+    { id: 'view_pinned_comment', labelKey: 'permissions.view_pinned_comment', group: 'project' },
+    { id: 'edit_pinned_comment', labelKey: 'permissions.edit_pinned_comment', group: 'project' },
+    { id: 'view_community_post', labelKey: 'permissions.view_community_post', group: 'project' },
+    { id: 'edit_community_post', labelKey: 'permissions.edit_community_post', group: 'project' },
+    { id: 'view_facebook_post', labelKey: 'permissions.view_facebook_post', group: 'project' },
+    { id: 'edit_facebook_post', labelKey: 'permissions.edit_facebook_post', group: 'project' },
+    { id: 'view_tasks', labelKey: 'permissions.view_tasks', group: 'project' },
+    { id: 'edit_tasks', labelKey: 'permissions.edit_tasks', group: 'project' },
+    // Group: Thumbnail
+    { id: 'view_thumbnail', labelKey: 'permissions.view_thumbnail', group: 'thumbnail' },
+    { id: 'edit_thumbnail', labelKey: 'permissions.edit_thumbnail', group: 'thumbnail' },
+    { id: 'view_thumbnail_prompt', labelKey: 'permissions.view_thumbnail_prompt', group: 'thumbnail' },
+    { id: 'edit_thumbnail_prompt', labelKey: 'permissions.edit_thumbnail_prompt', group: 'thumbnail' },
+    // Group: AI Assets
+    { id: 'view_voiceover_script', labelKey: 'permissions.view_voiceover_script', group: 'ai_assets' },
+    { id: 'edit_voiceover_script', labelKey: 'permissions.edit_voiceover_script', group: 'ai_assets' },
+    { id: 'view_visual_prompts', labelKey: 'permissions.view_visual_prompts', group: 'ai_assets' },
+    { id: 'edit_visual_prompts', labelKey: 'permissions.edit_visual_prompts', group: 'ai_assets' },
+    { id: 'view_prompt_table', labelKey: 'permissions.view_prompt_table', group: 'ai_assets' },
+    { id: 'edit_prompt_table', labelKey: 'permissions.edit_prompt_table', group: 'ai_assets' },
+    { id: 'view_timecode_map', labelKey: 'permissions.view_timecode_map', group: 'ai_assets' },
+    { id: 'edit_timecode_map', labelKey: 'permissions.edit_timecode_map', group: 'ai_assets' },
+    { id: 'view_seo_metadata', labelKey: 'permissions.view_seo_metadata', group: 'ai_assets' },
+    { id: 'edit_seo_metadata', labelKey: 'permissions.edit_seo_metadata', group: 'ai_assets' },
+    { id: 'view_metadata', labelKey: 'permissions.view_metadata', group: 'ai_assets' },
+    { id: 'edit_metadata', labelKey: 'permissions.edit_metadata', group: 'ai_assets' },
+    // Group: Actions
+    { id: 'action_generate_ai_content', labelKey: 'permissions.action_generate_ai_content', group: 'actions' },
+    { id: 'action_generate_thumbnail_image', labelKey: 'permissions.action_generate_thumbnail_image', group: 'actions' },
+    { id: 'action_delete_project', labelKey: 'permissions.action_delete_project', group: 'actions' },
+    { id: 'action_copy_project', labelKey: 'permissions.action_copy_project', group: 'actions' },
+    { id: 'action_rerun_automation', labelKey: 'permissions.action_rerun_automation', group: 'actions' },
+    { id: 'action_move_project', labelKey: 'permissions.action_move_project', group: 'actions' },
+    // Group: Channel Management
+    { id: 'manage_channel_settings', labelKey: 'permissions.manage_channel_settings', group: 'channel' },
+    { id: 'manage_channel_members', labelKey: 'permissions.manage_channel_members', group: 'channel' },
+    { id: 'manage_channel_roles', labelKey: 'permissions.manage_channel_roles', group: 'channel' },
+    { id: 'delete_channel', labelKey: 'permissions.delete_channel', group: 'channel' },
+];
+
+export const ALL_PERMISSION_IDS = ALL_PERMISSIONS.map(p => p.id as Permission);
+
+export const getDefaultRoles = (t: (key: string) => string): Role[] => {
+    const allPermissions = ALL_PERMISSION_IDS;
+    
+    const editorPermissions = allPermissions.filter(p => ![
+        'delete_channel',
+        'manage_channel_roles',
+        'manage_channel_members'
+    ].includes(p));
+
+    return [
+        {
+            id: 'owner',
+            name: t('roles.owner'),
+            permissions: allPermissions,
+            isDefault: true,
+        },
+        {
+            id: 'editor',
+            name: t('roles.editor'),
+            permissions: editorPermissions,
+            isDefault: true,
+        },
+        {
+            id: 'viewer',
+            name: t('roles.viewer'),
+            permissions: allPermissions.filter(p => p.startsWith('view_')),
+            isDefault: true,
+        }
+    ];
+};
 
 
 // Automation steps now use translation keys for name and description
