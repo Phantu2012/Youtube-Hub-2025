@@ -441,7 +441,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
                                                     <div key={group}>
                                                         <h5 className="font-semibold capitalize text-sm mb-2 text-primary">{t(`permissions.group.${group}`)}</h5>
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                            {permissions.map(p => (
+                                                            {/* FIX: Cast 'permissions' to the correct array type, as Object.entries can lose type information for indexed types. */}
+                                                            {(permissions as typeof ALL_PERMISSIONS).map(p => (
                                                                 <label key={p.id} className="flex items-center gap-2 text-sm cursor-pointer">
                                                                     <input
                                                                         type="checkbox"

@@ -38,6 +38,12 @@ export const ShareChannelModal: React.FC<ShareChannelModalProps> = ({ isOpen, on
             setMembers([]);
         }
     }, [isOpen, channel.members]);
+    
+    useEffect(() => {
+        return () => {
+            if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+        };
+    }, []);
 
     const handleInvite = async () => {
         if (!inviteEmail.trim()) return;
