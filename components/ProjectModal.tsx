@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel, Channel, User } from '../types';
-import { getStatusOptions } from '../constants';
+import { getStatusOptions, PROJECT_TASKS } from '../constants';
 import { fetchVideoStats } from '../services/youtubeService';
 import { StatsChart } from './StatsChart';
 import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet, Copy, Move, Cloud, Laptop } from 'lucide-react';
@@ -87,6 +87,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
             seoMetadata: '',
             visualPrompts: '',
             storage: 'local' as const,
+            tasks: {},
             ...project,
         };
         
@@ -143,6 +144,14 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleTaskChange = (taskId: string, isChecked: boolean) => {
+        setFormData(prev => {
+            const currentTasks = prev.tasks || {};
+            const newTasks = { ...currentTasks, [taskId]: isChecked };
+            return { ...prev, tasks: newTasks };
+        });
     };
     
     const addTagsFromString = (tagString: string) => {
@@ -623,6 +632,24 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                         <div>
                             <label className="font-semibold flex items-center gap-2">{t('projectModal.publishDate')}</label>
                             <input type="datetime-local" name="publishDateTime" value={formatForDateTimeLocal(formData.publishDateTime)} onChange={handleInputChange} className="w-full mt-1 p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" required />
+                        </div>
+                        <div>
+                            <label className="font-semibold">{t('projectTasks.title')}</label>
+                            <div className="mt-2 space-y-2 p-3 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md">
+                                {PROJECT_TASKS.map(task => (
+                                    <label key={task.id} className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={!!formData.tasks?.[task.id]}
+                                            onChange={(e) => handleTaskChange(task.id, e.target.checked)}
+                                            className="form-checkbox h-5 w-5 rounded text-primary focus:ring-primary-dark bg-transparent"
+                                        />
+                                        <span className={`text-sm ${formData.tasks?.[task.id] ? 'line-through text-gray-500' : 'text-light-text dark:text-dark-text'}`}>
+                                            {t(task.labelKey)}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
                         <div>
                             <label className="font-semibold">{t('projectModal.status')}</label>

@@ -91,6 +91,7 @@ export interface Project {
     seoMetadata?: string;
     visualPrompts?: string;
     storage?: 'local' | 'cloud';
+    tasks?: Record<string, boolean>;
 }
 
 export interface YouTubeStats {

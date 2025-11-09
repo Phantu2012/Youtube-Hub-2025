@@ -242,6 +242,12 @@ export default {
     "cloud": "Saved to cloud",
     "assignedTo": "Assigned to"
   },
+  "projectTasks": {
+    "title": "Task Checklist",
+    "checkVoice": "Check Voice",
+    "createVoice": "Create Voice",
+    "createImage": "Create Image"
+  },
   "projectModal": {
     "createTitle": "Create New Project",
     "editTitle": "Edit Project",

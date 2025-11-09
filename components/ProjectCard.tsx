@@ -1,6 +1,6 @@
 import React from 'react';
 import { Project, User } from '../types';
-import { getStatusOptions, STATUS_COLORS } from '../constants';
+import { getStatusOptions, STATUS_COLORS, PROJECT_TASKS } from '../constants';
 import { Calendar, Eye, Image as ImageIcon, ThumbsUp, MessageSquare, Cloud, Laptop } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -124,6 +124,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect, cha
             </div>
             <div className="p-4 flex-grow flex flex-col justify-between">
                 <div>
+                    <div className="mb-3 space-y-1.5">
+                        {PROJECT_TASKS.map(task => (
+                            <div key={task.id} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                <input
+                                    type="checkbox"
+                                    checked={!!project.tasks?.[task.id]}
+                                    readOnly
+                                    className="form-checkbox h-4 w-4 rounded text-primary-dark border-gray-400 dark:border-gray-500 bg-transparent pointer-events-none focus:ring-0 focus:ring-offset-0"
+                                />
+                                <span className={project.tasks?.[task.id] ? 'line-through text-gray-500' : ''}>{t(task.labelKey)}</span>
+                            </div>
+                        ))}
+                    </div>
                     <h3 className="text-lg font-bold truncate text-light-text dark:text-dark-text group-hover:text-primary transition-colors" title={project.videoTitle || project.projectName}>
                         {project.videoTitle || project.projectName}
                     </h3>

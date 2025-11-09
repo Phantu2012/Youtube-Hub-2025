@@ -47,6 +47,12 @@ export const IDEA_STATUS_COLORS: { [key in IdeaStatus]: string } = {
     [IdeaStatus.Redo]: 'bg-yellow-500',
 };
 
+export const PROJECT_TASKS = [
+    { id: 'check_voice', labelKey: 'projectTasks.checkVoice' },
+    { id: 'create_voice', labelKey: 'projectTasks.createVoice' },
+    { id: 'create_image', labelKey: 'projectTasks.createImage' },
+];
+
 
 // Automation steps now use translation keys for name and description
 export const DEFAULT_AUTOMATION_STEPS: AutomationStep[] = [

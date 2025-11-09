@@ -242,6 +242,12 @@ export default {
     "cloud": "Đã lưu trên đám mây",
     "assignedTo": "Phụ trách bởi"
   },
+  "projectTasks": {
+    "title": "Danh sách công việc",
+    "checkVoice": "Check Voice",
+    "createVoice": "Tạo Voice",
+    "createImage": "Tạo ảnh"
+  },
   "projectModal": {
     "createTitle": "Tạo dự án mới",
     "editTitle": "Chỉnh sửa dự án",

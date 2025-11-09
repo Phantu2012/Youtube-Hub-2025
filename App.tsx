@@ -72,6 +72,7 @@ const DEFAULT_PROJECT_DATA: Omit<Project, 'id' | 'channelId'> = {
     metadata: '',
     seoMetadata: '',
     visualPrompts: '',
+    tasks: {},
 };
 
 // Helper function to recursively remove undefined properties from an object.
