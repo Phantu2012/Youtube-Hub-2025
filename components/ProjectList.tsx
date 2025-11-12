@@ -1,12 +1,13 @@
 
 
 
-import React from 'react';
-import { Project, Channel, User } from '../types';
+import React, { useState, useMemo } from 'react';
+import { Project, Channel, User, ProjectStatus } from '../types';
 import { ProjectCard } from './ProjectCard';
 import { DashboardSummary } from './DashboardSummary';
 import { Loader, PlusCircle, Video, BookOpen, Users, Eye, Share2, AlertTriangle, ExternalLink } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
+import { getStatusOptions } from '../constants';
 
 interface ProjectListProps {
     projects: Project[];
@@ -24,6 +25,68 @@ interface ProjectListProps {
 
 export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, projectsByChannel, user, channelMembers, onSelectProject, isLoading, onAddChannel, onAddVideo, onManageDream100, missingIndexError }) => {
     const { t, language } = useTranslation();
+    const statusOptions = getStatusOptions(t);
+    
+    const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'name-asc' | 'status'>('date-desc');
+    const [statusFilter, setStatusFilter] = useState<ProjectStatus[]>([]);
+
+    const toggleStatusFilter = (status: ProjectStatus) => {
+        setStatusFilter(prev => {
+            const isPresent = prev.includes(status);
+            if (isPresent) {
+                return prev.filter(s => s !== status);
+            } else {
+                return [...prev, status];
+            }
+        });
+    };
+
+    const displayedProjects = useMemo(() => {
+        let processedProjects = [...projects];
+
+        // Filter
+        if (statusFilter.length > 0) {
+            processedProjects = processedProjects.filter(p => statusFilter.includes(p.status));
+        }
+
+        // Sort
+        processedProjects.sort((a, b) => {
+            switch (sortBy) {
+                case 'date-asc':
+                    return new Date(a.publishDateTime).getTime() - new Date(b.publishDateTime).getTime();
+                case 'name-asc':
+                    return (a.projectName || a.videoTitle).localeCompare(b.projectName || b.videoTitle);
+                case 'status':
+                    const orderA = statusOptions.findIndex(opt => opt.value === a.status);
+                    const orderB = statusOptions.findIndex(opt => opt.value === b.status);
+                    return orderA - orderB;
+                case 'date-desc':
+                default:
+                    try {
+                        const dateA = new Date(a.publishDateTime).getTime();
+                        const dateB = new Date(b.publishDateTime).getTime();
+                        if (isNaN(dateB)) return -1;
+                        if (isNaN(dateA)) return 1;
+                        return dateB - dateA;
+                    } catch (e) {
+                        return 0;
+                    }
+            }
+        });
+
+        return processedProjects;
+    }, [projects, sortBy, statusFilter, statusOptions]);
+
+    const displayedProjectsByChannel = useMemo(() => {
+        return displayedProjects.reduce((acc, project) => {
+          const channelId = project.channelId || 'uncategorized';
+          if (!acc[channelId]) {
+            acc[channelId] = [];
+          }
+          acc[channelId].push(project);
+          return acc;
+        }, {} as Record<string, Project[]>);
+    }, [displayedProjects]);
 
     const formatStat = (num: number): string => {
         if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -97,10 +160,58 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
             </div>
             
             <DashboardSummary projects={projects} />
+            
+            {/* Filter and Sort Controls */}
+            <div className="my-6 p-4 bg-light-card dark:bg-dark-card rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    {/* Filter */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold mr-2">{t('projects.filterByStatus')}:</span>
+                        <button
+                            onClick={() => setStatusFilter([])}
+                            className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                                statusFilter.length === 0 
+                                ? 'bg-primary text-white' 
+                                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+                            }`}
+                        >
+                            {t('projects.all')}
+                        </button>
+                        {statusOptions.map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => toggleStatusFilter(opt.value as ProjectStatus)}
+                                className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                                    statusFilter.includes(opt.value as ProjectStatus) 
+                                    ? 'bg-primary text-white' 
+                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                    {/* Sort */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        <label htmlFor="sort-by" className="text-sm font-semibold">{t('projects.sortBy')}:</label>
+                        <select
+                            id="sort-by"
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as any)}
+                            className="p-2 text-sm bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md"
+                        >
+                            <option value="date-desc">{t('projects.sortOptions.dateDesc')}</option>
+                            <option value="date-asc">{t('projects.sortOptions.dateAsc')}</option>
+                            <option value="name-asc">{t('projects.sortOptions.nameAsc')}</option>
+                            <option value="status">{t('projects.sortOptions.status')}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
             <div className="space-y-12">
                 {sortedChannels.map(channel => {
-                    const channelProjects = projectsByChannel[channel.id] || [];
+                    const channelProjects = displayedProjectsByChannel[channel.id] || [];
                     const isOwner = channel.ownerId === user.uid;
                     const owner = channelMembers[channel.ownerId];
                     const ownerName = owner ? owner.name : t('projects.owner');
@@ -155,7 +266,11 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
                                 </div>
                             ) : (
                                 <div className="text-center py-8 px-6 bg-light-bg dark:bg-dark-bg rounded-lg">
-                                    <p className="text-gray-500 dark:text-gray-400">{t('projects.noProjectsInChannel')}</p>
+                                    <p className="text-gray-500 dark:text-gray-400">
+                                        {(projectsByChannel[channel.id] || []).length > 0
+                                            ? t('projects.noMatchingProjects')
+                                            : t('projects.noProjectsInChannel')}
+                                    </p>
                                 </div>
                             )}
                         </div>

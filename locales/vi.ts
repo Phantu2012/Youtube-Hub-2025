@@ -1,4 +1,5 @@
 
+
 export default {
   "common": {
     "cancel": "Hủy",
@@ -213,11 +214,21 @@ export default {
     "noChannels": "Chưa có Kênh nào",
     "getStartedChannels": "Thêm kênh đầu tiên của bạn trong Cài đặt để bắt đầu.",
     "noProjectsInChannel": "Chưa có dự án video nào trong kênh này.",
+    "noMatchingProjects": "Không có dự án nào khớp với bộ lọc.",
     "subscribers": "Người đăng ký",
     "totalViews": "Tổng lượt xem",
     "videos": "Video",
     "sharedBy": "Được chia sẻ bởi {{name}}",
     "owner": "(Chủ sở hữu)",
+    "filterByStatus": "Lọc theo Trạng thái",
+    "sortBy": "Sắp xếp theo",
+    "all": "Tất cả",
+    "sortOptions": {
+      "dateDesc": "Ngày xuất bản (Mới nhất)",
+      "dateAsc": "Ngày xuất bản (Cũ nhất)",
+      "nameAsc": "Tên dự án (A-Z)",
+      "status": "Theo Trạng thái"
+    },
     "missingIndexError": {
       "title": "Yêu cầu Hành động: Tạo Chỉ mục Cơ sở dữ liệu",
       "createButton": "Nhấp vào đây để tạo chỉ mục trong Firebase"

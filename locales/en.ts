@@ -1,4 +1,5 @@
 
+
 export default {
   "common": {
     "cancel": "Cancel",
@@ -213,11 +214,21 @@ export default {
     "noChannels": "No Channels Found",
     "getStartedChannels": "Add your first channel in the Settings to get started.",
     "noProjectsInChannel": "No video projects in this channel yet.",
+    "noMatchingProjects": "No projects match the current filters.",
     "subscribers": "Subscribers",
     "totalViews": "Total Views",
     "videos": "Videos",
     "sharedBy": "Shared by {{name}}",
     "owner": "(Owner)",
+    "filterByStatus": "Filter by Status",
+    "sortBy": "Sort by",
+    "all": "All",
+    "sortOptions": {
+      "dateDesc": "Publish Date (Newest)",
+      "dateAsc": "Publish Date (Oldest)",
+      "nameAsc": "Project Name (A-Z)",
+      "status": "By Status"
+    },
     "missingIndexError": {
       "title": "Action Required: Create Database Index",
       "createButton": "Click here to create the index in Firebase"
