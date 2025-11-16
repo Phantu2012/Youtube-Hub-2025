@@ -141,18 +141,6 @@ const AppContent: React.FC = () => {
             stats: cachedStat ? cachedStat.stats : undefined,
         };
     });
-
-    projectsWithStats.sort((a: Project, b: Project) => {
-        try {
-            const dateA = new Date(a.publishDateTime).getTime();
-            const dateB = new Date(b.publishDateTime).getTime();
-            if (isNaN(dateB)) return -1;
-            if (isNaN(dateA)) return 1;
-            return dateB - dateA;
-        } catch (e) {
-            return 0;
-        }
-    });
     
     return projectsWithStats as Project[];
   }, [projectsFromListeners, localProjects, projectStats]);
