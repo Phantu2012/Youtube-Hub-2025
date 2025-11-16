@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel, Channel, User, Permission } from '../types';
 import { getStatusOptions, PROJECT_TASKS } from '../constants';
@@ -12,6 +14,7 @@ import { useTranslation } from '../hooks/useTranslation';
 
 interface ProjectModalProps {
     project: Project | null;
+    projects: Project[];
     channels: Channel[];
     apiKeys: ApiKeys;
     selectedProvider: AIProvider;
@@ -62,7 +65,7 @@ const TabButton: React.FC<{
 );
 
 
-export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, apiKeys, selectedProvider, selectedModel, isSaving, channelMembers, onClose, onSave, onDelete, onCopy, onRerun, onMove, showToast, userPermissions }) => {
+export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, channels, apiKeys, selectedProvider, selectedModel, isSaving, channelMembers, onClose, onSave, onDelete, onCopy, onRerun, onMove, showToast, userPermissions }) => {
     const { t, language } = useTranslation();
     const [activeTab, setActiveTab] = useState<ModalTab>('content');
     
@@ -72,6 +75,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
             channelId: '',
             projectName: '',
             publishDateTime: new Date().toISOString(),
+            plannedPublishDateTime: '',
             status: ProjectStatus.Idea,
             videoTitle: '',
             thumbnailData: '',
@@ -115,6 +119,36 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
     const [isMoving, setIsMoving] = useState(false);
     const [destinationChannelId, setDestinationChannelId] = useState('');
     const [copiedField, setCopiedField] = useState<string | null>(null);
+    const [scheduleConflict, setScheduleConflict] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!formData.plannedPublishDateTime) {
+            setScheduleConflict(null);
+            return;
+        }
+
+        try {
+            const plannedTime = new Date(formData.plannedPublishDateTime).getTime();
+            if (isNaN(plannedTime)) {
+                setScheduleConflict(null);
+                return;
+            }
+
+            const conflictingProject = projects.find(p =>
+                p.id !== formData.id &&
+                p.plannedPublishDateTime &&
+                new Date(p.plannedPublishDateTime).getTime() === plannedTime
+            );
+
+            if (conflictingProject) {
+                setScheduleConflict(conflictingProject.projectName || conflictingProject.videoTitle);
+            } else {
+                setScheduleConflict(null);
+            }
+        } catch (e) {
+            setScheduleConflict(null);
+        }
+    }, [formData.plannedPublishDateTime, formData.id, projects]);
 
     const handleCopyField = (fieldValue: string, fieldName: string) => {
         if (!fieldValue) return;
@@ -291,14 +325,14 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
         const clean = (field: any) => String(field || '').replace(/"/g, '""').replace(/\n/g, ' ').replace(/\t/g, ' ');
 
         const headers = [
-            'Project Name', 'Video Title', 'Status', 'Publish DateTime',
+            'Project Name', 'Video Title', 'Status', 'Publish DateTime', 'Planned Publish DateTime',
             'Description', 'Tags', 'Pinned Comment', 'Community Post',
             'Facebook Post', 'YouTube Link', 'Thumbnail Prompt', 'Script Outline',
             'Voiceover Script', 'Visual Prompts', 'Prompt Table', 'Timecode Map', 'SEO Metadata'
         ].join('\t');
         
         const data = [
-            clean(p.projectName), clean(p.videoTitle), clean(p.status), clean(p.publishDateTime),
+            clean(p.projectName), clean(p.videoTitle), clean(p.status), clean(p.publishDateTime), clean(p.plannedPublishDateTime),
             clean(p.description), (p.tags || []).join(', '), clean(p.pinnedComment), clean(p.communityPost),
             clean(p.facebookPost), clean(p.youtubeLink), clean(p.thumbnailPrompt), clean(p.script),
             clean(p.voiceoverScript), clean(p.visualPrompts), clean(p.promptTable), clean(p.timecodeMap), clean(p.seoMetadata)
@@ -485,7 +519,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
 
                 <div className="p-4 md:p-6 space-y-4 overflow-y-auto flex-grow">
                     {/* Common Header */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                         <div className="lg:col-span-2">
                             <label htmlFor="projectName" className="font-semibold text-sm mb-1 block">{t('projectModal.projectName')}</label>
                             <div className="relative group">
@@ -498,6 +532,15 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                          <div>
                             <label htmlFor="publishDateTime" className="font-semibold text-sm mb-1 block">{t('projectModal.publishDate')}</label>
                             <input id="publishDateTime" type="datetime-local" name="publishDateTime" value={formData.publishDateTime ? formData.publishDateTime.substring(0, 16) : ''} onChange={handleInputChange} disabled={!hasPermission('edit_publish_date')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                        </div>
+                        <div>
+                            <label htmlFor="plannedPublishDateTime" className="font-semibold text-sm mb-1 block">{t('projectModal.plannedPublishDate')}</label>
+                            <input id="plannedPublishDateTime" type="datetime-local" name="plannedPublishDateTime" value={formData.plannedPublishDateTime ? formData.plannedPublishDateTime.substring(0, 16) : ''} onChange={handleInputChange} disabled={!hasPermission('edit_publish_date')} className={`w-full p-2 bg-light-bg dark:bg-dark-bg border rounded-md ${scheduleConflict ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`} />
+                            {scheduleConflict && (
+                                <p className="text-red-500 text-xs mt-1">
+                                    {t('projectModal.scheduleConflictWarning', { projectName: scheduleConflict })}
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label htmlFor="status" className="font-semibold text-sm mb-1 block">{t('projectModal.status')}</label>
@@ -740,7 +783,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                     <div className="flex flex-wrap items-center gap-2">
                         {hasPermission('action_delete_project') && <button type="button" onClick={() => handleConfirmClick('delete')} className={`flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg transition-colors ${confirmAction === 'delete' ? 'bg-red-600 text-white' : 'text-red-500 hover:bg-red-500/10'}`}>{isSaving ? <Loader size={16} className="animate-spin"/> : <Trash2 size={16} />} {confirmAction === 'delete' ? t('projectModal.deleteConfirmation') : t('projectModal.delete')}</button>}
                         {hasPermission('action_copy_project') && <button type="button" onClick={() => onCopy(formData as Project)} className="flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg text-blue-500 hover:bg-blue-500/10"><Copy size={16} />{t('projectModal.copy')}</button>}
-                        <button type="button" onClick={handleExport} className="flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg text-green-600 hover:bg-green-600/10"><Sheet size={16} />{t('projectModal.exportToSheet')}</button>
+                        <button type="button" onClick={handleExport} className="flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg text-green-600 hover:bg-green-600/10"><Sheet size={16} />{t('projectModal.exportToSheet')}</button>}
                         {hasPermission('action_rerun_automation') && <button type="button" onClick={() => onRerun(formData as Project)} className="flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg text-purple-500 hover:bg-purple-500/10"><Repeat size={16} />{t('projectModal.rerunAutomation')}</button>}
                     </div>
                      <div className="flex items-center gap-2">

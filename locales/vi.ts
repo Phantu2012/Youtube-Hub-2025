@@ -1,5 +1,6 @@
 
 
+
 export default {
   "common": {
     "cancel": "Hủy",
@@ -251,13 +252,15 @@ export default {
     "comments": "bình luận",
     "local": "Đã lưu trên máy",
     "cloud": "Đã lưu trên đám mây",
-    "assignedTo": "Phụ trách bởi"
+    "assignedTo": "Phụ trách bởi",
+    "plannedDate": "Ngày dự kiến đăng"
   },
   "projectTasks": {
     "title": "Danh sách công việc",
     "checkVoice": "Check Voice",
     "createVoice": "Tạo Voice",
-    "createImage": "Tạo ảnh"
+    "createImage": "Tạo ảnh",
+    "createThumbnail": "Tạo Thumbnail"
   },
   "projectModal": {
     "createTitle": "Tạo dự án mới",
@@ -289,6 +292,8 @@ export default {
     "tags": "Thẻ (Tags)",
     "addTagPlaceholder": "Thêm thẻ...",
     "publishDate": "Ngày & Giờ xuất bản",
+    "plannedPublishDate": "Kế hoạch dự kiến đăng",
+    "scheduleConflictWarning": "Cảnh báo: Trùng lịch với dự án '{{projectName}}'.",
     "status": "Trạng thái",
     "assignedTo": "Người phụ trách",
     "unassigned": "Chưa giao",

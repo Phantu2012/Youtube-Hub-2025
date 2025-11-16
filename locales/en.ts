@@ -1,5 +1,6 @@
 
 
+
 export default {
   "common": {
     "cancel": "Cancel",
@@ -251,13 +252,15 @@ export default {
     "comments": "comments",
     "local": "Saved locally",
     "cloud": "Saved to cloud",
-    "assignedTo": "Assigned to"
+    "assignedTo": "Assigned to",
+    "plannedDate": "Planned Publish Date"
   },
   "projectTasks": {
     "title": "Task Checklist",
     "checkVoice": "Check Voice",
     "createVoice": "Create Voice",
-    "createImage": "Create Image"
+    "createImage": "Create Image",
+    "createThumbnail": "Create Thumbnail"
   },
   "projectModal": {
     "createTitle": "Create New Project",
@@ -289,6 +292,8 @@ export default {
     "tags": "Tags",
     "addTagPlaceholder": "Add a tag...",
     "publishDate": "Publish Date & Time",
+    "plannedPublishDate": "Planned Publish Date",
+    "scheduleConflictWarning": "Warning: Schedule conflicts with project '{{projectName}}'.",
     "status": "Status",
     "assignedTo": "Assigned To",
     "unassigned": "Unassigned",

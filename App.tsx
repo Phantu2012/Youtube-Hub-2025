@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep, YouTubeStats, Permission, Role } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -55,6 +56,7 @@ const DEV_DEFAULT_API_KEYS: ApiKeys = {
 const DEFAULT_PROJECT_DATA: Omit<Project, 'id' | 'channelId'> = {
     projectName: '',
     publishDateTime: '', // Will be set on creation/modal open
+    plannedPublishDateTime: '',
     status: ProjectStatus.Idea,
     assignedTo: undefined,
     videoTitle: '',
@@ -1232,6 +1234,7 @@ const AppContent: React.FC = () => {
       {isModalOpen && (
         <ProjectModal 
           project={selectedProject} 
+          projects={projects}
           channels={channels}
           apiKeys={apiKeys}
           selectedProvider={selectedProvider}

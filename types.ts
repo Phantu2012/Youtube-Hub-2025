@@ -118,6 +118,7 @@ export interface Project {
     channelId: string; // Link to the parent channel
     projectName: string;
     publishDateTime: string; // Changed from publishDate to include time
+    plannedPublishDateTime?: string;
     status: ProjectStatus;
     assignedTo?: string; // UID of the assigned user
     videoTitle: string;

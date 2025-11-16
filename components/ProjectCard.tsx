@@ -1,7 +1,7 @@
 import React from 'react';
 import { Project, User } from '../types';
 import { getStatusOptions, STATUS_COLORS, PROJECT_TASKS } from '../constants';
-import { Calendar, Eye, Image as ImageIcon, ThumbsUp, MessageSquare, Cloud, Laptop, Check } from 'lucide-react';
+import { Calendar, Eye, Image as ImageIcon, ThumbsUp, MessageSquare, Cloud, Laptop, Check, Clock } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
 interface ProjectCardProps {
@@ -24,50 +24,28 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect, cha
         return num.toLocaleString(language);
     };
     
-    const getLocaleDateTime = () => {
-        const { publishDateTime, projectName } = project;
-
-        if (!publishDateTime) {
-            return '—';
-        }
+    const formatProjectDate = (dateValue: any, projectName: string) => {
+        if (!dateValue) return '—';
 
         let date: Date | null = null;
-
         try {
-            const value = publishDateTime as any;
-
-            // Case 1: It's already a valid Date object.
-            if (value instanceof Date && !isNaN(value.getTime())) {
-                date = value;
-            }
-            // Case 2: It's a string (ISO, etc.) or a number (epoch ms).
-            else if (typeof value === 'string' || typeof value === 'number') {
-                const d = new Date(value);
-                if (!isNaN(d.getTime())) {
-                    date = d;
-                }
-            }
-            // Case 3: It's a Firestore-like Timestamp object.
-            else if (typeof value === 'object' && value !== null) {
-                // Check for v9/v8 .toDate() method
-                if (typeof value.toDate === 'function') {
-                    date = value.toDate();
-                }
-                // Check for serialized seconds properties
-                else if (typeof value.seconds === 'number') {
-                    date = new Date(value.seconds * 1000);
-                } else if (typeof value._seconds === 'number') {
-                     date = new Date(value._seconds * 1000);
-                }
+            if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
+                date = dateValue;
+            } else if (typeof dateValue === 'string' || typeof dateValue === 'number') {
+                const d = new Date(dateValue);
+                if (!isNaN(d.getTime())) date = d;
+            } else if (typeof dateValue === 'object' && dateValue !== null) {
+                if (typeof dateValue.toDate === 'function') date = dateValue.toDate();
+                else if (typeof dateValue.seconds === 'number') date = new Date(dateValue.seconds * 1000);
+                else if (typeof dateValue._seconds === 'number') date = new Date(dateValue._seconds * 1000);
             }
         } catch (e) {
-            console.error(`Error parsing date for project "${projectName}":`, publishDateTime, e);
+            console.error(`Error parsing date for project "${projectName}":`, dateValue, e);
             return '—';
         }
         
-        // Final validation and formatting
         if (!date || isNaN(date.getTime())) {
-            console.warn(`Could not parse date for project "${projectName}":`, publishDateTime);
+            console.warn(`Could not parse date for project "${projectName}":`, dateValue);
             return '—';
         }
 
@@ -88,7 +66,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect, cha
             hour12: true
         }).replace(',', '');
     };
-    const localeDateTime = getLocaleDateTime();
+    
+    const localeDateTime = formatProjectDate(project.publishDateTime, project.projectName);
+    const localePlannedDateTime = formatProjectDate(project.plannedPublishDateTime, project.projectName);
     
     const storageType = project.storage || (project.id.startsWith('local_') ? 'local' : 'cloud');
 
@@ -142,9 +122,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect, cha
                         {project.videoTitle || project.projectName}
                     </h3>
                     <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
-                        <div className="flex items-center">
-                            <Calendar size={14} className="mr-2" />
-                            <span>{localeDateTime}</span>
+                        <div className="flex items-center flex-wrap gap-x-3 gap-y-1">
+                            <div className="flex items-center" title={t('projectModal.publishDate')}>
+                                <Calendar size={14} className="mr-2" />
+                                <span>{localeDateTime}</span>
+                            </div>
+                            {localePlannedDateTime !== '—' && (
+                                <div className="flex items-center" title={t('projectCard.plannedDate')}>
+                                    <Clock size={14} className="mr-2 text-blue-500" />
+                                    <span className="text-blue-500">{localePlannedDateTime}</span>
+                                </div>
+                            )}
                         </div>
                         {project.stats && (
                             <div className="flex items-center space-x-3">

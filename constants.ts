@@ -51,6 +51,7 @@ export const PROJECT_TASKS = [
     { id: 'check_voice', labelKey: 'projectTasks.checkVoice' },
     { id: 'create_voice', labelKey: 'projectTasks.createVoice' },
     { id: 'create_image', labelKey: 'projectTasks.createImage' },
+    { id: 'create_thumbnail', labelKey: 'projectTasks.createThumbnail' },
 ];
 
 export const ALL_PERMISSIONS: { id: Permission; labelKey: string; group: string; }[] = [
