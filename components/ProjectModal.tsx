@@ -114,6 +114,19 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
     const confirmTimer = useRef<number | null>(null);
     const [isMoving, setIsMoving] = useState(false);
     const [destinationChannelId, setDestinationChannelId] = useState('');
+    const [copiedField, setCopiedField] = useState<string | null>(null);
+
+    const handleCopyField = (fieldValue: string, fieldName: string) => {
+        if (!fieldValue) return;
+        navigator.clipboard.writeText(fieldValue).then(() => {
+            showToast(t('toasts.copied'), 'success');
+            setCopiedField(fieldName);
+            setTimeout(() => setCopiedField(null), 2000);
+        }).catch(err => {
+            console.error('Failed to copy text:', err);
+            showToast(t('toasts.copyFailed'), 'error');
+        });
+    };
 
     const hasPermission = useCallback((p: Permission) => userPermissions.includes(p), [userPermissions]);
     const hasAnyEditPermission = useMemo(() => userPermissions.some(p => p.startsWith('edit_') || p.startsWith('action_')), [userPermissions]);
@@ -272,6 +285,35 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
             }
         }
     };
+    
+    const handleExport = useCallback(() => {
+        const p = formData as Project;
+        const clean = (field: any) => String(field || '').replace(/"/g, '""').replace(/\n/g, ' ').replace(/\t/g, ' ');
+
+        const headers = [
+            'Project Name', 'Video Title', 'Status', 'Publish DateTime',
+            'Description', 'Tags', 'Pinned Comment', 'Community Post',
+            'Facebook Post', 'YouTube Link', 'Thumbnail Prompt', 'Script Outline',
+            'Voiceover Script', 'Visual Prompts', 'Prompt Table', 'Timecode Map', 'SEO Metadata'
+        ].join('\t');
+        
+        const data = [
+            clean(p.projectName), clean(p.videoTitle), clean(p.status), clean(p.publishDateTime),
+            clean(p.description), (p.tags || []).join(', '), clean(p.pinnedComment), clean(p.communityPost),
+            clean(p.facebookPost), clean(p.youtubeLink), clean(p.thumbnailPrompt), clean(p.script),
+            clean(p.voiceoverScript), clean(p.visualPrompts), clean(p.promptTable), clean(p.timecodeMap), clean(p.seoMetadata)
+        ].join('\t');
+        
+        const tsvContent = `${headers}\n${data}`;
+        
+        navigator.clipboard.writeText(tsvContent).then(() => {
+            showToast(t('toasts.projectExported'), 'success');
+        }).catch(err => {
+            console.error('Failed to copy project data:', err);
+            showToast(t('toasts.exportFailed'), 'error');
+        });
+    }, [formData, showToast, t]);
+
 
     const handleGenerate = async (field: 'videoTitle' | 'description' | 'tags' | 'thumbnailPrompt') => {
         const aiApiKey = selectedProvider === 'gemini' ? apiKeys.gemini : apiKeys.openai;
@@ -446,7 +488,12 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="lg:col-span-2">
                             <label htmlFor="projectName" className="font-semibold text-sm mb-1 block">{t('projectModal.projectName')}</label>
-                            <input id="projectName" name="projectName" value={formData.projectName} onChange={handleInputChange} disabled={!hasPermission('edit_project_name')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                            <div className="relative group">
+                                <input id="projectName" name="projectName" value={formData.projectName} onChange={handleInputChange} disabled={!hasPermission('edit_project_name')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                <button type="button" onClick={() => handleCopyField(formData.projectName, 'projectName')} title={t('common.copy')} className="absolute top-1/2 right-1 -translate-y-1/2 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {copiedField === 'projectName' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                </button>
+                            </div>
                         </div>
                          <div>
                             <label htmlFor="publishDateTime" className="font-semibold text-sm mb-1 block">{t('projectModal.publishDate')}</label>
@@ -464,23 +511,65 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                     <div className={activeTab === 'content' ? 'block' : 'hidden'}>
                         {/* Content Tab */}
                         <div className="space-y-4">
-                             <div>
-                                <label htmlFor="videoTitle" className="font-semibold text-sm mb-1 block">{t('projectModal.videoTitle')}</label>
-                                <div className="flex gap-2">
-                                    <input id="videoTitle" name="videoTitle" value={formData.videoTitle} onChange={handleInputChange} disabled={!hasPermission('edit_video_title')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
-                                    {hasPermission('action_generate_ai_content') && <button type="button" onClick={() => handleGenerate('videoTitle')} disabled={isGenerating === 'videoTitle'} className="p-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 flex-shrink-0">{isGenerating === 'videoTitle' ? <Loader size={20} className="animate-spin" /> : <Wand2 size={20}/>}</button>}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                               <div className="md:col-span-2">
+                                    <label htmlFor="videoTitle" className="font-semibold text-sm mb-1 block">{t('projectModal.videoTitle')}</label>
+                                    <div className="flex gap-2">
+                                        <div className="relative group w-full">
+                                            <input id="videoTitle" name="videoTitle" value={formData.videoTitle} onChange={handleInputChange} disabled={!hasPermission('edit_video_title')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                            <button type="button" onClick={() => handleCopyField(formData.videoTitle, 'videoTitle')} title={t('common.copy')} className="absolute top-1/2 right-1 -translate-y-1/2 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {copiedField === 'videoTitle' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                            </button>
+                                        </div>
+                                        {hasPermission('action_generate_ai_content') && <button type="button" onClick={() => handleGenerate('videoTitle')} disabled={isGenerating === 'videoTitle'} className="p-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 flex-shrink-0">{isGenerating === 'videoTitle' ? <Loader size={20} className="animate-spin" /> : <Wand2 size={20}/>}</button>}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="font-semibold text-sm mb-1 block">{t('projectTasks.title')}</label>
+                                    <div className="space-y-2 rounded-md bg-light-bg dark:bg-dark-bg p-3 border border-gray-200 dark:border-gray-700">
+                                        {PROJECT_TASKS.map(task => (
+                                            <label key={task.id} className={`flex items-center gap-3 ${hasPermission('edit_tasks') ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only"
+                                                    checked={!!formData.tasks?.[task.id]}
+                                                    onChange={(e) => hasPermission('edit_tasks') && handleTaskChange(task.id, e.target.checked)}
+                                                    disabled={!hasPermission('edit_tasks')}
+                                                />
+                                                <div className={`w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
+                                                    formData.tasks?.[task.id]
+                                                        ? 'bg-orange-500 border-orange-500'
+                                                        : 'border-gray-400 bg-white dark:bg-dark-card'
+                                                }`}>
+                                                    {formData.tasks?.[task.id] && <Check size={16} className="text-white" />}
+                                                </div>
+                                                <span className={`text-sm ${formData.tasks?.[task.id] ? 'line-through text-gray-500' : 'text-light-text dark:text-dark-text'}`}>{t(task.labelKey)}</span>
+                                            </label>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label htmlFor="description" className="font-semibold text-sm mb-1 block">{t('projectModal.description')}</label>
                                     <div className="flex gap-2">
-                                        <textarea id="description" name="description" value={formData.description} onChange={handleInputChange} disabled={!hasPermission('edit_description')} rows={6} placeholder={t('projectModal.description')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                                        <div className="relative group w-full">
+                                            <textarea id="description" name="description" value={formData.description} onChange={handleInputChange} disabled={!hasPermission('edit_description')} rows={6} placeholder={t('projectModal.description')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                            <button type="button" onClick={() => handleCopyField(formData.description, 'description')} title={t('common.copy')} className="absolute top-1 right-1 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity bg-light-bg/80 dark:bg-dark-bg/80">
+                                                {copiedField === 'description' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                            </button>
+                                        </div>
                                         {hasPermission('action_generate_ai_content') && <button type="button" onClick={() => handleGenerate('description')} disabled={isGenerating === 'description'} className="p-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 flex-shrink-0 self-start">{isGenerating === 'description' ? <Loader size={20} className="animate-spin" /> : <Wand2 size={20}/>}</button>}
                                     </div>
                                 </div>
                                 <div>
-                                    <label htmlFor="tags" className="font-semibold text-sm mb-1 block flex items-center gap-2"><Tag size={14}/>{t('projectModal.tags')}</label>
+                                    <label htmlFor="tags" className="font-semibold text-sm mb-1 block flex items-center gap-2">
+                                        <Tag size={14}/>
+                                        {t('projectModal.tags')}
+                                        <button type="button" onClick={() => handleCopyField((formData.tags || []).join(', '), 'tags')} className="p-1 text-gray-400 hover:text-primary rounded-md" title={t('common.copy')}>
+                                            {copiedField === 'tags' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                        </button>
+                                    </label>
                                     <div className="flex gap-2 mb-2">
                                         <input id="tags" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} onPaste={handleTagPaste} onBlur={handleTagInputBlur} placeholder={t('projectModal.addTagPlaceholder')} disabled={!hasPermission('edit_tags')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
                                         {hasPermission('action_generate_ai_content') && <button type="button" onClick={() => handleGenerate('tags')} disabled={isGenerating === 'tags'} className="p-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 flex-shrink-0">{isGenerating === 'tags' ? <Loader size={20} className="animate-spin" /> : <Wand2 size={20}/>}</button>}
@@ -501,21 +590,35 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                     <div className={activeTab === 'publishing' ? 'block' : 'hidden'}>
                         {/* Publishing Tab */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
+                            <div className="relative group">
                                 <label htmlFor="pinnedComment" className="font-semibold text-sm mb-1 block">{t('projectModal.pinnedComment')}</label>
-                                <textarea id="pinnedComment" name="pinnedComment" value={formData.pinnedComment} onChange={handleInputChange} disabled={!hasPermission('edit_pinned_comment')} rows={4} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                                <textarea id="pinnedComment" name="pinnedComment" value={formData.pinnedComment} onChange={handleInputChange} disabled={!hasPermission('edit_pinned_comment')} rows={4} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                <button type="button" onClick={() => handleCopyField(formData.pinnedComment, 'pinnedComment')} title={t('common.copy')} className="absolute top-8 right-1 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity bg-light-bg/80 dark:bg-dark-bg/80">
+                                    {copiedField === 'pinnedComment' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                </button>
                             </div>
-                            <div>
+                            <div className="relative group">
                                 <label htmlFor="communityPost" className="font-semibold text-sm mb-1 block">{t('projectModal.communityPost')}</label>
-                                <textarea id="communityPost" name="communityPost" value={formData.communityPost} onChange={handleInputChange} disabled={!hasPermission('edit_community_post')} rows={4} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                                <textarea id="communityPost" name="communityPost" value={formData.communityPost} onChange={handleInputChange} disabled={!hasPermission('edit_community_post')} rows={4} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                <button type="button" onClick={() => handleCopyField(formData.communityPost, 'communityPost')} title={t('common.copy')} className="absolute top-8 right-1 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity bg-light-bg/80 dark:bg-dark-bg/80">
+                                    {copiedField === 'communityPost' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                </button>
                             </div>
-                            <div>
+                            <div className="relative group">
                                 <label htmlFor="facebookPost" className="font-semibold text-sm mb-1 block">{t('projectModal.facebookPost')}</label>
-                                <textarea id="facebookPost" name="facebookPost" value={formData.facebookPost} onChange={handleInputChange} disabled={!hasPermission('edit_facebook_post')} rows={4} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                                <textarea id="facebookPost" name="facebookPost" value={formData.facebookPost} onChange={handleInputChange} disabled={!hasPermission('edit_facebook_post')} rows={4} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                <button type="button" onClick={() => handleCopyField(formData.facebookPost, 'facebookPost')} title={t('common.copy')} className="absolute top-8 right-1 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity bg-light-bg/80 dark:bg-dark-bg/80">
+                                    {copiedField === 'facebookPost' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                </button>
                             </div>
                              <div>
                                 <label htmlFor="youtubeLink" className="font-semibold text-sm mb-1 block">{t('projectModal.youtubeLink')}</label>
-                                <input id="youtubeLink" name="youtubeLink" value={formData.youtubeLink} onChange={handleInputChange} disabled={!hasPermission('edit_youtube_link')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                                <div className="relative group">
+                                    <input id="youtubeLink" name="youtubeLink" value={formData.youtubeLink} onChange={handleInputChange} disabled={!hasPermission('edit_youtube_link')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                    <button type="button" onClick={() => handleCopyField(formData.youtubeLink, 'youtubeLink')} title={t('common.copy')} className="absolute top-1/2 right-1 -translate-y-1/2 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {copiedField === 'youtubeLink' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -548,7 +651,12 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                                 <div>
                                     <label htmlFor="thumbnailPrompt" className="font-semibold text-sm mb-1 block">{t('projectModal.thumbnailPrompt')}</label>
                                     <div className="flex gap-2">
-                                         <textarea id="thumbnailPrompt" name="thumbnailPrompt" value={formData.thumbnailPrompt} onChange={handleInputChange} placeholder={t('projectModal.thumbnailPromptPlaceholder')} disabled={!hasPermission('edit_thumbnail_prompt')} rows={3} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                                         <div className="relative group w-full">
+                                            <textarea id="thumbnailPrompt" name="thumbnailPrompt" value={formData.thumbnailPrompt} onChange={handleInputChange} placeholder={t('projectModal.thumbnailPromptPlaceholder')} disabled={!hasPermission('edit_thumbnail_prompt')} rows={3} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                            <button type="button" onClick={() => handleCopyField(formData.thumbnailPrompt, 'thumbnailPrompt')} title={t('common.copy')} className="absolute top-1 right-1 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity bg-light-bg/80 dark:bg-dark-bg/80">
+                                                {copiedField === 'thumbnailPrompt' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                            </button>
+                                        </div>
                                         {hasPermission('action_generate_ai_content') && <button type="button" onClick={() => handleGenerate('thumbnailPrompt')} disabled={isGenerating === 'thumbnailPrompt'} className="p-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 self-start">{isGenerating === 'thumbnailPrompt' ? <Loader size={20} className="animate-spin"/> : <Wand2 size={20}/>}</button>}
                                     </div>
                                 </div>
@@ -563,29 +671,47 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                     <div className={activeTab === 'ai_assets' ? 'block' : 'hidden'}>
                         {/* AI Assets Tab */}
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
+                            <div className="relative group">
                                 <label htmlFor="script" className="font-semibold text-sm mb-1 block">{t('projectModal.script')}</label>
-                                <textarea id="script" name="script" value={formData.script} onChange={handleInputChange} disabled={!hasPermission('edit_script')} placeholder={t('projectModal.scriptPlaceholder')} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                                <textarea id="script" name="script" value={formData.script} onChange={handleInputChange} disabled={!hasPermission('edit_script')} placeholder={t('projectModal.scriptPlaceholder')} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                <button type="button" onClick={() => handleCopyField(formData.script, 'script')} title={t('common.copy')} className="absolute top-8 right-1 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity bg-light-bg/80 dark:bg-dark-bg/80">
+                                    {copiedField === 'script' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                </button>
                             </div>
-                            <div>
+                            <div className="relative group">
                                 <label htmlFor="voiceoverScript" className="font-semibold text-sm mb-1 block">{t('projectModal.voiceoverScript')}</label>
-                                <textarea id="voiceoverScript" name="voiceoverScript" value={formData.voiceoverScript} onChange={handleInputChange} disabled={!hasPermission('edit_voiceover_script')} placeholder={t('projectModal.voiceoverScriptPlaceholder')} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                                <textarea id="voiceoverScript" name="voiceoverScript" value={formData.voiceoverScript} onChange={handleInputChange} disabled={!hasPermission('edit_voiceover_script')} placeholder={t('projectModal.voiceoverScriptPlaceholder')} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                <button type="button" onClick={() => handleCopyField(formData.voiceoverScript, 'voiceoverScript')} title={t('common.copy')} className="absolute top-8 right-1 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity bg-light-bg/80 dark:bg-dark-bg/80">
+                                    {copiedField === 'voiceoverScript' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                </button>
                             </div>
-                             <div>
+                             <div className="relative group">
                                 <label htmlFor="visualPrompts" className="font-semibold text-sm mb-1 block">{t('projectModal.visualPrompts')}</label>
-                                <textarea id="visualPrompts" name="visualPrompts" value={formData.visualPrompts} onChange={handleInputChange} disabled={!hasPermission('edit_visual_prompts')} placeholder={t('projectModal.visualPromptsPlaceholder')} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                                <textarea id="visualPrompts" name="visualPrompts" value={formData.visualPrompts} onChange={handleInputChange} disabled={!hasPermission('edit_visual_prompts')} placeholder={t('projectModal.visualPromptsPlaceholder')} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                <button type="button" onClick={() => handleCopyField(formData.visualPrompts, 'visualPrompts')} title={t('common.copy')} className="absolute top-8 right-1 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity bg-light-bg/80 dark:bg-dark-bg/80">
+                                    {copiedField === 'visualPrompts' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                </button>
                             </div>
-                             <div>
+                             <div className="relative group">
                                 <label htmlFor="promptTable" className="font-semibold text-sm mb-1 block">{t('projectModal.promptTable')}</label>
-                                <textarea id="promptTable" name="promptTable" value={formData.promptTable} onChange={handleInputChange} disabled={!hasPermission('edit_prompt_table')} placeholder={t('projectModal.promptTablePlaceholder')} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                                <textarea id="promptTable" name="promptTable" value={formData.promptTable} onChange={handleInputChange} disabled={!hasPermission('edit_prompt_table')} placeholder={t('projectModal.promptTablePlaceholder')} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                <button type="button" onClick={() => handleCopyField(formData.promptTable, 'promptTable')} title={t('common.copy')} className="absolute top-8 right-1 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity bg-light-bg/80 dark:bg-dark-bg/80">
+                                    {copiedField === 'promptTable' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                </button>
                             </div>
-                             <div>
+                             <div className="relative group">
                                 <label htmlFor="timecodeMap" className="font-semibold text-sm mb-1 block">{t('projectModal.timecodeMap')}</label>
-                                <textarea id="timecodeMap" name="timecodeMap" value={formData.timecodeMap} onChange={handleInputChange} disabled={!hasPermission('edit_timecode_map')} placeholder={t('projectModal.timecodeMapPlaceholder')} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                                <textarea id="timecodeMap" name="timecodeMap" value={formData.timecodeMap} onChange={handleInputChange} disabled={!hasPermission('edit_timecode_map')} placeholder={t('projectModal.timecodeMapPlaceholder')} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                <button type="button" onClick={() => handleCopyField(formData.timecodeMap, 'timecodeMap')} title={t('common.copy')} className="absolute top-8 right-1 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity bg-light-bg/80 dark:bg-dark-bg/80">
+                                    {copiedField === 'timecodeMap' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                </button>
                             </div>
-                             <div>
+                             <div className="relative group">
                                 <label htmlFor="seoMetadata" className="font-semibold text-sm mb-1 block">{t('projectModal.seoMetadata')}</label>
-                                <textarea id="seoMetadata" name="seoMetadata" value={formData.seoMetadata} onChange={handleInputChange} disabled={!hasPermission('edit_seo_metadata')} placeholder={t('projectModal.seoMetadataPlaceholder')} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
+                                <textarea id="seoMetadata" name="seoMetadata" value={formData.seoMetadata} onChange={handleInputChange} disabled={!hasPermission('edit_seo_metadata')} placeholder={t('projectModal.seoMetadataPlaceholder')} rows={12} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
+                                <button type="button" onClick={() => handleCopyField(formData.seoMetadata, 'seoMetadata')} title={t('common.copy')} className="absolute top-8 right-1 p-1.5 text-gray-400 hover:text-primary rounded-md opacity-0 group-hover:opacity-100 transition-opacity bg-light-bg/80 dark:bg-dark-bg/80">
+                                    {copiedField === 'seoMetadata' ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -611,9 +737,10 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, channels, a
                 </div>
 
                 <div className="p-4 bg-light-bg dark:bg-dark-bg/50 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-between items-center gap-4 flex-shrink-0">
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         {hasPermission('action_delete_project') && <button type="button" onClick={() => handleConfirmClick('delete')} className={`flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg transition-colors ${confirmAction === 'delete' ? 'bg-red-600 text-white' : 'text-red-500 hover:bg-red-500/10'}`}>{isSaving ? <Loader size={16} className="animate-spin"/> : <Trash2 size={16} />} {confirmAction === 'delete' ? t('projectModal.deleteConfirmation') : t('projectModal.delete')}</button>}
                         {hasPermission('action_copy_project') && <button type="button" onClick={() => onCopy(formData as Project)} className="flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg text-blue-500 hover:bg-blue-500/10"><Copy size={16} />{t('projectModal.copy')}</button>}
+                        <button type="button" onClick={handleExport} className="flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg text-green-600 hover:bg-green-600/10"><Sheet size={16} />{t('projectModal.exportToSheet')}</button>
                         {hasPermission('action_rerun_automation') && <button type="button" onClick={() => onRerun(formData as Project)} className="flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg text-purple-500 hover:bg-purple-500/10"><Repeat size={16} />{t('projectModal.rerunAutomation')}</button>}
                     </div>
                      <div className="flex items-center gap-2">

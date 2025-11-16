@@ -764,6 +764,7 @@ export default {
     "resetInputsSuccess": "Tất cả dữ liệu đầu vào đã được xóa.",
     "dbConnectionError": "Không thể kết nối với cơ sở dữ liệu. Điều này có thể do sự cố mạng hoặc cấu hình dự án Firebase không chính xác (ví dụ: Firestore chưa được bật).",
     "copied": "Đã sao chép vào clipboard!",
+    "copyFailed": "Sao chép văn bản thất bại.",
     "step5AutoFilled": "Dữ liệu cho Bước 5 đã được điền tự động từ lựa chọn tốt nhất của Bước 4!",
     "projectExported": "Đã sao chép dữ liệu dự án!",
     "exportFailed": "Không thể sao chép dữ liệu.",

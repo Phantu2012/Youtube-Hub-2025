@@ -1,7 +1,7 @@
 import React from 'react';
 import { Project, User } from '../types';
 import { getStatusOptions, STATUS_COLORS, PROJECT_TASKS } from '../constants';
-import { Calendar, Eye, Image as ImageIcon, ThumbsUp, MessageSquare, Cloud, Laptop } from 'lucide-react';
+import { Calendar, Eye, Image as ImageIcon, ThumbsUp, MessageSquare, Cloud, Laptop, Check } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
 interface ProjectCardProps {
@@ -127,12 +127,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect, cha
                     <div className="mb-3 space-y-1.5">
                         {PROJECT_TASKS.map(task => (
                             <div key={task.id} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                                <input
-                                    type="checkbox"
-                                    checked={!!project.tasks?.[task.id]}
-                                    readOnly
-                                    className="form-checkbox h-4 w-4 rounded text-primary-dark border-gray-400 dark:border-gray-500 bg-transparent pointer-events-none focus:ring-0 focus:ring-offset-0"
-                                />
+                                <div className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center 
+                                    ${project.tasks?.[task.id]
+                                        ? 'bg-orange-500 border-orange-500'
+                                        : 'border-gray-400 dark:border-gray-500'
+                                    }`}>
+                                    {project.tasks?.[task.id] && <Check size={12} className="text-white" />}
+                                </div>
                                 <span className={project.tasks?.[task.id] ? 'line-through text-gray-500' : ''}>{t(task.labelKey)}</span>
                             </div>
                         ))}
