@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel, Channel, User, Permission } from '../types';
 import { getStatusOptions, PROJECT_TASKS } from '../constants';
@@ -783,7 +781,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, c
                     <div className="flex flex-wrap items-center gap-2">
                         {hasPermission('action_delete_project') && <button type="button" onClick={() => handleConfirmClick('delete')} className={`flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg transition-colors ${confirmAction === 'delete' ? 'bg-red-600 text-white' : 'text-red-500 hover:bg-red-500/10'}`}>{isSaving ? <Loader size={16} className="animate-spin"/> : <Trash2 size={16} />} {confirmAction === 'delete' ? t('projectModal.deleteConfirmation') : t('projectModal.delete')}</button>}
                         {hasPermission('action_copy_project') && <button type="button" onClick={() => onCopy(formData as Project)} className="flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg text-blue-500 hover:bg-blue-500/10"><Copy size={16} />{t('projectModal.copy')}</button>}
-                        <button type="button" onClick={handleExport} className="flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg text-green-600 hover:bg-green-600/10"><Sheet size={16} />{t('projectModal.exportToSheet')}</button>}
+                        <button type="button" onClick={handleExport} className="flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg text-green-600 hover:bg-green-600/10"><Sheet size={16} />{t('projectModal.exportToSheet')}</button>
                         {hasPermission('action_rerun_automation') && <button type="button" onClick={() => onRerun(formData as Project)} className="flex items-center gap-2 text-sm font-semibold py-2 px-3 rounded-lg text-purple-500 hover:bg-purple-500/10"><Repeat size={16} />{t('projectModal.rerunAutomation')}</button>}
                     </div>
                      <div className="flex items-center gap-2">
