@@ -517,8 +517,8 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, c
 
                 <div className="p-4 md:p-6 space-y-4 overflow-y-auto flex-grow">
                     {/* Common Header */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                        <div className="lg:col-span-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="md:col-span-2 lg:col-span-1">
                             <label htmlFor="projectName" className="font-semibold text-sm mb-1 block">{t('projectModal.projectName')}</label>
                             <div className="relative group">
                                 <input id="projectName" name="projectName" value={formData.projectName} onChange={handleInputChange} disabled={!hasPermission('edit_project_name')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md pr-10" />
@@ -527,10 +527,34 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, c
                                 </button>
                             </div>
                         </div>
-                         <div>
+                        
+                        <div>
+                            <label htmlFor="channelId" className="font-semibold text-sm mb-1 block">{t('projectModal.channel')}</label>
+                            <select
+                                id="channelId"
+                                name="channelId"
+                                value={formData.channelId}
+                                onChange={handleInputChange}
+                                disabled={!formData.id?.startsWith('local_')}
+                                className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                <option value="" disabled>{t('automation.selectChannelPlaceholder')}</option>
+                                {channels.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label htmlFor="status" className="font-semibold text-sm mb-1 block">{t('projectModal.status')}</label>
+                            <select id="status" name="status" value={formData.status} onChange={handleInputChange} disabled={!hasPermission('edit_status')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md">
+                                {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                            </select>
+                        </div>
+
+                        <div>
                             <label htmlFor="publishDateTime" className="font-semibold text-sm mb-1 block">{t('projectModal.publishDate')}</label>
                             <input id="publishDateTime" type="datetime-local" name="publishDateTime" value={formData.publishDateTime ? formData.publishDateTime.substring(0, 16) : ''} onChange={handleInputChange} disabled={!hasPermission('edit_publish_date')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md" />
                         </div>
+
                         <div>
                             <label htmlFor="plannedPublishDateTime" className="font-semibold text-sm mb-1 block">{t('projectModal.plannedPublishDate')}</label>
                             <input id="plannedPublishDateTime" type="datetime-local" name="plannedPublishDateTime" value={formData.plannedPublishDateTime ? formData.plannedPublishDateTime.substring(0, 16) : ''} onChange={handleInputChange} disabled={!hasPermission('edit_publish_date')} className={`w-full p-2 bg-light-bg dark:bg-dark-bg border rounded-md ${scheduleConflict ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`} />
@@ -540,10 +564,21 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, c
                                 </p>
                             )}
                         </div>
+
                         <div>
-                            <label htmlFor="status" className="font-semibold text-sm mb-1 block">{t('projectModal.status')}</label>
-                            <select id="status" name="status" value={formData.status} onChange={handleInputChange} disabled={!hasPermission('edit_status')} className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md">
-                                {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                            <label htmlFor="assignedTo" className="font-semibold text-sm mb-1 block">{t('projectModal.assignedTo')}</label>
+                            <select
+                                id="assignedTo"
+                                name="assignedTo"
+                                value={formData.assignedTo || ''}
+                                onChange={handleInputChange}
+                                disabled={!hasPermission('edit_assigned_to')}
+                                className="w-full p-2 bg-light-bg dark:bg-dark-bg border border-gray-300 dark:border-gray-600 rounded-md"
+                            >
+                                <option value="">{t('projectModal.unassigned')}</option>
+                                {currentChannelMembers.map(member => (
+                                    <option key={member.uid} value={member.uid}>{member.name}</option>
+                                ))}
                             </select>
                         </div>
                     </div>

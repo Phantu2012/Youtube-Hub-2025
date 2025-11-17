@@ -1,6 +1,5 @@
 
 
-
 export default {
   "common": {
     "cancel": "Cancel",
@@ -273,6 +272,7 @@ export default {
     "deleteConfirmation": "Confirm Delete",
     "clearFormConfirmation": "Confirm Clear",
     "projectName": "Project Name",
+    "channel": "Channel",
     "videoTitle": "Video Title",
     "script": "Script Outline (from AI)",
     "scriptPlaceholder": "Output from Automation Step 1 (Outline Generation) will appear here...",

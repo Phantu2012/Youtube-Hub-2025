@@ -1,6 +1,5 @@
 
 
-
 export default {
   "common": {
     "cancel": "Hủy",
@@ -273,6 +272,7 @@ export default {
     "deleteConfirmation": "Xác nhận Xóa",
     "clearFormConfirmation": "Xác nhận Làm trống",
     "projectName": "Tên dự án",
+    "channel": "Kênh",
     "videoTitle": "Tiêu đề Video",
     "script": "Dàn ý Kịch bản (từ AI)",
     "scriptPlaceholder": "Kết quả từ Bước 1 Tự động hóa (Tạo dàn ý) sẽ xuất hiện ở đây...",
