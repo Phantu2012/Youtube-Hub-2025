@@ -1,6 +1,7 @@
 
 
 
+
 export enum ProjectStatus {
     Idea = 'Idea',
     Production = 'Production',
@@ -140,6 +141,7 @@ export interface Project {
     visualPrompts?: string;
     storage?: 'local' | 'cloud';
     tasks?: Record<string, boolean>;
+    updatedAt?: any;
 }
 
 export interface YouTubeStats {

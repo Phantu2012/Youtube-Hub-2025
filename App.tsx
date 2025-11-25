@@ -1,6 +1,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep, YouTubeStats, Permission, Role } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -875,7 +877,7 @@ const AppContent: React.FC = () => {
             script, thumbnailData, description, pinnedComment, communityPost,
             facebookPost, thumbnailPrompt, voiceoverScript, promptTable,
             timecodeMap, metadata, seoMetadata, visualPrompts,
-            id, storage, stats, tags,
+            id, storage, stats, tags, updatedAt,
             ...mainData
         } = projectToSave;
 
@@ -904,6 +906,9 @@ const AppContent: React.FC = () => {
         const cleanedProjectData = cleanUndefined(projectDataToSave);
         const cleanedLargeData = cleanUndefined(largeData);
 
+        // Force update timestamp to trigger onSnapshot listeners even if only sub-collection data changed.
+        // This fixes the issue where updates to large data fields (like scripts) don't refresh the UI immediately.
+        cleanedProjectData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
 
         if (projectToSave.id && !isMigratingFromLocal) { // Update existing cloud project
             const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectToSave.id);
@@ -1030,7 +1035,11 @@ const AppContent: React.FC = () => {
     const ownerId = originalChannel.ownerId;
     try {
         const projectDocRef = db.collection('users').doc(ownerId).collection('projects').doc(projectToMove.id);
-        await projectDocRef.update({ channelId: newChannelId });
+        // Force update timestamp to trigger listener on move as well
+        await projectDocRef.update({ 
+            channelId: newChannelId,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
         showToast(t('toasts.projectMoved', { channelName: destinationChannel.name }), 'success');
         handleCloseModal();
     } catch (error) {
