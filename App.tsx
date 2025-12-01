@@ -3,6 +3,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, ProjectStatus, ToastMessage, User, ChannelDna, ApiKeys, AIProvider, AIModel, Channel, Dream100Video, ChannelStats, Idea, AutomationStep, YouTubeStats, Permission, Role } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -51,6 +53,7 @@ const MOCK_USER: User = {
 const DEV_DEFAULT_API_KEYS: ApiKeys = {
   gemini: 'YOUR_GEMINI_API_KEY_HERE',
   openai: 'YOUR_OPENAI_API_KEY_HERE',
+  claude: 'YOUR_CLAUDE_API_KEY_HERE',
   youtube: 'YOUR_YOUTUBE_API_KEY_HERE',
 };
 
@@ -112,7 +115,7 @@ const AppContent: React.FC = () => {
   const [theme, setTheme] = useLocalStorage<'light' | 'dark'>('theme', 'dark');
   const [apiKeys, setApiKeys] = useLocalStorage<ApiKeys>(
     'api-keys', 
-    IS_DEV_MODE ? DEV_DEFAULT_API_KEYS : { gemini: '', openai: '', youtube: '' }
+    IS_DEV_MODE ? DEV_DEFAULT_API_KEYS : { gemini: '', openai: '', claude: '', youtube: '' }
   );
   const [selectedProvider, setSelectedProvider] = useLocalStorage<AIProvider>('ai-provider', 'gemini');
   const [selectedModel, setSelectedModel] = useLocalStorage<AIModel>('ai-model', 'gemini-2.5-flash');

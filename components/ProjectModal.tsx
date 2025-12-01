@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel, Channel, User, Permission } from '../types';
 import { getStatusOptions, PROJECT_TASKS } from '../constants';
@@ -348,7 +350,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, c
 
 
     const handleGenerate = async (field: 'videoTitle' | 'description' | 'tags' | 'thumbnailPrompt') => {
-        const aiApiKey = selectedProvider === 'gemini' ? apiKeys.gemini : apiKeys.openai;
+        const aiApiKey = selectedProvider === 'gemini' ? apiKeys.gemini : (selectedProvider === 'openai' ? apiKeys.openai : apiKeys.claude);
         if (!aiApiKey) {
             showToast(t('toasts.aiKeyMissing', {provider: selectedProvider}), 'error');
             return;
@@ -386,7 +388,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, c
                 const ai = new GoogleGenAI({ apiKey: aiApiKey });
                 const response = await ai.models.generateContent({ model: selectedModel, contents: prompt });
                 result = response.text;
-            } else { // OpenAI
+            } else if (selectedProvider === 'openai') { 
                 const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${aiApiKey}` },
@@ -398,6 +400,27 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, c
                 }
                 const data = await response.json();
                 result = data.choices[0].message.content.trim();
+            } else if (selectedProvider === 'claude') {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'x-api-key': aiApiKey,
+                        'anthropic-version': '2023-06-01',
+                        'content-type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: selectedModel || 'claude-3-5-sonnet-20240620',
+                        max_tokens: 4096,
+                        messages: [{ role: 'user', content: prompt }]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    throw new Error(`Claude API error: ${response.status} - ${errorBody}`);
+                }
+                const data = await response.json();
+                result = data.content[0].text.trim();
             }
             
             if (field === 'tags') {
@@ -436,6 +459,10 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, c
                  setIsGeneratingImage(false);
                  return;
 
+             } else if (selectedProvider === 'claude') {
+                 showToast('Image generation is not supported by Claude directly.', 'info');
+                 setIsGeneratingImage(false);
+                 return;
              } else { // OpenAI DALL-E
                  const response = await fetch('https://api.openai.com/v1/images/generations', {
                      method: 'POST',
@@ -792,7 +819,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, c
                         </div>
                     </div>
                     
-                    <div className={activeTab === 'stats' ? 'block' : 'hidden'}>
+                    <div className="activeTab === 'stats' ? 'block' : 'hidden'">
                         {/* Stats Tab */}
                         {isLoadingStats && <div className="flex justify-center items-center h-64"><Loader className="w-12 h-12 animate-spin text-primary" /></div>}
                         {!isLoadingStats && !stats && <div className="text-center h-64 flex flex-col justify-center items-center"><InfoIcon className="text-yellow-500 mb-2" size={32}/><p>{apiKeys.youtube ? t('projectModal.enterLinkForStats') : t('projectModal.setApiKey')}</p></div>}

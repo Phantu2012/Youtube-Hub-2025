@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { X, Save, Key, Eye, EyeOff, Info, Bot, Youtube, Sparkles, PlusCircle, Trash2, Link, Loader, Share2, Users, Edit, Check } from 'lucide-react';
 import { ChannelDna, ApiKeys, AIProvider, AIModel, Channel, User, Role, Permission } from '../types';
@@ -32,6 +34,9 @@ const models: Record<AIProvider, { value: AIModel, label: string }[]> = {
         { value: 'gpt-4o', label: 'GPT-4o' },
         { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
     ],
+    claude: [
+        { value: 'claude-3-5-sonnet-20240620', label: 'Claude 3.5 Sonnet' }
+    ]
 };
 
 const ApiKeyInput: React.FC<{
@@ -254,7 +259,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
                                             <div>
                                                 <label className="font-semibold text-sm mb-2 block">{t('settings.aiProvider.selectProvider')}</label>
                                                 <div className="flex gap-4">
-                                                    {(['gemini', 'openai'] as AIProvider[]).map(provider => (
+                                                    {(['gemini', 'openai', 'claude'] as AIProvider[]).map(provider => (
                                                         <label key={provider} className="flex items-center gap-2 cursor-pointer">
                                                             <input
                                                                 type="radio"
@@ -294,6 +299,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
                                                 label="OpenAI API Key"
                                                 value={localApiKeys.openai}
                                                 onChange={(e) => handleApiKeyChange('openai', e.target.value)}
+                                                placeholder={t('settings.apiKeyPlaceholder')}
+                                            />
+                                            <ApiKeyInput
+                                                id="claudeApiKey"
+                                                label="Claude API Key"
+                                                value={localApiKeys.claude}
+                                                onChange={(e) => handleApiKeyChange('claude', e.target.value)}
                                                 placeholder={t('settings.apiKeyPlaceholder')}
                                             />
                                         </div>

@@ -2,6 +2,8 @@
 
 
 
+
+
 export enum ProjectStatus {
     Idea = 'Idea',
     Production = 'Production',
@@ -209,12 +211,13 @@ export interface AutomationStep {
     enabled?: boolean;
 }
 
-export type AIProvider = 'gemini' | 'openai';
+export type AIProvider = 'gemini' | 'openai' | 'claude';
 
-export type AIModel = 'gemini-2.5-flash' | 'gpt-4o' | 'gpt-4-turbo';
+export type AIModel = 'gemini-2.5-flash' | 'gpt-4o' | 'gpt-4-turbo' | 'claude-3-5-sonnet-20240620';
 
 export interface ApiKeys {
     gemini: string;
     openai: string;
+    claude: string;
     youtube: string;
 }

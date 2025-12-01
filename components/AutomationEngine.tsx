@@ -1,7 +1,9 @@
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { Channel, ChannelDna, Project, ProjectStatus, ToastMessage, AutomationStep, AutomationStepStatus, YouTubeVideoDetails, ApiKeys, AIProvider, AIModel, Idea, Dream100Video } from '../types';
-import { Bot, Loader, Sparkles, FilePlus2, PlayCircle, Youtube, Search, RotateCcw, Trash2, ChevronDown, StopCircle, Lightbulb, BookOpen } from 'lucide-react';
+import { Bot, Loader, Sparkles, FilePlus2, PlayCircle, Youtube, Search, RotateCcw, Trash2, ChevronDown, StopCircle, Lightbulb, BookOpen, Settings } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { DEFAULT_AUTOMATION_STEPS } from '../constants';
 import { AutomationStepCard } from './AutomationStepCard';
@@ -76,6 +78,13 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
     const [stepSettings, setStepSettings] = useLocalStorage<StepSettings>('automation-settings', {});
     const [isIdeaBankOpen, setIsIdeaBankOpen] = useState(false);
     const [isDream100SelectorOpen, setIsDream100SelectorOpen] = useState(false);
+    
+    // Local provider override state
+    const [localProvider, setLocalProvider] = useState<AIProvider>(selectedProvider);
+    
+    useEffect(() => {
+        setLocalProvider(selectedProvider);
+    }, [selectedProvider]);
 
     useEffect(() => {
         // Load user-specific custom steps for the channel, or fall back to global defaults
@@ -259,7 +268,12 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
     };
 
     const runSingleStep = async (step: AutomationStep, context: Record<string, string>): Promise<string> => {
-        const aiApiKey = selectedProvider === 'gemini' ? apiKeys.gemini : apiKeys.openai;
+        const providerToUse = localProvider; // Use the locally selected provider
+        const aiApiKey = providerToUse === 'gemini' ? apiKeys.gemini : (providerToUse === 'openai' ? apiKeys.openai : apiKeys.claude);
+        const modelToUse = providerToUse === 'gemini' 
+            ? 'gemini-2.5-flash' 
+            : (providerToUse === 'openai' ? 'gpt-4o' : 'claude-3-5-sonnet-20240620'); // Default mappings
+
         const prompt = hydratePrompt(step.promptTemplate, context);
         
         const MAX_RETRIES = 4;
@@ -268,18 +282,18 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
         for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
                 let output = '';
-                if (selectedProvider === 'gemini') {
+                if (providerToUse === 'gemini') {
                     const ai = new GoogleGenAI({ apiKey: aiApiKey });
                     const response = await ai.models.generateContent({
-                        model: selectedModel,
+                        model: modelToUse,
                         contents: prompt,
                     });
                     output = response.text.trim();
-                } else { // OpenAI
+                } else if (providerToUse === 'openai') { 
                     const response = await fetch('https://api.openai.com/v1/chat/completions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${aiApiKey}` },
-                        body: JSON.stringify({ model: selectedModel, messages: [{ role: 'user', content: prompt }] }),
+                        body: JSON.stringify({ model: modelToUse, messages: [{ role: 'user', content: prompt }] }),
                     });
 
                     if (!response.ok) {
@@ -292,7 +306,32 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                     }
                     const data = await response.json();
                     output = data.choices[0].message.content.trim();
+                } else if (providerToUse === 'claude') {
+                    const response = await fetch('https://api.anthropic.com/v1/messages', {
+                        method: 'POST',
+                        headers: {
+                            'x-api-key': aiApiKey,
+                            'anthropic-version': '2023-06-01',
+                            'content-type': 'application/json',
+                            // NOTE: Browsers will block this by default due to CORS. 
+                            // Users typically need a proxy or a browser extension to bypass CORS for direct API calls.
+                            // 'anthropic-dangerously-allow-browser': 'true' // Some SDKs use this, raw fetch is strict.
+                        },
+                        body: JSON.stringify({
+                            model: modelToUse,
+                            max_tokens: 4096,
+                            messages: [{ role: 'user', content: prompt }]
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        throw new Error(`Claude API error: ${response.status} - ${errorBody}`);
+                    }
+                    const data = await response.json();
+                    output = data.content[0].text.trim();
                 }
+                
                 return output; // Success
             } catch (error: any) {
                 const errorMessage = String(error.message || '').toUpperCase();
@@ -343,9 +382,9 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
             }
         }
         
-        const aiApiKey = selectedProvider === 'gemini' ? apiKeys.gemini : apiKeys.openai;
+        const aiApiKey = localProvider === 'gemini' ? apiKeys.gemini : (localProvider === 'openai' ? apiKeys.openai : apiKeys.claude);
         if (!aiApiKey) {
-            showToast(t('toasts.aiKeyMissing', { provider: selectedProvider }), 'error');
+            showToast(t('toasts.aiKeyMissing', { provider: localProvider }), 'error');
             return;
         }
 
@@ -438,6 +477,8 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                 let errorMessage = t('toasts.stepError', { stepName: t(step.name) });
                 if (error.message && (error.message.includes('500') || error.message.includes('INTERNAL') || error.message.includes('Server error'))) {
                     errorMessage = t('toasts.stepError500', { stepName: t(step.name) });
+                } else if (error.message && error.message.includes('Claude')) {
+                    errorMessage = `Claude AI Error: ${error.message}`;
                 }
                 showToast(errorMessage, 'error');
                 setStepStatus(prev => ({ ...prev, [step.id]: AutomationStepStatus.Error }));
@@ -830,6 +871,28 @@ export const AutomationEngine: React.FC<AutomationEngineProps> = ({ channels, on
                             <><PlayCircle size={20} /> {pausedAtStep ? t('automation.resumeButton') : t('automation.runButton')}</>
                         )}
                     </button>
+                    
+                    {/* AI Provider Selection for this Run */}
+                    <div className="flex justify-center items-center gap-4 border-t border-b border-gray-200 dark:border-gray-700 py-3">
+                        <span className="text-sm font-semibold text-gray-500">AI Model:</span>
+                        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                            {(['gemini', 'openai', 'claude'] as AIProvider[]).map((provider) => (
+                                <button
+                                    key={provider}
+                                    onClick={() => !isRunning && setLocalProvider(provider)}
+                                    disabled={isRunning}
+                                    className={`px-4 py-1.5 rounded-md text-sm font-semibold capitalize transition-all ${
+                                        localProvider === provider
+                                            ? 'bg-white dark:bg-dark-card text-primary shadow-sm'
+                                            : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                                    }`}
+                                >
+                                    {provider}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="flex justify-center gap-4 pt-2">
                         <button
                             onClick={handleResetChainProgress}
