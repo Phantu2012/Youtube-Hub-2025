@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { auth, db, googleProvider, firebase } from './firebase';
 import { User, Channel, Project, ApiKeys, AIProvider, AIModel, ToastMessage, AutomationStep, Idea, Dream100Video, Role, ProjectStatus } from './types';
-import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { LoginScreen } from './components/LoginScreen';
 import { PendingApprovalScreen } from './components/PendingApprovalScreen';
@@ -577,15 +576,6 @@ const App: React.FC = () => {
 
     return (
         <div className="flex min-h-screen bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text font-sans transition-colors duration-300">
-            <Sidebar
-                theme={theme}
-                toggleTheme={() => setTheme(prev => prev === 'light' ? 'dark' : 'light')}
-                onOpenSettings={() => setIsSettingsOpen(true)}
-                user={user}
-                onLogout={handleLogout}
-                activeView={activeView === 'projects' || activeView === 'automation' ? activeView : 'projects'}
-                setActiveView={(v) => setActiveView(v)}
-            />
             
             <div className="flex-1 flex flex-col h-screen overflow-hidden">
                 <Header
