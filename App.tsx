@@ -22,14 +22,29 @@ import { useTranslation } from './hooks/useTranslation';
 import { DEFAULT_AUTOMATION_STEPS, ALL_PERMISSION_IDS } from './constants';
 import { Loader } from 'lucide-react';
 
-// Helper to remove undefined values from objects before saving to Firestore
+// FIX: Helper function was destroying Date and Firestore objects.
+// Updated to preserve instances of classes (like Date, FieldValue).
 const cleanUndefined = (obj: any): any => {
     if (obj === null || typeof obj !== 'object') {
         return obj;
     }
+    
+    // Preserve Dates
+    if (obj instanceof Date) {
+        return obj;
+    }
+    
+    // Handle Arrays
     if (Array.isArray(obj)) {
         return obj.map(cleanUndefined);
     }
+    
+    // Preserve Firestore Types and other special objects
+    // If it's not a plain object (created by {} or new Object()), leave it alone.
+    if (obj.constructor !== Object) {
+        return obj;
+    }
+
     return Object.entries(obj).reduce((acc, [key, value]) => {
         if (value !== undefined) {
             acc[key] = cleanUndefined(value);
@@ -388,7 +403,6 @@ const App: React.FC = () => {
 
     const handleDeleteChannel = async (channelId: string) => {
         if (!user) return;
-        // Verify channel has no projects locally
         const channelProjects = projects.filter(p => p.channelId === channelId);
         if (channelProjects.length > 0) {
             showToast(t('settings.deleteChannelError'), 'error');
@@ -434,9 +448,9 @@ const App: React.FC = () => {
         if (!user) return;
         setIsSavingProject(true);
         try {
+            // Find channel owner
             const channel = channels.find(c => c.id === project.channelId);
-            if (!channel) throw new Error("Channel not found");
-            const ownerId = channel.ownerId;
+            const ownerId = channel ? channel.ownerId : user.uid; // Fallback to current user if channel unknown (unlikely with orphan fix)
             
             let projectId = project.id;
             const isNew = project.id.startsWith('local_');

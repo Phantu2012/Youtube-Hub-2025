@@ -172,6 +172,8 @@ const viData = {
     "addVideo": "Thêm Video",
     "noMatchingProjects": "Không có dự án nào khớp với bộ lọc.",
     "noProjectsInChannel": "Chưa có dự án nào trong kênh này.",
+    "unknownChannel": "Kênh Không xác định ({{id}})",
+    "ghostChannelHint": "Dữ liệu kênh này bị thiếu, nhưng dự án vẫn an toàn.",
     "missingIndexError": {
         "title": "Thiếu Index",
         "createButton": "Tạo Index"
@@ -519,40 +521,6 @@ const viData = {
       "description": "Đối chiếu các prompt hình ảnh với dấu thời gian hội thoại từ một tệp SRT được cung cấp để tạo danh sách cảnh quay được đồng bộ hóa."
     }
   },
-  "dream100": {
-      "title": "Dream 100 - {{channelName}}",
-      "youtubeUrlPlaceholder": "Nhập URL Video YouTube",
-      "addVideo": "Thêm Video",
-      "addingVideo": "Đang thêm...",
-      "filterByChannel": "Lọc theo Kênh",
-      "allChannels": "Tất cả các Kênh",
-      "noVideos": "Chưa có video nào.",
-      "getStarted": "Thêm video từ đối thủ cạnh tranh hoặc kênh truyền cảm hứng để theo dõi.",
-      "deleteConfirmation": "Xóa video này khỏi Dream 100?",
-      "status": {
-          "pending": "Chờ xử lý",
-          "analyzed": "Đã phân tích",
-          "remade": "Đã làm lại"
-      },
-      "table": {
-          "video": "Video",
-          "stats": "Thống kê",
-          "published": "Đã xuất bản",
-          "status": "Trạng thái",
-          "actions": "Hành động"
-      },
-      "details": {
-          "description": "Mô tả",
-          "tags": "Thẻ",
-          "noTags": "Không tìm thấy thẻ nào."
-      },
-      "toasts": {
-          "videoAdded": "Đã thêm video vào Dream 100!",
-          "videoExists": "Video đã tồn tại trong Dream 100.",
-          "fetchError": "Không thể lấy chi tiết video",
-          "videoRemoved": "Đã xóa video khỏi Dream 100."
-      }
-  },
   "dream100Selector": {
     "title": "Chọn một Video Viral",
     "searchPlaceholder": "Tìm theo tiêu đề...",
@@ -582,160 +550,6 @@ const viData = {
     "contentPlaceholder": "Nhập nội dung chính hoặc ghi chú cho ý tưởng này...",
     "noIdeas": "Chưa có ý tưởng nào. Hãy thêm một ý tưởng ở trên để bắt đầu!",
     "deleteConfirm": "Bạn có chắc chắn muốn xóa ý tưởng này không?"
-  },
-  "channelDnaWizard": {
-      "title": "Trình tạo DNA Kênh",
-      "resultTitle": "DNA Đã tạo",
-      "resultDescription": "Đây là DNA Kênh được tạo ra. Hãy xem lại và chỉnh sửa nếu cần, sau đó nhấp vào 'Sử dụng DNA này'.",
-      "generatingTitle": "Đang tạo...",
-      "generatingMessage": "Đang phân tích câu trả lời của bạn để xây dựng hồ sơ hoàn hảo...",
-      "errorTitle": "Tạo Thất bại",
-      "retry": "Thử lại",
-      "regenerate": "Tạo lại",
-      "useThisDna": "Sử dụng DNA này",
-      "back": "Quay lại",
-      "next": "Tiếp theo",
-      "generate": "Tạo DNA",
-      "step": "Bước {{current}} / {{total}}",
-      "guide": {
-          "title": "Hướng dẫn Tạo DNA",
-          "intro": "Để tạo nội dung chất lượng cao với AI, bạn cần một 'Bản sắc' (DNA) rõ ràng. Trình hướng dẫn này sẽ giúp bạn xác định nó.",
-          "start": "Bắt đầu",
-          "checklist": "Mẹo: Hãy cụ thể! Bạn cung cấp càng nhiều chi tiết, AI sẽ hoạt động càng tốt.",
-          "step1_title": "Chủ đề & Ngách",
-          "step1_desc": "Chủ đề chính là gì? (VD: Nấu ăn, Công nghệ, Lịch sử)\nNgách cụ thể là gì? (VD: Nấu ăn chay cho sinh viên)",
-          "step2_title": "Khán giả Mục tiêu",
-          "step2_desc": "Bạn đang nói chuyện với ai? (Tuổi, giới tính, sở thích, vấn đề)\nVD: 'Nam giới 25-40 tuổi quan tâm đến thể hình nhưng không có thời gian.'",
-          "step3_title": "Vai trò & Giọng văn",
-          "step3_desc": "Bạn là ai đối với khán giả? (Chuyên gia, Bạn bè, Người hướng dẫn)\nGiọng văn như thế nào? (Nghiêm túc, Hài hước, Truyền cảm hứng)",
-          "step4_title": "Giá trị Cốt lõi & Sứ mệnh",
-          "step4_desc": "Mục tiêu của kênh là gì? (Giáo dục, Giải trí, Truyền cảm hứng)\nBạn đại diện cho điều gì?",
-          "step5_title": "Phong cách & Cấu trúc",
-          "step5_desc": "Bạn bắt đầu video như thế nào? (Hook, Intro)\nBạn kết thúc như thế nào? (CTA)\nĐộ dài và nhịp độ video.",
-          "step6_title": "Hình ảnh & Âm thanh",
-          "step6_desc": "Phong cách hình ảnh (Điện ảnh, Vlog, Stock, Hoạt hình)\nLựa chọn âm nhạc và hiệu ứng âm thanh.",
-          "step7_title": "Từ khóa & Ngôn ngữ",
-          "step7_desc": "Từ vựng hoặc câu cửa miệng cụ thể.\nNgôn ngữ (Tiếng Anh, Tiếng Việt, v.v.)"
-      },
-      "q1_question": "Chủ đề & Ngách",
-      "q1_description": "Kênh của bạn nói về cái gì? Hãy cụ thể.",
-      "q1_placeholder": "VD: Tài chính cá nhân cho Gen Z, Review Game cổ điển...",
-      "q2_question": "Khán giả Mục tiêu",
-      "q2_description": "Ai là người xem lý tưởng của bạn?",
-      "q2_placeholder": "VD: Sinh viên đại học gặp khó khăn về ngân sách...",
-      "q_role_question": "Vai trò & Xưng hô",
-      "q_role_description": "Bạn là ai đối với khán giả? Bạn xưng hô với họ như thế nào?",
-      "q_role_placeholder": "VD: Tôi là một giáo viên nghiêm khắc. Tôi gọi họ là 'các em'...",
-      "q3_question": "Giá trị Cốt lõi",
-      "q3_description": "Bạn cung cấp giá trị gì? Tại sao họ nên xem?",
-      "q3_placeholder": "VD: Giúp họ tiết kiệm tiền mà không phải khổ sở...",
-      "q4_question": "Điểm mạnh & Sự độc đáo",
-      "q4_description": "Điều gì làm bạn khác biệt so với đối thủ?",
-      "q4_placeholder": "VD: Tôi sử dụng hài hước và meme để giải thích các chủ đề nhàm chán...",
-      "q5_question": "Mục tiêu",
-      "q5_description": "Bạn muốn người xem làm gì hoặc cảm thấy gì?",
-      "q5_placeholder": "VD: Cảm thấy được trao quyền để đầu tư...",
-      "q6_question": "Thời lượng & Nhịp độ",
-      "q6_description": "Video của bạn dài bao nhiêu? Nhịp độ nhanh hay chậm?",
-      "q6_placeholder": "VD: 8-12 phút, nhịp độ rất nhanh, nhiều cắt cảnh...",
-      "q7_question": "Định dạng Mô tả",
-      "q7_description": "Bất kỳ yêu cầu cụ thể nào cho mô tả YouTube?",
-      "q7_placeholder": "VD: Luôn bao gồm các liên kết tiếp thị và dấu thời gian...",
-      "q8_question": "Phong cách Hình ảnh",
-      "q8_description": "Video trông như thế nào?",
-      "q8_placeholder": "VD: Màu sắc tươi sáng, độ tương phản cao, lớp phủ văn bản...",
-      "q9_question": "Cơ sở Khoa học (Tùy chọn)",
-      "q9_description": "Bạn có dựa vào dữ liệu hoặc nguồn cụ thể nào không?",
-      "q9_placeholder": "VD: Chỉ sử dụng các nghiên cứu đã được bình duyệt...",
-      "masterPrompt": {
-          "template": "Tạo một hồ sơ 'DNA Kênh YouTube' toàn diện dựa trên các đầu vào sau. DNA này sẽ được sử dụng để hướng dẫn AI viết kịch bản và tạo nội dung cho kênh này.\n\nĐầu vào:\n1. Chủ đề: {{topic}}\n2. Khán giả: {{audience}}\n3. Vai trò & Xưng hô: {{role_and_address}}\n4. Giá trị Cốt lõi: {{core_value}}\n5. Điểm mạnh: {{strength}}\n6. Mục tiêu: {{goals}}\n7. Thời lượng/Nhịp độ: {{duration}}\n8. Định dạng Mô tả: {{description_format}}\n9. Phong cách Hình ảnh: {{illustration_style}}\n10. Cơ sở Khoa học: {{scientific_basis}}\n\nĐịnh dạng Đầu ra:\nVui lòng tổ chức DNA thành các phần rõ ràng: 'Bản sắc Kênh', 'Chân dung Khán giả', 'Giọng văn', 'Phong cách & Cấu trúc Nội dung', 'Định hướng Hình ảnh', và 'Quy trình Hoạt động Tiêu chuẩn'. Viết nó như một hướng dẫn hệ thống cho một tác nhân AI."
-      }
-  },
-  "adminPanel": {
-      "title": "Bảng Quản trị",
-      "description": "Quản lý người dùng và cài đặt hệ thống.",
-      "userManagementTab": "Quản lý Người dùng",
-      "promptManagementTab": "Prompt Toàn cầu",
-      "systemCheckTab": "Kiểm tra Hệ thống",
-      "loadingUsers": "Đang tải người dùng...",
-      "administrator": "Quản trị viên",
-      "status": "Trạng thái",
-      "statuses": {
-          "active": "Hoạt động",
-          "pending": "Chờ duyệt",
-          "expired": "Hết hạn"
-      },
-      "expiresAt": "Hết hạn vào",
-      "save": "Lưu",
-      "saving": "Đang lưu...",
-      "toasts": {
-          "userUpdated": "Đã cập nhật người dùng {{name}}.",
-          "updateFailed": "Không thể cập nhật {{name}}.",
-          "fetchFailed": "Không thể tải danh sách người dùng."
-      },
-      "permissionError": {
-          "title": "Quyền bị Từ chối",
-          "intro": "Bạn không có quyền xem dữ liệu này hoặc các quy tắc cơ sở dữ liệu chưa được cấu hình chính xác.",
-          "step1": "1. Đi tới Firebase Console > Firestore > Rules.",
-          "step2": "2. Đảm bảo các quy tắc cho phép đọc bộ sưu tập 'users' đối với người dùng đã xác thực hoặc admin.",
-          "step3": "3. Nếu bạn là người dùng đầu tiên, bạn có thể cần phải đặt thủ công 'isAdmin: true' trong tài liệu người dùng Firestore của mình.",
-          "button": "Mở Rules",
-          "retryButton": "Thử lại",
-          "rulesTitle": "Quy tắc Đề xuất"
-      },
-      "firstAdminSetup": {
-          "title": "Thiết lập Admin Đầu tiên",
-          "intro": "Có vẻ như bạn là người dùng đầu tiên, nhưng bạn chưa phải là Admin. Để quản lý những người dùng khác, bạn cần cấp quyền Admin cho chính mình.",
-          "step1": "Đi tới Firebase Console -> Firestore Database -> Data.",
-          "step2": "Tìm bộ sưu tập 'users'.",
-          "step3": "Tìm tài liệu người dùng của bạn (ID khớp với UID của bạn).",
-          "step4": "Thêm một trường mới: 'isAdmin' (boolean) = true.",
-          "step5": "Thêm một trường mới: 'status' (string) = 'active'.",
-          "step6": "Làm mới trang này."
-      },
-      "systemCheck": {
-          "title": "Kiểm tra Sức khỏe Hệ thống",
-          "description": "Xác minh rằng tất cả các dịch vụ và cấu hình cần thiết đang hoạt động chính xác.",
-          "firebaseConfig": {
-              "title": "Cấu hình Firebase",
-              "ok": "Cấu hình có vẻ hợp lệ.",
-              "error": "Cấu hình bị thiếu hoặc sử dụng giá trị giữ chỗ."
-          },
-          "firestore": {
-              "title": "Kết nối & Quy tắc Firestore",
-              "ok": "Đã kết nối và quy tắc cho phép truy cập.",
-              "warning": "Quyền bị từ chối. Kiểm tra Quy tắc Bảo mật.",
-              "error": "Kết nối thất bại. Kiểm tra xem Firestore đã được bật chưa.",
-              "resolution": "Kiểm tra Quy tắc/Trạng thái"
-          },
-          "adminStatus": {
-              "title": "Quyền Quản trị",
-              "ok": "Bạn có quyền truy cập Admin.",
-              "error": "Bạn không có quyền truy cập Admin.",
-              "resolution": "Sửa Tài liệu Người dùng"
-          },
-          "apiKeys": {
-              "title": "Khóa API",
-              "ok": "Khóa API YouTube đã có.",
-              "warning": "Khóa API YouTube bị thiếu trong cài đặt cục bộ."
-          },
-          "sharingIndex": {
-              "title": "Index Firestore cho Chia sẻ",
-              "ok": "Index có vẻ hợp lệ hoặc chưa cần thiết.",
-              "error": "Thiếu index bắt buộc cho truy vấn kênh được chia sẻ.",
-              "resolution": "Tạo Index"
-          }
-      }
-  },
-  "adminPrompts": {
-      "title": "Prompt Tự động hóa Toàn cầu",
-      "description": "Chỉnh sửa các prompt mặc định được sử dụng cho tất cả các kênh mới. Thay đổi ở đây sẽ không ảnh hưởng đến các prompt tùy chỉnh hiện có trong các kênh.",
-      "saveSuccess": "Đã cập nhật prompt toàn cầu thành công.",
-      "saveError": "Không thể lưu prompt.",
-      "saveButton": "Lưu Tất cả Prompt",
-      "savingButton": "Đang lưu...",
-      "resetPrompt": "Khôi phục Mặc định App",
-      "confirmReset": "Xác nhận Khôi phục"
   },
   "toasts": {
     "fetchProjectsError": "Không thể tải các dự án.",

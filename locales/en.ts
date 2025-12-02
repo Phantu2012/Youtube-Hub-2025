@@ -172,6 +172,8 @@ const enData = {
     "addVideo": "Add Video",
     "noMatchingProjects": "No projects match the selected filter.",
     "noProjectsInChannel": "No projects in this channel yet.",
+    "unknownChannel": "Unknown Channel ({{id}})",
+    "ghostChannelHint": "This channel data is missing, but its projects are safe.",
     "missingIndexError": {
         "title": "Missing Index",
         "createButton": "Create Index"
@@ -519,40 +521,6 @@ const enData = {
       "description": "Matches visual prompts to dialogue timestamps from a provided SRT file to create a synchronized shot list."
     }
   },
-  "dream100": {
-      "title": "Dream 100 - {{channelName}}",
-      "youtubeUrlPlaceholder": "Enter YouTube Video URL",
-      "addVideo": "Add Video",
-      "addingVideo": "Adding...",
-      "filterByChannel": "Filter by Channel",
-      "allChannels": "All Channels",
-      "noVideos": "No videos yet.",
-      "getStarted": "Add a video from a competitor or inspiration channel to track it.",
-      "deleteConfirmation": "Remove this video from Dream 100?",
-      "status": {
-          "pending": "Pending",
-          "analyzed": "Analyzed",
-          "remade": "Remade"
-      },
-      "table": {
-          "video": "Video",
-          "stats": "Stats",
-          "published": "Published",
-          "status": "Status",
-          "actions": "Actions"
-      },
-      "details": {
-          "description": "Description",
-          "tags": "Tags",
-          "noTags": "No tags found."
-      },
-      "toasts": {
-          "videoAdded": "Video added to Dream 100!",
-          "videoExists": "Video already exists in Dream 100.",
-          "fetchError": "Failed to fetch video details",
-          "videoRemoved": "Video removed from Dream 100."
-      }
-  },
   "dream100Selector": {
     "title": "Select a Viral Video",
     "searchPlaceholder": "Search by title...",
@@ -582,160 +550,6 @@ const enData = {
     "contentPlaceholder": "Enter main content or notes for this idea...",
     "noIdeas": "No ideas yet. Add one above to get started!",
     "deleteConfirm": "Are you sure you want to delete this idea?"
-  },
-  "channelDnaWizard": {
-      "title": "Channel DNA Wizard",
-      "resultTitle": "Generated DNA",
-      "resultDescription": "Here is your generated Channel DNA. Review and edit it if necessary, then click 'Use this DNA'.",
-      "generatingTitle": "Generating...",
-      "generatingMessage": "Analyzing your answers to build the perfect profile...",
-      "errorTitle": "Generation Failed",
-      "retry": "Retry",
-      "regenerate": "Regenerate",
-      "useThisDna": "Use this DNA",
-      "back": "Back",
-      "next": "Next",
-      "generate": "Generate DNA",
-      "step": "Step {{current}} of {{total}}",
-      "guide": {
-          "title": "DNA Creation Guide",
-          "intro": "To create high-quality content with AI, you need a clear 'Identity' (DNA). This wizard will guide you through defining it.",
-          "start": "Start Wizard",
-          "checklist": "Tip: Be specific! The more details you provide, the better the AI will perform.",
-          "step1_title": "Topic & Niche",
-          "step1_desc": "What is the main subject? (e.g., Cooking, Tech, History)\nWhat is the specific niche? (e.g., Vegan cooking for students)",
-          "step2_title": "Target Audience",
-          "step2_desc": "Who are you talking to? (Age, gender, interests, problems)\nExample: 'Men 25-40 interested in fitness but have no time.'",
-          "step3_title": "Role & Tone",
-          "step3_desc": "Who are you? (Expert, Friend, Guide, Storyteller)\nWhat is the tone? (Serious, Humorous, Inspiring, Fast-paced)",
-          "step4_title": "Core Values & Mission",
-          "step4_desc": "What is the goal of your channel? (Educate, Entertain, Inspire)\nWhat do you stand for?",
-          "step5_title": "Style & Structure",
-          "step5_desc": "How do you start videos? (Hook, Intro)\nHow do you end? (CTA)\nVideo length and pacing.",
-          "step6_title": "Visuals & Audio",
-          "step6_desc": "Visual style (Cinematic, Vlog, Stock footage, Animation)\nMusic choice and sound effects.",
-          "step7_title": "Keywords & Language",
-          "step7_desc": "Specific vocabulary or catchphrases.\nLanguage (English, Vietnamese, etc.)"
-      },
-      "q1_question": "Topic & Niche",
-      "q1_description": "What is your channel about? Be specific.",
-      "q1_placeholder": "e.g., Personal Finance for Gen Z, Retro Game Reviews...",
-      "q2_question": "Target Audience",
-      "q2_description": "Who is your ideal viewer?",
-      "q2_placeholder": "e.g., College students struggling with budget...",
-      "q_role_question": "Role & Address",
-      "q_role_description": "Who are you to the audience? How do you address them?",
-      "q_role_placeholder": "e.g., I am a strict teacher. I call them 'students'...",
-      "q3_question": "Core Value",
-      "q3_description": "What value do you provide? Why should they watch?",
-      "q3_placeholder": "e.g., To help them save money without being miserable...",
-      "q4_question": "Strengths & Uniqueness",
-      "q4_description": "What makes you different from competitors?",
-      "q4_placeholder": "e.g., I use humor and memes to explain boring topics...",
-      "q5_question": "Goals",
-      "q5_description": "What do you want the viewer to do or feel?",
-      "q5_placeholder": "e.g., Feel empowered to invest...",
-      "q6_question": "Duration & Pacing",
-      "q6_description": "How long are your videos? Is the pace fast or slow?",
-      "q6_placeholder": "e.g., 8-12 minutes, very fast paced, lots of cuts...",
-      "q7_question": "Description Format",
-      "q7_description": "Any specific requirements for YouTube descriptions?",
-      "q7_placeholder": "e.g., Always include affiliate links and timestamps...",
-      "q8_question": "Visual Style",
-      "q8_description": "What should the video look like?",
-      "q8_placeholder": "e.g., Bright colors, high contrast, text overlays...",
-      "q9_question": "Scientific Basis (Optional)",
-      "q9_description": "Do you rely on specific data or sources?",
-      "q9_placeholder": "e.g., Only use peer-reviewed studies...",
-      "masterPrompt": {
-          "template": "Create a comprehensive 'YouTube Channel DNA' profile based on the following inputs. This DNA will be used to instruct an AI to write scripts and generate content for this channel.\n\nInputs:\n1. Topic: {{topic}}\n2. Target Audience: {{audience}}\n3. Role & Address: {{role_and_address}}\n4. Core Value: {{core_value}}\n5. Strengths: {{strength}}\n6. Goals: {{goals}}\n7. Duration/Pacing: {{duration}}\n8. Description Format: {{description_format}}\n9. Visual Style: {{illustration_style}}\n10. Scientific Basis: {{scientific_basis}}\n\nOutput Format:\nPlease organize the DNA into clear sections: 'Channel Identity', 'Audience Persona', 'Tone of Voice', 'Content Style & Structure', 'Visual Direction', and 'Standard Operating Procedures'. Write it as a system instruction for an AI agent."
-      }
-  },
-  "adminPanel": {
-      "title": "Admin Panel",
-      "description": "Manage users and system settings.",
-      "userManagementTab": "User Management",
-      "promptManagementTab": "Global Prompts",
-      "systemCheckTab": "System Check",
-      "loadingUsers": "Loading users...",
-      "administrator": "Administrator",
-      "status": "Status",
-      "statuses": {
-          "active": "Active",
-          "pending": "Pending",
-          "expired": "Expired"
-      },
-      "expiresAt": "Expires At",
-      "save": "Save",
-      "saving": "Saving...",
-      "toasts": {
-          "userUpdated": "User {{name}} updated.",
-          "updateFailed": "Failed to update {{name}}.",
-          "fetchFailed": "Failed to fetch users."
-      },
-      "permissionError": {
-          "title": "Permission Denied",
-          "intro": "You do not have permission to view this data or the database rules are not configured correctly.",
-          "step1": "1. Go to Firebase Console > Firestore > Rules.",
-          "step2": "2. Ensure the rules allow reads for the 'users' collection for authenticated users or admins.",
-          "step3": "3. If you are the first user, you might need to manually set 'isAdmin: true' in your Firestore user document.",
-          "button": "Open Rules",
-          "retryButton": "Retry Fetching",
-          "rulesTitle": "Recommended Rules"
-      },
-      "firstAdminSetup": {
-          "title": "First Admin Setup",
-          "intro": "It looks like you are the first user, but you are not an Admin yet. To manage other users, you need to grant yourself Admin privileges.",
-          "step1": "Go to Firebase Console -> Firestore Database -> Data.",
-          "step2": "Find the 'users' collection.",
-          "step3": "Find your user document (ID matches your UID).",
-          "step4": "Add a new field: 'isAdmin' (boolean) = true.",
-          "step5": "Add a new field: 'status' (string) = 'active'.",
-          "step6": "Refresh this page."
-      },
-      "systemCheck": {
-          "title": "System Health Check",
-          "description": "Verify that all required services and configurations are working correctly.",
-          "firebaseConfig": {
-              "title": "Firebase Configuration",
-              "ok": "Configuration looks valid.",
-              "error": "Configuration is missing or uses placeholder values."
-          },
-          "firestore": {
-              "title": "Firestore Connection & Rules",
-              "ok": "Connected and rules allow access.",
-              "warning": "Permission denied. Check Security Rules.",
-              "error": "Connection failed. Check if Firestore is enabled.",
-              "resolution": "Check Rules/Status"
-          },
-          "adminStatus": {
-              "title": "Admin Privileges",
-              "ok": "You have Admin access.",
-              "error": "You do not have Admin access.",
-              "resolution": "Edit User Doc"
-          },
-          "apiKeys": {
-              "title": "API Keys",
-              "ok": "YouTube API Key is present.",
-              "warning": "YouTube API Key is missing in local settings."
-          },
-          "sharingIndex": {
-              "title": "Firestore Index for Sharing",
-              "ok": "Index appears to be valid or not required yet.",
-              "error": "Missing required index for shared channels query.",
-              "resolution": "Create Index"
-          }
-      }
-  },
-  "adminPrompts": {
-      "title": "Global Automation Prompts",
-      "description": "Edit the default prompts used for all new channels. Changes here will not affect existing custom prompts in channels.",
-      "saveSuccess": "Global prompts updated successfully.",
-      "saveError": "Failed to save prompts.",
-      "saveButton": "Save All Prompts",
-      "savingButton": "Saving...",
-      "resetPrompt": "Reset to App Default",
-      "confirmReset": "Confirm Reset"
   },
   "toasts": {
     "fetchProjectsError": "Could not fetch projects.",
@@ -778,7 +592,6 @@ const enData = {
     "resetInputsSuccess": "All inputs have been cleared.",
     "dbConnectionError": "Failed to connect to the database. This might be due to a network issue or an incorrect Firebase project configuration (e.g., Firestore not enabled).",
     "copied": "Copied to clipboard!",
-    "copyFailed": "Failed to copy.",
     "step5AutoFilled": "Step 5 inputs have been auto-filled from Step 4's best choice!",
     "projectExported": "Project data copied to clipboard!",
     "exportFailed": "Could not copy data to clipboard.",
@@ -786,35 +599,13 @@ const enData = {
     "ideaAdded": "Idea(s) added successfully!",
     "ideaUpdated": "Idea status updated.",
     "ideaDeleted": "Idea deleted.",
-    "userNotFound": "User not found.",
-    "userAlreadyMember": "User is already a member.",
-    "userAdded": "User added successfully.",
-    "userRemoved": "User removed.",
-    "updateMembersFailed": "Failed to update members.",
-    "roleInUseError": "Cannot delete this role because it is assigned to one or more members.",
-    "rolesUpdated": "Roles updated successfully.",
-    "updateRolesFailed": "Failed to update roles.",
-    "channelAdded": "Channel added!",
-    "channelAddFailed": "Failed to add channel.",
-    "channelUpdated": "Channel updated!",
-    "channelSaveFailed": "Failed to save channel.",
-    "channelDeleted": "Channel deleted!",
-    "channelDeleteFailed": "Failed to delete channel.",
-    "projectCopied": "Project copied!",
-    "projectMoved": "Project moved!",
-    "moveFailed": "Failed to move project.",
-    "saveFailed": "Save failed.",
-    "promptRestored": "Restored default prompt for step {{id}}.",
-    "automationStopped": "Automation stopped by user.",
     "generated": {
       "videoTitle": "Video title generated!",
       "description": "Description generated!",
       "tags": "Tags generated!",
       "thumbnailPrompt": "Thumbnail prompt generated!"
-    },
-    "deleteConfirm": "Confirm Delete",
-    "clearConfirm": "Confirm Clear Form"
+    }
   }
-};
+}
 
 export default enData;

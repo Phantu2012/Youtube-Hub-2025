@@ -1,12 +1,8 @@
-
-
-
-
 import React, { useState, useMemo } from 'react';
 import { Project, Channel, User, ProjectStatus } from '../types';
 import { ProjectCard } from './ProjectCard';
 import { DashboardSummary } from './DashboardSummary';
-import { Loader, PlusCircle, Video, BookOpen, Users, Eye, Share2, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Loader, PlusCircle, Video, BookOpen, Users, Eye, Share2, AlertTriangle, ExternalLink, HelpCircle } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { getStatusOptions } from '../constants';
 
@@ -104,7 +100,22 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
         );
     }
 
-    if (channels.length === 0 && !missingIndexError) {
+    // Determine Orphan Channels (Projects that exist but have no corresponding Channel in the list)
+    const orphanChannelIds = Object.keys(displayedProjectsByChannel).filter(id => !channels.find(c => c.id === id));
+    
+    // Create Ghost Channel objects for display
+    const ghostChannels: Channel[] = orphanChannelIds.map(id => ({
+        id,
+        name: t('projects.unknownChannel', { id: id.substring(0, 6) }),
+        ownerId: user.uid, // Assume ownership to allow editing
+        members: {},
+        dna: '',
+        stats: { videoCount: displayedProjectsByChannel[id].length, viewCount: 0, subscriberCount: 0 }
+    }));
+
+    const allChannelsToRender = [...channels, ...ghostChannels].sort((a, b) => a.name.localeCompare(b.name));
+
+    if (allChannelsToRender.length === 0 && !missingIndexError) {
         return (
             <div className="text-center py-16 px-6 bg-light-card dark:bg-dark-card rounded-lg shadow-inner">
                 <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-300">{t('projects.noChannels')}</h2>
@@ -120,8 +131,6 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
         );
     }
     
-    const sortedChannels = [...channels].sort((a, b) => a.name.localeCompare(b.name));
-
     return (
         <div>
             {missingIndexError && (
@@ -211,9 +220,10 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
             </div>
 
             <div className="space-y-12">
-                {sortedChannels.map(channel => {
+                {allChannelsToRender.map(channel => {
                     const channelProjects = displayedProjectsByChannel[channel.id] || [];
                     const isOwner = channel.ownerId === user.uid;
+                    const isGhost = channel.name.includes(t('projects.unknownChannel', { id: '' }).split(' ')[0]); // Check if it's a ghost channel
                     const owner = channelMembers[channel.ownerId];
                     const ownerName = owner ? owner.name : t('projects.owner');
 
@@ -221,14 +231,16 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
                         <div key={channel.id}>
                             <div className="flex flex-wrap justify-between items-center gap-y-2 mb-4 border-b-2 border-primary/30 pb-2">
                                 <div className="flex items-center gap-4">
-                                    <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">{channel.name}</h2>
-                                    {!isOwner && (
+                                    <h2 className={`text-2xl font-semibold ${isGhost ? 'text-orange-500 italic' : 'text-gray-800 dark:text-white'}`}>
+                                        {channel.name} {isGhost && <span className="text-xs not-italic bg-orange-100 text-orange-800 px-2 py-1 rounded ml-2">Recovered</span>}
+                                    </h2>
+                                    {!isOwner && !isGhost && (
                                         <span className="text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full flex items-center gap-1.5">
                                             <Share2 size={12}/>
                                             {t('projects.sharedBy', { name: ownerName })}
                                         </span>
                                     )}
-                                    {channel.stats && (
+                                    {channel.stats && !isGhost && (
                                         <div className="hidden md:flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 border-l border-gray-300 dark:border-gray-600 pl-4">
                                             <span className="flex items-center gap-1.5" title={`${channel.stats.videoCount.toLocaleString(language)} ${t('projects.videos')}`}>
                                                 <Video size={14} /> {formatStat(channel.stats.videoCount)}
@@ -243,20 +255,29 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, channels, pr
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => onManageDream100(channel.id)}
-                                        className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg shadow-md transition-transform transform hover:scale-105"
-                                    >
-                                        <BookOpen size={16} />
-                                        {t('projects.manageDream100')}
-                                    </button>
-                                    <button
-                                        onClick={() => onAddVideo(channel.id)}
-                                        className="flex items-center gap-2 text-sm bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg shadow-md transition-transform transform hover:scale-105"
-                                    >
-                                        <Video size={16} />
-                                        {t('projects.addVideo')}
-                                    </button>
+                                    {!isGhost && (
+                                        <>
+                                            <button
+                                                onClick={() => onManageDream100(channel.id)}
+                                                className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg shadow-md transition-transform transform hover:scale-105"
+                                            >
+                                                <BookOpen size={16} />
+                                                {t('projects.manageDream100')}
+                                            </button>
+                                            <button
+                                                onClick={() => onAddVideo(channel.id)}
+                                                className="flex items-center gap-2 text-sm bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg shadow-md transition-transform transform hover:scale-105"
+                                            >
+                                                <Video size={16} />
+                                                {t('projects.addVideo')}
+                                            </button>
+                                        </>
+                                    )}
+                                    {isGhost && (
+                                        <div className="text-sm text-gray-500 italic flex items-center gap-1">
+                                            <HelpCircle size={14} /> {t('projects.ghostChannelHint')}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             {channelProjects.length > 0 ? (
