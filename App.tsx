@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { auth, db, googleProvider, firebase } from './firebase';
 import { User, Channel, Project, ApiKeys, AIProvider, AIModel, ToastMessage, AutomationStep, Idea, Dream100Video, Role, ProjectStatus } from './types';
@@ -448,9 +449,8 @@ const App: React.FC = () => {
         if (!user) return;
         setIsSavingProject(true);
         try {
-            // Find channel owner
             const channel = channels.find(c => c.id === project.channelId);
-            const ownerId = channel ? channel.ownerId : user.uid; // Fallback to current user if channel unknown (unlikely with orphan fix)
+            const ownerId = channel ? channel.ownerId : user.uid; // Fallback to current user if channel unknown
             
             let projectId = project.id;
             const isNew = project.id.startsWith('local_');
@@ -741,6 +741,7 @@ const App: React.FC = () => {
                     selectedModel={selectedModel}
                     isSaving={isSavingProject}
                     channelMembers={channelMembers}
+                    currentUser={user}
                     onClose={() => { setIsProjectModalOpen(false); setEditingProject(null); }}
                     onSave={handleSaveProject}
                     onDelete={handleDeleteProject}

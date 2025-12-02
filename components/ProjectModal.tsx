@@ -1,15 +1,13 @@
 
-
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Project, ProjectStatus, YouTubeStats, ViewHistoryData, ToastMessage, ApiKeys, AIProvider, AIModel, Channel, User, Permission } from '../types';
 import { getStatusOptions, PROJECT_TASKS } from '../constants';
 import { fetchVideoStats } from '../services/youtubeService';
 import { StatsChart } from './StatsChart';
-// FIX: Import 'Check' icon from 'lucide-react' to resolve 'Cannot find name' error.
 import { X, Save, Trash2, Tag, Loader, Youtube, BarChart2, MessageSquare, ThumbsUp, Eye, FileText, Wand2, Image as ImageIcon, Calendar, Settings, UploadCloud, Sparkles, Mic, List, Clock, RotateCcw, Repeat, Info as InfoIcon, Code, Sheet, Copy, Move, Cloud, Laptop, Check } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { useTranslation } from '../hooks/useTranslation';
+import { db } from '../firebase';
 
 
 interface ProjectModalProps {
@@ -21,6 +19,7 @@ interface ProjectModalProps {
     selectedModel: AIModel;
     isSaving: boolean;
     channelMembers: Record<string, User>;
+    currentUser: User | null;
     onClose: () => void;
     onSave: (project: Project) => void;
     onDelete: (projectId: string) => Promise<void>;
@@ -65,7 +64,7 @@ const TabButton: React.FC<{
 );
 
 
-export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, channels, apiKeys, selectedProvider, selectedModel, isSaving, channelMembers, onClose, onSave, onDelete, onCopy, onRerun, onMove, showToast, userPermissions }) => {
+export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, channels, apiKeys, selectedProvider, selectedModel, isSaving, channelMembers, currentUser, onClose, onSave, onDelete, onCopy, onRerun, onMove, showToast, userPermissions }) => {
     const { t, language } = useTranslation();
     const [activeTab, setActiveTab] = useState<ModalTab>('content');
     
@@ -120,6 +119,54 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, projects, c
     const [destinationChannelId, setDestinationChannelId] = useState('');
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [scheduleConflict, setScheduleConflict] = useState<string | null>(null);
+
+    // Fetch subcollection data if main data is empty (Data Recovery)
+    useEffect(() => {
+        const loadSubcollectionData = async () => {
+            if (!project || !project.id || project.id.startsWith('local_')) return;
+            
+            // Determine ownerId
+            const channel = channels.find(c => c.id === project.channelId);
+            // If channel found, owner is channel.ownerId.
+            // If not found (orphaned), owner is likely current user (as per ProjectList logic) or we can't find it easily.
+            // We prioritize the current user if channel is missing to try and find the data.
+            const ownerId = channel ? channel.ownerId : currentUser?.uid;
+            
+            if (!ownerId) return;
+
+            try {
+                // We check for a 'data' subcollection. 
+                const subColRef = db.collection('users').doc(ownerId).collection('projects').doc(project.id).collection('data');
+                const snapshot = await subColRef.limit(1).get();
+                
+                if (!snapshot.empty) {
+                    const subData = snapshot.docs[0].data(); 
+                    
+                    setFormData(prev => {
+                        const next = { ...prev };
+                        let changed = false;
+                        
+                        // Merge heavy fields if they are missing in the main document
+                        const fieldsToCheck = ['script', 'description', 'voiceoverScript', 'promptTable', 'timecodeMap', 'visualPrompts', 'metadata', 'seoMetadata'];
+                        
+                        fieldsToCheck.forEach(key => {
+                            // @ts-ignore
+                            if ((!next[key] || next[key] === '') && subData[key]) {
+                                // @ts-ignore
+                                next[key] = subData[key];
+                                changed = true;
+                            }
+                        });
+                        return changed ? next : prev;
+                    });
+                }
+            } catch (err) {
+                console.error("Error loading subcollection data:", err);
+            }
+        };
+        
+        loadSubcollectionData();
+    }, [project?.id, channels, currentUser?.uid]);
 
     useEffect(() => {
         if (!formData.plannedPublishDateTime) {
