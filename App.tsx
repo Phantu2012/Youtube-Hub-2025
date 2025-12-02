@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { auth, db, googleProvider, firebase } from './firebase';
 import { User, Channel, Project, ApiKeys, AIProvider, AIModel, ToastMessage, AutomationStep, Idea, Dream100Video, Role, ProjectStatus } from './types';
 import { Header } from './components/Header';
@@ -49,9 +49,38 @@ const App: React.FC = () => {
     const [activeView, setActiveView] = useState<'projects' | 'automation' | 'calendar' | 'admin'>('projects');
     const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('theme') as 'light' | 'dark') || 'light');
     
-    // Data State
-    const [channels, setChannels] = useState<Channel[]>([]);
-    const [projects, setProjects] = useState<Project[]>([]);
+    // --- Data State (Split for Safety) ---
+    // Channels
+    const [myChannels, setMyChannels] = useState<Channel[]>([]);
+    const [sharedChannels, setSharedChannels] = useState<Channel[]>([]);
+    
+    // Projects
+    const [myProjects, setMyProjects] = useState<Project[]>([]);
+    const [sharedProjects, setSharedProjects] = useState<Project[]>([]);
+    
+    // Unified Data
+    const channels = useMemo(() => {
+        const map = new Map<string, Channel>();
+        // Add my channels first
+        myChannels.forEach(c => map.set(c.id, c));
+        // Add shared channels (deduplicated by ID)
+        sharedChannels.forEach(c => {
+            if (!map.has(c.id)) map.set(c.id, c);
+        });
+        return Array.from(map.values());
+    }, [myChannels, sharedChannels]);
+
+    const projects = useMemo(() => {
+        const map = new Map<string, Project>();
+        // Add my projects first
+        myProjects.forEach(p => map.set(p.id, p));
+        // Add shared projects
+        sharedProjects.forEach(p => {
+            if (!map.has(p.id)) map.set(p.id, p);
+        });
+        return Array.from(map.values());
+    }, [myProjects, sharedProjects]);
+
     const [channelMembers, setChannelMembers] = useState<Record<string, User>>({});
     const [isLoadingData, setIsLoadingData] = useState(false);
     const [missingIndexError, setMissingIndexError] = useState<{ message: string, url: string | null } | null>(null);
@@ -134,7 +163,6 @@ const App: React.FC = () => {
                 const doc = await db.collection('system_settings').doc('automation_prompts').get();
                 if (doc.exists && doc.data()?.steps) {
                     const dbSteps = doc.data()?.steps as AutomationStep[];
-                    // Merge with defaults to ensure all steps exist
                     const mergedSteps = DEFAULT_AUTOMATION_STEPS.map(defaultStep => {
                         const dbStep = dbSteps.find(s => s.id === defaultStep.id);
                         return dbStep ? { ...defaultStep, ...dbStep } : defaultStep;
@@ -148,113 +176,131 @@ const App: React.FC = () => {
         fetchGlobalSteps();
     }, [user]);
 
-    // Data Fetching Effect
+    // --- DATA FETCHING (ISOLATED STREAMS) ---
+
+    // 1. My Channels (Listener)
     useEffect(() => {
         if (!user || user.status !== 'active') {
-            setChannels([]);
-            setProjects([]);
+            setMyChannels([]);
+            return;
+        }
+        setIsLoadingData(true);
+        const unsubscribe = db.collection('users').doc(user.uid).collection('channels')
+            .onSnapshot((snapshot) => {
+                const loadedChannels = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Channel[];
+                setMyChannels(loadedChannels);
+                setIsLoadingData(false);
+            }, (error) => {
+                console.error("My Channels Error:", error);
+                setIsLoadingData(false);
+            });
+        return () => unsubscribe();
+    }, [user]);
+
+    // 2. My Projects (Listener)
+    useEffect(() => {
+        if (!user || user.status !== 'active') {
+            setMyProjects([]);
+            return;
+        }
+        const unsubscribe = db.collection('users').doc(user.uid).collection('projects')
+            .onSnapshot((snapshot) => {
+                const loadedProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+                setMyProjects(loadedProjects);
+            }, (error) => {
+                console.error("My Projects Error:", error);
+            });
+        return () => unsubscribe();
+    }, [user]);
+
+    // 3. Shared Channels (Fetcher)
+    useEffect(() => {
+        if (!user || user.status !== 'active') {
+            setSharedChannels([]);
+            return;
+        }
+        
+        const fetchSharedChannels = async () => {
+            try {
+                const sharedSnapshot = await db.collectionGroup('channels')
+                    .where('memberIds', 'array-contains', user.uid)
+                    .get();
+                
+                const loadedSharedChannels = sharedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Channel[];
+                setSharedChannels(loadedSharedChannels);
+                setMissingIndexError(null);
+            } catch (error: any) {
+                console.error("Shared Channels Error:", error);
+                if (error.code === 'failed-precondition') {
+                     const urlMatch = error.message.match(/(https:\/\/[^\s]+)/);
+                     setMissingIndexError({
+                         message: t('projects.missingIndexError.title'),
+                         url: urlMatch ? urlMatch[0] : null
+                     });
+                }
+            }
+        };
+        fetchSharedChannels();
+    }, [user, t]);
+
+    // 4. Shared Projects (Fetcher - Dependent on Shared Channels)
+    useEffect(() => {
+        if (sharedChannels.length === 0) {
+            setSharedProjects([]);
             return;
         }
 
-        setIsLoadingData(true);
-        const unsubscribeChannels = db.collection('users').doc(user.uid).collection('channels')
-            .onSnapshot(async (snapshot) => {
-                const myChannels = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Channel[];
-                
-                // Fetch shared channels where user is a member
-                try {
-                    // Note: This query requires a Firestore composite index on `memberIds` array-contains
-                    const sharedSnapshot = await db.collectionGroup('channels')
-                        .where('memberIds', 'array-contains', user.uid)
-                        .get();
-                    
-                    const sharedChannels = sharedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Channel[];
-                    // Deduplicate
-                    const allChannels = [...myChannels];
-                    sharedChannels.forEach(sc => {
-                        if (!allChannels.find(c => c.id === sc.id)) {
-                            allChannels.push(sc);
-                        }
-                    });
-                    
-                    setChannels(allChannels);
+        const fetchSharedProjects = async () => {
+            let fetchedProjects: Project[] = [];
+            let memberUids = new Set<string>();
 
-                    // Fetch projects for all these channels
-                    // Note: This could be optimized by querying only relevant projects, 
-                    // but for simplicity we iterate channels or use a collectionGroup query for projects if permissions allow.
-                    // Given the permission rules, we can query projects under the user, and need a way to get shared projects.
-                    // A collectionGroup query for projects where channelId IN [myChannelIds] would be efficient but 'IN' has limits.
-                    // Let's fetch projects from my collection and shared collections.
-                    
-                    let allProjects: Project[] = [];
-                    let memberUids = new Set<string>();
-
-                    // 1. My projects
-                    const myProjectsSnap = await db.collection('users').doc(user.uid).collection('projects').get();
-                    allProjects = [...allProjects, ...myProjectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project))];
-
-                    // 2. Shared projects (iterate shared channels owners)
-                    // This is potentially expensive. A better schema might be needed for scale, 
-                    // but for this scope: find owners of shared channels and query their projects filtered by channelId.
-                    
-                    for (const channel of sharedChannels) {
-                        if (channel.ownerId !== user.uid) {
-                             const sharedProjSnap = await db.collection('users').doc(channel.ownerId).collection('projects')
-                                .where('channelId', '==', channel.id)
-                                .get();
-                             allProjects = [...allProjects, ...sharedProjSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project))];
-                             memberUids.add(channel.ownerId);
-                             channel.memberIds?.forEach(id => memberUids.add(id));
-                        }
+            for (const channel of sharedChannels) {
+                if (channel.ownerId !== user?.uid) {
+                    try {
+                        const snap = await db.collection('users').doc(channel.ownerId).collection('projects')
+                            .where('channelId', '==', channel.id)
+                            .get();
+                        
+                        const projs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+                        fetchedProjects = [...fetchedProjects, ...projs];
+                        
+                        memberUids.add(channel.ownerId);
+                        channel.memberIds?.forEach(id => memberUids.add(id));
+                    } catch (e) {
+                        console.error(`Error fetching projects for shared channel ${channel.id}`, e);
                     }
-                    
-                    myChannels.forEach(ch => ch.memberIds?.forEach(id => memberUids.add(id)));
-
-                    setProjects(allProjects);
-
-                    // Fetch member details
-                    if (memberUids.size > 0) {
-                         // Firestore 'in' query limit is 10. Batch if needed.
-                         const uidsArray = Array.from(memberUids);
-                         const chunks = [];
-                         for (let i = 0; i < uidsArray.length; i += 10) {
-                             chunks.push(uidsArray.slice(i, i + 10));
-                         }
-                         
-                         let membersMap: Record<string, User> = {};
-                         for (const chunk of chunks) {
-                             const usersSnap = await db.collection('users').where(firebase.firestore.FieldPath.documentId(), 'in', chunk).get();
-                             usersSnap.docs.forEach(doc => {
-                                 membersMap[doc.id] = { uid: doc.id, ...doc.data() } as User;
-                             });
-                         }
-                         setChannelMembers(membersMap);
-                    }
-
-                    setMissingIndexError(null);
-
-                } catch (error: any) {
-                    console.error("Error fetching data:", error);
-                    if (error.code === 'failed-precondition') { // Missing index
-                         const urlMatch = error.message.match(/(https:\/\/[^\s]+)/);
-                         setMissingIndexError({
-                             message: t('toasts.missingIndex'),
-                             url: urlMatch ? urlMatch[0] : null
-                         });
-                    }
-                } finally {
-                     setIsLoadingData(false);
                 }
+            }
+            
+            setSharedProjects(fetchedProjects);
 
-            }, (error) => {
-                console.error("Channel listener error", error);
-                setIsLoadingData(false);
-            });
+            // Fetch Member Details for display
+            if (memberUids.size > 0) {
+                 const uidsArray = Array.from(memberUids);
+                 const chunks = [];
+                 for (let i = 0; i < uidsArray.length; i += 10) {
+                     chunks.push(uidsArray.slice(i, i + 10));
+                 }
+                 
+                 let membersMap: Record<string, User> = {};
+                 for (const chunk of chunks) {
+                     try {
+                         const usersSnap = await db.collection('users').where(firebase.firestore.FieldPath.documentId(), 'in', chunk).get();
+                         usersSnap.docs.forEach(doc => {
+                             membersMap[doc.id] = { uid: doc.id, ...doc.data() } as User;
+                         });
+                     } catch (e) { console.error("Error fetching members", e); }
+                 }
+                 setChannelMembers(prev => ({...prev, ...membersMap}));
+            }
+        };
 
-        return () => unsubscribeChannels();
-    }, [user, t]);
+        fetchSharedProjects();
+    }, [sharedChannels, user]);
 
-    // Handlers
+
+    // --- Handlers ---
+
     const handleLoginWithGoogle = async () => {
         try {
             await auth.signInWithPopup(googleProvider);
@@ -342,11 +388,10 @@ const App: React.FC = () => {
 
     const handleDeleteChannel = async (channelId: string) => {
         if (!user) return;
-        // Verify channel has no projects? 
-        // This validation should ideally be on server rules or checked here.
+        // Verify channel has no projects locally
         const channelProjects = projects.filter(p => p.channelId === channelId);
         if (channelProjects.length > 0) {
-            showToast(t('deleteChannelError'), 'error');
+            showToast(t('settings.deleteChannelError'), 'error');
             return;
         }
 
@@ -389,7 +434,6 @@ const App: React.FC = () => {
         if (!user) return;
         setIsSavingProject(true);
         try {
-            // Determine owner of the channel this project belongs to
             const channel = channels.find(c => c.id === project.channelId);
             if (!channel) throw new Error("Channel not found");
             const ownerId = channel.ownerId;
@@ -427,7 +471,7 @@ const App: React.FC = () => {
             const project = projects.find(p => p.id === projectId);
             if (!project) return;
             const channel = channels.find(c => c.id === project.channelId);
-            const ownerId = channel ? channel.ownerId : user.uid; // Fallback to user if channel missing (orphaned)
+            const ownerId = channel ? channel.ownerId : user.uid;
 
             await db.collection('users').doc(ownerId).collection('projects').doc(projectId).delete();
             showToast(t('toasts.projectDeleted'), 'success');
@@ -446,28 +490,23 @@ const App: React.FC = () => {
             status: ProjectStatus.Idea,
         };
         setEditingProject(copy);
-        // Modal is already open, state update will reflect
         showToast(t('toasts.projectCopied'), 'info');
     };
     
     const handleMoveProject = async (project: Project, newChannelId: string) => {
         if (!user) return;
         try {
-            // 1. Get source location
             const oldChannel = channels.find(c => c.id === project.channelId);
             const oldOwnerId = oldChannel ? oldChannel.ownerId : user.uid;
             
-            // 2. Get dest location
             const newChannel = channels.find(c => c.id === newChannelId);
             const newOwnerId = newChannel ? newChannel.ownerId : user.uid;
             
             const projectData = { ...project, channelId: newChannelId };
 
-            // 3. Write to new location
             const newDocRef = db.collection('users').doc(newOwnerId).collection('projects').doc();
             await newDocRef.set({ ...cleanUndefined(projectData), id: newDocRef.id });
             
-            // 4. Delete from old location
             await db.collection('users').doc(oldOwnerId).collection('projects').doc(project.id).delete();
             
             showToast(t('toasts.projectMoved'), 'success');
@@ -481,7 +520,7 @@ const App: React.FC = () => {
     const handleRerunAutomation = (project: Project) => {
          localStorage.setItem('rerun-data', JSON.stringify({
             targetTitle: project.projectName,
-            viralTranscript: project.script // Assuming script contains transcript if it was from Step 1
+            viralTranscript: project.script 
         }));
         setEditingProject(null);
         setIsProjectModalOpen(false);
@@ -520,7 +559,6 @@ const App: React.FC = () => {
         try {
             const channelRef = db.collection('users').doc(dream100Channel.ownerId).collection('channels').doc(dream100Channel.id);
             await channelRef.update({ dream100Videos: cleanUndefined(updatedVideos) });
-            // Local update for UI responsiveness
             setDream100Channel({ ...dream100Channel, dream100Videos: updatedVideos });
         } catch (error) {
             console.error("Error updating Dream 100:", error);
@@ -598,7 +636,7 @@ const App: React.FC = () => {
                             channelMembers={channelMembers}
                             onSelectProject={(p) => { setEditingProject(p); setIsProjectModalOpen(true); }}
                             isLoading={isLoadingData}
-                            onAddChannel={() => setIsSettingsOpen(true)} // Open settings to add channel
+                            onAddChannel={() => setIsSettingsOpen(true)}
                             onAddVideo={(channelId) => {
                                 const newProject: Project = {
                                     id: `local_${Date.now()}`,
