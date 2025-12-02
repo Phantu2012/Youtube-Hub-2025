@@ -1,9 +1,7 @@
 
-
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { X, Save, Key, Eye, EyeOff, Info, Bot, Youtube, Sparkles, PlusCircle, Trash2, Link, Loader, Share2, Users, Edit, Check } from 'lucide-react';
-import { ChannelDna, ApiKeys, AIProvider, AIModel, Channel, User, Role, Permission } from '../types';
+import { X, Save, Key, Eye, EyeOff, Info, Bot, Youtube, Sparkles, PlusCircle, Trash2, Link, Loader, Share2, Users, Edit, Check, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChannelDna, ApiKeys, AIProvider, AIModel, Channel, User, Role, Permission, ChannelLog } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 import { ChannelDnaWizard } from './ChannelDnaWizard';
 import { ALL_PERMISSIONS, getDefaultRoles } from '../constants';
@@ -83,6 +81,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
     const [isAddingChannel, setIsAddingChannel] = useState(false);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const confirmTimerRef = useRef<number | null>(null);
+    const [expandedLogChannelId, setExpandedLogChannelId] = useState<string | null>(null);
     
     // State for roles management
     const ownedChannels = useMemo(() => currentChannels.filter(c => c.ownerId === user.uid), [currentChannels, user.uid]);
@@ -111,6 +110,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
         const channelToUpdate = currentChannels.find(ch => ch.id === id);
         if (channelToUpdate) {
             onUpdateChannel({ ...channelToUpdate, [field]: value });
+        }
+    };
+
+    const handleChannelLogChange = (id: string, field: keyof ChannelLog, value: string) => {
+        const channelToUpdate = currentChannels.find(ch => ch.id === id);
+        if (channelToUpdate) {
+            const currentLog = channelToUpdate.log || {};
+            const updatedLog = { ...currentLog, [field]: value };
+            onUpdateChannel({ ...channelToUpdate, log: updatedLog });
         }
     };
 
@@ -220,7 +228,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
 
     const handleProviderChange = (provider: AIProvider) => {
         setLocalProvider(provider);
-        // When provider changes, also reset the model to the first valid one
         setLocalModel(models[provider][0].value);
     };
 
@@ -341,6 +348,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
                                     <div className="space-y-4">
                                         {currentChannels.map(channel => {
                                             const isOwner = user.uid === channel.ownerId;
+                                            const isLogExpanded = expandedLogChannelId === channel.id;
                                             return (
                                             <div key={channel.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
                                                 <div className="flex items-center justify-between">
@@ -357,6 +365,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
                                                             <>
                                                                 <button type="button" onClick={() => onShareChannel(channel)} className="p-2 text-gray-500 hover:text-green-500" title={t('settings.shareChannel')}><Share2 size={16} /></button>
                                                                 <button type="button" onClick={() => handleLaunchWizard(channel)} className="p-2 text-gray-500 hover:text-purple-500" title={t('settings.buildWithAI')}><Sparkles size={16} /></button>
+                                                                <button type="button" onClick={() => setExpandedLogChannelId(isLogExpanded ? null : channel.id)} className={`p-2 transition-colors ${isLogExpanded ? 'text-blue-500 bg-blue-100 dark:bg-blue-900 rounded-md' : 'text-gray-500 hover:text-blue-500'}`} title={t('settings.channelLog.title')}><ClipboardList size={16} /></button>
                                                                 <button 
                                                                     type="button" 
                                                                     onClick={() => handleDeleteChannelClick(channel.id)} 
@@ -390,6 +399,89 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, u
                                                     rows={4}
                                                     readOnly={!isOwner}
                                                 />
+
+                                                {/* Channel Log Section */}
+                                                {isLogExpanded && (
+                                                    <div className="mt-4 p-4 bg-light-bg dark:bg-dark-bg/50 border border-gray-300 dark:border-gray-600 rounded-md">
+                                                        <h4 className="font-bold text-sm mb-3 flex items-center gap-2 text-primary">
+                                                            <ClipboardList size={16} /> {t('settings.channelLog.title')}
+                                                        </h4>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.creationDate')}</label>
+                                                                <input type="date" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.creationDate || ''} onChange={e => handleChannelLogChange(channel.id, 'creationDate', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.channelEmail')}</label>
+                                                                <input type="email" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.channelEmail || ''} onChange={e => handleChannelLogChange(channel.id, 'channelEmail', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.recoveryEmail')}</label>
+                                                                <input type="email" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.recoveryEmail || ''} onChange={e => handleChannelLogChange(channel.id, 'recoveryEmail', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.phoneNumber')}</label>
+                                                                <input type="text" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.phoneNumber || ''} onChange={e => handleChannelLogChange(channel.id, 'phoneNumber', e.target.value)} placeholder="09xxxxxxx" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.identityInfo')}</label>
+                                                                <input type="text" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.identityInfo || ''} onChange={e => handleChannelLogChange(channel.id, 'identityInfo', e.target.value)} placeholder="Name/DOB" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.postingSchedule')}</label>
+                                                                <input type="text" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.postingSchedule || ''} onChange={e => handleChannelLogChange(channel.id, 'postingSchedule', e.target.value)} placeholder="e.g., Mon, Wed, Fri at 8 PM" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.firstVideoDate')}</label>
+                                                                <input type="date" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.firstVideoDate || ''} onChange={e => handleChannelLogChange(channel.id, 'firstVideoDate', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.monetizationDate')}</label>
+                                                                <input type="date" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.monetizationDate || ''} onChange={e => handleChannelLogChange(channel.id, 'monetizationDate', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.adsenseEmail')}</label>
+                                                                <input type="email" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.adsenseEmail || ''} onChange={e => handleChannelLogChange(channel.id, 'adsenseEmail', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.manager')}</label>
+                                                                <input type="text" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.manager || ''} onChange={e => handleChannelLogChange(channel.id, 'manager', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.editor')}</label>
+                                                                <input type="text" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.editor || ''} onChange={e => handleChannelLogChange(channel.id, 'editor', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.contentCreator')}</label>
+                                                                <input type="text" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.contentCreator || ''} onChange={e => handleChannelLogChange(channel.id, 'contentCreator', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.country')}</label>
+                                                                <input type="text" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.country || ''} onChange={e => handleChannelLogChange(channel.id, 'country', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.aiVoice')}</label>
+                                                                <input type="text" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.aiVoice || ''} onChange={e => handleChannelLogChange(channel.id, 'aiVoice', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.imageSource')}</label>
+                                                                <input type="text" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.imageSource || ''} onChange={e => handleChannelLogChange(channel.id, 'imageSource', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.videoSource')}</label>
+                                                                <input type="text" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.videoSource || ''} onChange={e => handleChannelLogChange(channel.id, 'videoSource', e.target.value)} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.proxyInfo')}</label>
+                                                                <input type="text" className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" value={channel.log?.proxyInfo || ''} onChange={e => handleChannelLogChange(channel.id, 'proxyInfo', e.target.value)} />
+                                                            </div>
+                                                            <div className="md:col-span-2 lg:col-span-3">
+                                                                <label className="text-xs font-semibold block mb-1">{t('settings.channelLog.notes')}</label>
+                                                                <textarea className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-card" rows={3} value={channel.log?.notes || ''} onChange={e => handleChannelLogChange(channel.id, 'notes', e.target.value)} placeholder="Strikes, important events, etc." />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )})}
                                         <button

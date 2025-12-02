@@ -1,9 +1,4 @@
 
-
-
-
-
-
 export enum ProjectStatus {
     Idea = 'Idea',
     Production = 'Production',
@@ -53,6 +48,27 @@ export interface ChannelStats {
     subscriberCount: number;
     viewCount: number;
     videoCount: number;
+}
+
+export interface ChannelLog {
+    creationDate?: string;
+    channelEmail?: string;
+    recoveryEmail?: string; // Suggested
+    phoneNumber?: string; // New: For 2FA/Sim management
+    identityInfo?: string; // New: Name/DOB used for account
+    postingSchedule?: string;
+    firstVideoDate?: string;
+    monetizationDate?: string;
+    adsenseEmail?: string; // Suggested
+    manager?: string;
+    editor?: string;
+    contentCreator?: string;
+    country?: string;
+    aiVoice?: string;
+    imageSource?: string;
+    videoSource?: string;
+    proxyInfo?: string; // Suggested
+    notes?: string;
 }
 
 export type Permission =
@@ -114,6 +130,7 @@ export interface Channel {
     ideas?: Idea[];
     automationSteps?: AutomationStep[];
     roles?: Role[];
+    log?: ChannelLog;
 }
 
 export interface Project {
