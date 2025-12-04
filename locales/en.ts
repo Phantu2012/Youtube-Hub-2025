@@ -605,7 +605,162 @@ const enData = {
       "tags": "Tags generated!",
       "thumbnailPrompt": "Thumbnail prompt generated!"
     }
+  },
+  "adminPanel": {
+    "title": "Admin Panel",
+    "description": "Manage users, system prompts, and verify system health.",
+    "userManagementTab": "User Management",
+    "promptManagementTab": "Prompt Management",
+    "systemCheckTab": "System Check",
+    "status": "Status",
+    "expiresAt": "Expires At",
+    "save": "Save",
+    "saving": "Saving...",
+    "administrator": "Administrator",
+    "loadingUsers": "Loading users...",
+    "statuses": {
+      "active": "Active",
+      "pending": "Pending",
+      "expired": "Expired"
+    },
+    "toasts": {
+      "fetchFailed": "Failed to fetch users.",
+      "userUpdated": "User {{name}} updated successfully.",
+      "updateFailed": "Failed to update user {{name}}."
+    },
+    "permissionError": {
+      "title": "Permission Configuration Required",
+      "intro": "The application cannot access necessary data because Firestore security rules have not been configured for Admin access.",
+      "step1": "1. Go to the Firebase Console > Firestore Database > Rules tab.",
+      "button": "Open Firestore Rules",
+      "step2": "2. Replace the existing rules with the following:",
+      "rulesTitle": "Updated Security Rules",
+      "step3": "3. Click 'Publish'.",
+      "retryButton": "I've Updated the Rules, Try Again"
+    },
+    "firstAdminSetup": {
+      "title": "First Admin Setup Required",
+      "intro": "No administrators detected. You need to manually set your account as an admin in Firebase.",
+      "step1": "Go to Firebase Console > Firestore Database > Data tab.",
+      "step2": "Find the 'users' collection.",
+      "step3": "Locate your user document (match by email).",
+      "step4": "Add a new field: 'isAdmin' (boolean).",
+      "step5": "Set value to 'true'.",
+      "step6": "Refresh this page."
+    },
+    "systemCheck": {
+      "title": "System Health Check",
+      "description": "Verify critical system components and configurations.",
+      "firebaseConfig": {
+        "title": "Firebase Configuration",
+        "ok": "Configuration is valid.",
+        "error": "Invalid configuration detected."
+      },
+      "firestore": {
+        "title": "Firestore Connectivity",
+        "ok": "Connected successfully.",
+        "warning": "Permission denied. Check security rules.",
+        "error": "Connection failed.",
+        "resolution": "Check Rules"
+      },
+      "adminStatus": {
+        "title": "Admin Privileges",
+        "ok": "Admin access verified.",
+        "error": "User is not an admin.",
+        "resolution": "Fix in Database"
+      },
+      "apiKeys": {
+        "title": "API Keys",
+        "ok": "Keys configured locally.",
+        "warning": "Some keys might be missing (e.g., YouTube)."
+      },
+      "sharingIndex": {
+        "title": "Sharing Index",
+        "ok": "Index exists.",
+        "error": "Missing required Firestore index.",
+        "resolution": "Create Index"
+      }
+    }
+  },
+  "adminPrompts": {
+    "title": "Prompt Management",
+    "description": "Customize the default system prompts used in the Automation Engine.",
+    "saveButton": "Save Prompts",
+    "savingButton": "Saving...",
+    "saveSuccess": "Global prompts updated successfully.",
+    "saveError": "Failed to save prompts. Check permissions.",
+    "resetPrompt": "Reset to Default",
+    "confirmReset": "Confirm Reset"
+  },
+  "channelDnaWizard": {
+    "title": "AI Channel DNA Wizard",
+    "masterPrompt": {
+      "template": "Based on the following inputs, generate a comprehensive 'Channel DNA' profile for a YouTube channel. \n\nInputs:\n1. Topic: {{topic}}\n2. Target Audience: {{audience}}\n3. Role & Address: {{role_and_address}}\n4. Core Value: {{core_value}}\n5. Strength/Style: {{strength}}\n6. Goals: {{goals}}\n7. Video Duration: {{duration}}\n8. Description Format: {{description_format}}\n9. Illustration Style: {{illustration_style}}\n10. Scientific Basis: {{scientific_basis}}\n\nOutput the DNA profile as a single, coherent block of text that describes the channel's identity, tone, style, and content strategy in detail. Use the language of the inputs (Vietnamese) for the output."
+    },
+    "guide": {
+      "title": "How to use this Wizard",
+      "intro": "To create the perfect AI assistant for your channel, we need to define its 'DNA'. This wizard will guide you through 10 key questions.",
+      "start": "Start Wizard",
+      "stepLabel": "Step {{index}}:",
+      "step1_title": "Topic & Audience",
+      "step1_desc": "What is your channel about, and who are you talking to?",
+      "step2_title": "Role & Address",
+      "step2_desc": "Who are you to them? (Friend, Expert, Guide?) How do you call them?",
+      "step3_title": "Value & Style",
+      "step3_desc": "What do viewers get? What makes you unique?",
+      "step4_title": "Goals & Format",
+      "step4_desc": "What is the purpose of your videos? How long are they?",
+      "step5_title": "Description Structure",
+      "step5_desc": "How should your video descriptions look?",
+      "step6_title": "Visual Style",
+      "step6_desc": "What kind of images or footage do you use?",
+      "step7_title": "Scientific Basis",
+      "step7_desc": "What authoritative sources or principles back your content?",
+      "checklist": "Tip: The more detailed your answers, the better the AI will perform!"
+    },
+    "step": "Step {{current}} of {{total}}",
+    "next": "Next",
+    "back": "Back",
+    "generate": "Generate DNA",
+    "regenerate": "Regenerate",
+    "useThisDna": "Use this DNA",
+    "generatingTitle": "Synthesizing Channel DNA...",
+    "generatingMessage": "Our AI is crafting a unique profile based on your answers.",
+    "resultTitle": "Your Channel DNA",
+    "resultDescription": "Review and edit the generated DNA below before saving.",
+    "errorTitle": "Generation Failed",
+    "retry": "Try Again",
+    "q1_question": "What is the main topic of your channel?",
+    "q1_description": "Be specific. e.g., 'Home gardening for beginners' or 'Advanced astrophysics explained simply'.",
+    "q1_placeholder": "e.g., Healthy cooking for busy parents...",
+    "q2_question": "Who is your target audience?",
+    "q2_description": "Describe their age, interests, pain points, and desires.",
+    "q2_placeholder": "e.g., Women aged 30-50 who want to lose weight but love food...",
+    "q_role_question": "What is your role and how do you address them?",
+    "q_role_description": "Are you a teacher, a friend, a critic? Do you say 'Hey guys', 'Dear students', etc.?",
+    "q_role_placeholder": "e.g., I am a supportive coach. I call them 'Health Warriors'...",
+    "q3_question": "What is the Core Value you provide?",
+    "q3_description": "Why should they watch YOU instead of others?",
+    "q3_placeholder": "e.g., I simplify complex medical terms into easy tips...",
+    "q4_question": "What are your Strengths or Signature Style?",
+    "q4_description": "Humor, deep research, high energy, calm voice, visual storytelling?",
+    "q4_placeholder": "e.g., Very calm, soothing voice with high-quality B-roll...",
+    "q5_question": "What is the Goal of your videos?",
+    "q5_description": "To educate, entertain, inspire, sell a product, or build community?",
+    "q5_placeholder": "e.g., To inspire people to cook at home more often...",
+    "q6_question": "What is the typical Video Duration?",
+    "q6_description": "Short (under 1 min), Medium (8-12 mins), Long (20+ mins)?",
+    "q6_placeholder": "e.g., 8 to 12 minutes...",
+    "q7_question": "What is your Description Format?",
+    "q7_description": "Do you use timestamps, affiliate links, specific intros/outros in the text?",
+    "q7_placeholder": "e.g., Hook first, then links, then timestamps...",
+    "q8_question": "What is your Illustration/Visual Style?",
+    "q8_description": "Stock footage, animation, face-cam, whiteboard, cinematic?",
+    "q8_placeholder": "e.g., Cinematic b-roll with text overlays...",
+    "q9_question": "What is the Scientific Basis or Authority?",
+    "q9_description": "Do you cite specific papers, books, or experts? Or is it personal experience?",
+    "q9_placeholder": "e.g., Based on the works of Dr. Andrew Huberman..."
   }
-}
+};
 
 export default enData;

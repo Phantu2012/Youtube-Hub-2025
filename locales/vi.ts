@@ -628,6 +628,161 @@ const viData = {
     },
     "deleteConfirm": "Xác nhận Xóa",
     "clearConfirm": "Xác nhận Xóa Form"
+  },
+  "adminPanel": {
+    "title": "Bảng Quản trị",
+    "description": "Quản lý người dùng, các prompt hệ thống và kiểm tra sức khỏe hệ thống.",
+    "userManagementTab": "Quản lý Người dùng",
+    "promptManagementTab": "Quản lý Prompt",
+    "systemCheckTab": "Kiểm tra Hệ thống",
+    "status": "Trạng thái",
+    "expiresAt": "Hết hạn vào",
+    "save": "Lưu",
+    "saving": "Đang lưu...",
+    "administrator": "Quản trị viên",
+    "loadingUsers": "Đang tải người dùng...",
+    "statuses": {
+      "active": "Hoạt động",
+      "pending": "Chờ duyệt",
+      "expired": "Hết hạn"
+    },
+    "toasts": {
+      "fetchFailed": "Tải danh sách người dùng thất bại.",
+      "userUpdated": "Đã cập nhật người dùng {{name}} thành công.",
+      "updateFailed": "Cập nhật người dùng {{name}} thất bại."
+    },
+    "permissionError": {
+      "title": "Yêu cầu Cấu hình Quyền",
+      "intro": "Ứng dụng không thể truy cập dữ liệu cần thiết vì quy tắc bảo mật Firestore chưa được cấu hình cho quyền truy cập Quản trị viên.",
+      "step1": "1. Đi đến Firebase Console > Firestore Database > tab Rules.",
+      "button": "Mở Quy tắc Firestore",
+      "step2": "2. Thay thế các quy tắc hiện có bằng đoạn mã sau:",
+      "rulesTitle": "Quy tắc Bảo mật Đã cập nhật",
+      "step3": "3. Nhấp 'Publish'.",
+      "retryButton": "Tôi Đã Cập nhật Quy tắc, Thử lại"
+    },
+    "firstAdminSetup": {
+      "title": "Yêu cầu Thiết lập Quản trị viên Đầu tiên",
+      "intro": "Không phát hiện quản trị viên nào. Bạn cần thiết lập thủ công tài khoản của mình làm quản trị viên trong Firebase.",
+      "step1": "Đi đến Firebase Console > Firestore Database > tab Data.",
+      "step2": "Tìm bộ sưu tập (collection) 'users'.",
+      "step3": "Tìm tài liệu (document) người dùng của bạn (khớp theo email).",
+      "step4": "Thêm một trường mới: 'isAdmin' (kiểu boolean).",
+      "step5": "Đặt giá trị thành 'true'.",
+      "step6": "Làm mới trang này."
+    },
+    "systemCheck": {
+      "title": "Kiểm tra Sức khỏe Hệ thống",
+      "description": "Xác minh các thành phần và cấu hình quan trọng của hệ thống.",
+      "firebaseConfig": {
+        "title": "Cấu hình Firebase",
+        "ok": "Cấu hình hợp lệ.",
+        "error": "Phát hiện cấu hình không hợp lệ."
+      },
+      "firestore": {
+        "title": "Kết nối Firestore",
+        "ok": "Kết nối thành công.",
+        "warning": "Quyền bị từ chối. Kiểm tra quy tắc bảo mật.",
+        "error": "Kết nối thất bại.",
+        "resolution": "Kiểm tra Quy tắc"
+      },
+      "adminStatus": {
+        "title": "Quyền Quản trị",
+        "ok": "Đã xác minh quyền truy cập Admin.",
+        "error": "Người dùng không phải là Admin.",
+        "resolution": "Sửa trong Cơ sở dữ liệu"
+      },
+      "apiKeys": {
+        "title": "Khóa API",
+        "ok": "Đã cấu hình khóa cục bộ.",
+        "warning": "Một số khóa có thể bị thiếu (ví dụ: YouTube)."
+      },
+      "sharingIndex": {
+        "title": "Index Chia sẻ",
+        "ok": "Index đã tồn tại.",
+        "error": "Thiếu Index Firestore bắt buộc.",
+        "resolution": "Tạo Index"
+      }
+    }
+  },
+  "adminPrompts": {
+    "title": "Quản lý Prompt",
+    "description": "Tùy chỉnh các prompt hệ thống mặc định được sử dụng trong Công cụ Tự động hóa.",
+    "saveButton": "Lưu Prompt",
+    "savingButton": "Đang lưu...",
+    "saveSuccess": "Đã cập nhật prompt toàn cầu thành công.",
+    "saveError": "Lưu prompt thất bại. Kiểm tra quyền hạn.",
+    "resetPrompt": "Khôi phục Mặc định",
+    "confirmReset": "Xác nhận Khôi phục"
+  },
+  "channelDnaWizard": {
+    "title": "AI Channel DNA Wizard",
+    "masterPrompt": {
+      "template": "Based on the following inputs, generate a comprehensive 'Channel DNA' profile for a YouTube channel. \n\nInputs:\n1. Topic: {{topic}}\n2. Target Audience: {{audience}}\n3. Role & Address: {{role_and_address}}\n4. Core Value: {{core_value}}\n5. Strength/Style: {{strength}}\n6. Goals: {{goals}}\n7. Video Duration: {{duration}}\n8. Description Format: {{description_format}}\n9. Illustration Style: {{illustration_style}}\n10. Scientific Basis: {{scientific_basis}}\n\nOutput the DNA profile as a single, coherent block of text that describes the channel's identity, tone, style, and content strategy in detail. Use the language of the inputs (Vietnamese) for the output."
+    },
+    "guide": {
+      "title": "Hướng dẫn sử dụng Wizard",
+      "intro": "Để tạo trợ lý AI hoàn hảo cho kênh của bạn, chúng ta cần xác định 'DNA' của nó. Wizard này sẽ hướng dẫn bạn qua 10 câu hỏi chính.",
+      "start": "Bắt đầu Wizard",
+      "stepLabel": "Bước {{index}}:",
+      "step1_title": "Chủ đề & Khán giả",
+      "step1_desc": "Kênh của bạn nói về cái gì, và bạn đang nói chuyện với ai?",
+      "step2_title": "Vai trò & Xưng hô",
+      "step2_desc": "Bạn là ai đối với họ? (Bạn bè, Chuyên gia, Người hướng dẫn?) Bạn gọi họ là gì?",
+      "step3_title": "Giá trị & Phong cách",
+      "step3_desc": "Người xem nhận được gì? Điều gì khiến bạn trở nên độc đáo?",
+      "step4_title": "Mục tiêu & Định dạng",
+      "step4_desc": "Mục đích video của bạn là gì? Chúng dài bao nhiêu?",
+      "step5_title": "Cấu trúc Mô tả",
+      "step5_desc": "Mô tả video của bạn nên trông như thế nào?",
+      "step6_title": "Phong cách Hình ảnh",
+      "step6_desc": "Bạn sử dụng loại hình ảnh hoặc cảnh quay nào?",
+      "step7_title": "Cơ sở Khoa học",
+      "step7_desc": "Bạn trích dẫn các nguồn hoặc nguyên tắc uy tín nào?",
+      "checklist": "Mẹo: Câu trả lời của bạn càng chi tiết, AI sẽ hoạt động càng tốt!"
+    },
+    "step": "Bước {{current}} trên {{total}}",
+    "next": "Tiếp theo",
+    "back": "Quay lại",
+    "generate": "Tạo DNA",
+    "regenerate": "Tạo lại",
+    "useThisDna": "Sử dụng DNA này",
+    "generatingTitle": "Đang tổng hợp DNA Kênh...",
+    "generatingMessage": "AI của chúng tôi đang tạo một hồ sơ độc đáo dựa trên câu trả lời của bạn.",
+    "resultTitle": "DNA Kênh của bạn",
+    "resultDescription": "Xem lại và chỉnh sửa DNA đã tạo bên dưới trước khi lưu.",
+    "errorTitle": "Tạo thất bại",
+    "retry": "Thử lại",
+    "q1_question": "Chủ đề chính của kênh bạn là gì?",
+    "q1_description": "Hãy cụ thể. VD: 'Làm vườn tại nhà cho người mới' hoặc 'Vật lý thiên văn giải thích đơn giản'.",
+    "q1_placeholder": "VD: Nấu ăn lành mạnh cho cha mẹ bận rộn...",
+    "q2_question": "Khán giả mục tiêu của bạn là ai?",
+    "q2_description": "Mô tả tuổi tác, sở thích, nỗi đau và mong muốn của họ.",
+    "q2_placeholder": "VD: Phụ nữ 30-50 tuổi muốn giảm cân nhưng yêu thích đồ ăn...",
+    "q_role_question": "Vai trò của bạn là gì và bạn xưng hô với họ như thế nào?",
+    "q_role_description": "Bạn là giáo viên, bạn bè, nhà phê bình? Bạn có nói 'Chào các bạn', 'Các em thân mến', v.v. không?",
+    "q_role_placeholder": "VD: Tôi là một huấn luyện viên hỗ trợ. Tôi gọi họ là 'Chiến binh Sức khỏe'...",
+    "q3_question": "Giá trị Cốt lõi bạn cung cấp là gì?",
+    "q3_description": "Tại sao họ nên xem BẠN thay vì những người khác?",
+    "q3_placeholder": "VD: Tôi đơn giản hóa các thuật ngữ y học phức tạp thành mẹo dễ hiểu...",
+    "q4_question": "Điểm mạnh hoặc Phong cách Đặc trưng của bạn là gì?",
+    "q4_description": "Hài hước, nghiên cứu sâu, năng lượng cao, giọng nói êm dịu, kể chuyện bằng hình ảnh?",
+    "q4_placeholder": "VD: Giọng nói rất bình tĩnh, êm dịu với B-roll chất lượng cao...",
+    "q5_question": "Mục tiêu của các video của bạn là gì?",
+    "q5_description": "Để giáo dục, giải trí, truyền cảm hứng, bán sản phẩm hay xây dựng cộng đồng?",
+    "q5_placeholder": "VD: Để truyền cảm hứng cho mọi người nấu ăn ở nhà thường xuyên hơn...",
+    "q6_question": "Thời lượng Video điển hình là bao nhiêu?",
+    "q6_description": "Ngắn (dưới 1 phút), Trung bình (8-12 phút), Dài (20+ phút)?",
+    "q6_placeholder": "VD: 8 đến 12 phút...",
+    "q7_question": "Định dạng Mô tả của bạn là gì?",
+    "q7_description": "Bạn có sử dụng dấu thời gian, liên kết liên kết, phần mở đầu/kết thúc cụ thể trong văn bản không?",
+    "q7_placeholder": "VD: Câu dẫn trước, sau đó là liên kết, rồi đến dấu thời gian...",
+    "q8_question": "Phong cách Minh họa/Hình ảnh của bạn là gì?",
+    "q8_description": "Cảnh quay kho, hoạt hình, quay mặt, bảng trắng, điện ảnh?",
+    "q8_placeholder": "VD: B-roll điện ảnh với lớp phủ văn bản...",
+    "q9_question": "Cơ sở Khoa học hoặc Thẩm quyền là gì?",
+    "q9_description": "Bạn có trích dẫn các bài báo, sách hoặc chuyên gia cụ thể không? Hay là kinh nghiệm cá nhân?",
+    "q9_placeholder": "VD: Dựa trên các công trình của Tiến sĩ Andrew Huberman..."
   }
 };
 
